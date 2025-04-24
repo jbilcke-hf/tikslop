@@ -72,7 +72,40 @@ PRODUCT_NAME="AiTube" \
 ### Run the client (web)
 
 ```bash
-
+# For local development with default configuration
 flutter run --dart-define=CONFIG_PATH=assets/config/aitube_low.yaml -d chrome
+
+# For production build to be deployed on a server
+flutter build web --dart-define=CONFIG_PATH=assets/config/aitube_low.yaml
 ```
+
+### WebSocket Connection
+
+The application automatically determines the WebSocket URL:
+
+1. **Web Platform**: 
+   - Automatically uses the same host that serves the web app
+   - Handles HTTP/HTTPS protocol correctly (ws/wss)
+   - No configuration needed for deployment
+
+2. **Native Platforms**:
+   - Production: Automatically uses `wss://aitube.at/ws` when built with production flag
+   - Development: Uses `ws://localhost:8080/ws` by default
+   - Custom: Can override with `API_WS_URL` environment variable (highest priority)
+
+#### Production Native Build
+
+For production builds (connecting to aitube.at):
+```bash
+flutter build apk --dart-define=CONFIG_PATH=assets/config/aitube_low.yaml --dart-define=PRODUCTION_MODE=true
+```
+
+#### Custom API Server
+
+For connecting to a different server:
+```bash
+flutter build apk --dart-define=CONFIG_PATH=assets/config/aitube_low.yaml --dart-define=API_WS_URL=ws://custom-api.example.com/ws
+```
+
+Note: The `API_WS_URL` parameter takes precedence over the production setting.
 

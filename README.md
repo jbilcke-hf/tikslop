@@ -18,6 +18,15 @@ hf_oauth_scopes:
 
 # AiTube2
 
+## Configuration
+
+### WebSocket Connection
+- **Web Platform**: Automatically connects to the host serving the page (adapts to both HTTP/HTTPS)
+- **Native Platforms**: 
+  - Production: Uses `wss://aitube.at/ws` when built with `--dart-define=PRODUCTION_MODE=true`
+  - Development: Uses `ws://localhost:8080/ws` by default
+  - Custom: Set `API_WS_URL` during build with `--dart-define=API_WS_URL=ws://your-server:port/ws` (highest priority)
+
 ## News
 
 aitube2 is coming sooner than expected!

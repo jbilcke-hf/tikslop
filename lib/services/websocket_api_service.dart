@@ -47,7 +47,40 @@ class WebSocketApiService {
   factory WebSocketApiService() => _instance;
   WebSocketApiService._internal();
 
-  static const String _wsUrl = 'ws://localhost:8080/ws';
+  // Dynamically build WebSocket URL based on current host in web platform
+  // or use environment variable/production URL/localhost for development on other platforms
+  static String get _wsUrl {
+    if (kIsWeb) {
+      // Get the current host and protocol from the browser window
+      final location = Uri.base;
+      final protocol = location.scheme == 'https' ? 'wss' : 'ws';
+      final url = '$protocol://${location.host}/ws';
+      debugPrint('WebSocketApiService: Using dynamic WebSocket URL: $url');
+      return url;
+    } else {
+      // First try to get WebSocket URL from environment variable (highest priority)
+      const envWsUrl = String.fromEnvironment('API_WS_URL', defaultValue: '');
+      
+      if (envWsUrl.isNotEmpty) {
+        debugPrint('WebSocketApiService: Using WebSocket URL from environment: $envWsUrl');
+        return envWsUrl;
+      }
+      
+      // Second, check if we're in production mode (determined by build flag)
+      const isProduction = bool.fromEnvironment('PRODUCTION_MODE', defaultValue: false);
+      
+      if (isProduction) {
+        // Production default is aitube.at
+        const productionUrl = 'wss://aitube.at/ws';
+        debugPrint('WebSocketApiService: Using production WebSocket URL: $productionUrl');
+        return productionUrl;
+      } else {
+        // Fallback to localhost for development
+        debugPrint('WebSocketApiService: Using default localhost WebSocket URL');
+        return 'ws://localhost:8080/ws';
+      }
+    }
+  }
   WebSocketChannel? _channel;
   final _responseController = StreamController<Map<String, dynamic>>.broadcast();
   final _pendingRequests = <String, Completer<Map<String, dynamic>>>{};
@@ -162,10 +195,14 @@ class WebSocketApiService {
         
         // First check if server is in maintenance mode by making an HTTP request to the status endpoint
         try {
+          // Determine HTTP URL based on WebSocket URL
+          final wsUri = Uri.parse(_wsUrl);
+          final protocol = wsUri.scheme == 'wss' ? 'https' : 'http';
+          final httpUrl = '$protocol://${wsUri.authority}/api/status';
+          
           // Use conditional import to handle platform differences
           if (kIsWeb) {
             // For web platform, use http package instead of HttpClient which is only available in dart:io
-            final httpUrl = 'http://${baseUrl.authority}/api/status';
             final response = await http.get(Uri.parse(httpUrl));
             
             if (response.statusCode == 200) {
@@ -179,7 +216,6 @@ class WebSocketApiService {
             }
           } else {
             // For non-web platforms, use HttpClient from dart:io
-            final httpUrl = 'http://${baseUrl.authority}/api/status';
             final httpClient = io.HttpClient();
             final request = await httpClient.getUrl(Uri.parse(httpUrl));
             final response = await request.close();
