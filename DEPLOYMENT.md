@@ -52,13 +52,18 @@ curl https://api.endpoints.huggingface.cloud/v2/endpoint/<YOUR_ACCOUNT_NAME> 	-X
 # load the environment
 # (if you haven't done it already for this shell session)
 source .python_venv/bin/activate
-
-HF_TOKEN="<USE YOUR OWN TOKEN>" \
-    SECRET_TOKEN="<USE YOUR OWN TOKEN>" \
+    
+PRODUCT_NAME="AiTube" \
+    MAX_NODES="3" \
+    MAINTENANCE_MODE=false \
+    HF_TOKEN="<USE YOUR OWN HF TOKEN>" \
+    SECRET_TOKEN="<USE YOUR OWN AITUBE SECRET>" \
     VIDEO_ROUND_ROBIN_SERVER_1="https:/<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     VIDEO_ROUND_ROBIN_SERVER_2="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     VIDEO_ROUND_ROBIN_SERVER_3="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     VIDEO_ROUND_ROBIN_SERVER_4="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
+    VIDEO_ROUND_ROBIN_SERVER_5="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
+    VIDEO_ROUND_ROBIN_SERVER_6="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     HF_IMAGE_MODEL="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     HF_TEXT_MODEL="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     python3 api.py

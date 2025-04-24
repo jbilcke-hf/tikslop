@@ -111,20 +111,52 @@ class Endpoint:
     url: str
     busy: bool = False
     last_used: float = 0
+    error_count: int = 0
+    error_until: float = 0  # Timestamp until which this endpoint is considered in error state
 
 class EndpointManager:
     def __init__(self):
         self.endpoints: List[Endpoint] = []
         self.lock = Lock()
-        self.endpoint_queue: Queue[Endpoint] = Queue()
         self.initialize_endpoints()
+        self.last_used_index = -1  # Track the last used endpoint for round-robin
 
     def initialize_endpoints(self):
         """Initialize the list of endpoints"""
         for i, url in enumerate(VIDEO_ROUND_ROBIN_ENDPOINT_URLS):
             endpoint = Endpoint(id=i + 1, url=url)
             self.endpoints.append(endpoint)
-            self.endpoint_queue.put_nowait(endpoint)
+
+    def _get_next_free_endpoint(self):
+        """Get the next available non-busy endpoint, or oldest endpoint if all are busy"""
+        current_time = time.time()
+        
+        # First priority: Get any non-busy and non-error endpoint
+        free_endpoints = [
+            ep for ep in self.endpoints 
+            if not ep.busy and current_time > ep.error_until
+        ]
+        
+        if free_endpoints:
+            # Return the least recently used free endpoint
+            return min(free_endpoints, key=lambda ep: ep.last_used)
+        
+        # Second priority: If all busy/error, use round-robin but skip error endpoints
+        tried_count = 0
+        next_index = self.last_used_index
+        
+        while tried_count < len(self.endpoints):
+            next_index = (next_index + 1) % len(self.endpoints)
+            tried_count += 1
+            
+            # If endpoint is not in error state, use it
+            if current_time > self.endpoints[next_index].error_until:
+                self.last_used_index = next_index
+                return self.endpoints[next_index]
+        
+        # If all endpoints are in error state, use the one with earliest error expiry
+        self.last_used_index = next_index
+        return min(self.endpoints, key=lambda ep: ep.error_until)
 
     @asynccontextmanager
     async def get_endpoint(self, max_wait_time: int = 10):
@@ -137,18 +169,15 @@ class EndpointManager:
                 if time.time() - start_time > max_wait_time:
                     raise TimeoutError(f"Could not acquire an endpoint within {max_wait_time} seconds")
 
-                try:
-                    endpoint = self.endpoint_queue.get_nowait()
-                    async with self.lock:
-                        if not endpoint.busy:
-                            endpoint.busy = True
-                            endpoint.last_used = time.time()
-                            break
-                        else:
-                            await self.endpoint_queue.put(endpoint)
-                except asyncio.QueueEmpty:
-                    await asyncio.sleep(0.5)
-                    continue
+                async with self.lock:
+                    # Get the next available endpoint using our selection strategy
+                    endpoint = self._get_next_free_endpoint()
+                    
+                    # Mark it as busy
+                    endpoint.busy = True
+                    endpoint.last_used = time.time()
+                    logger.info(f"Using endpoint {endpoint.id} (busy: {endpoint.busy}, last used: {endpoint.last_used})")
+                    break
 
             yield endpoint
 
@@ -157,7 +186,7 @@ class EndpointManager:
                 async with self.lock:
                     endpoint.busy = False
                     endpoint.last_used = time.time()
-                    await self.endpoint_queue.put(endpoint)
+                    # We don't need to put back into queue - our strategy now picks directly from the list
 
 class ChatRoom:
     def __init__(self):
@@ -626,32 +655,75 @@ Your caption:"""
         }
 
         async with self.endpoint_manager.get_endpoint() as endpoint:
-            #logger.info(f"Using endpoint {endpoint.id} for video generation with prompt: {prompt}")
+            logger.info(f"Using endpoint {endpoint.id} for video generation")
             
-            async with ClientSession() as session:
-                async with session.post(
-                    endpoint.url,
-                    headers={
-                        "Accept": "application/json",
-                        "Authorization": f"Bearer {HF_TOKEN}",
-                        "Content-Type": "application/json"
-                    },
-                    json=json_payload
-                ) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        raise Exception(f"Video generation failed: HTTP {response.status} - {error_text}")
-                    
-                    result = await response.json()
-                    
-                    if "error" in result:
-                        raise Exception(f"Video generation failed: {result['error']}")
-                    
-                    video_data_uri = result.get("video")
-                    if not video_data_uri:
-                        raise Exception("No video data in response")
-                    
-                    return video_data_uri
+            try:
+                async with ClientSession() as session:
+                    async with session.post(
+                        endpoint.url,
+                        headers={
+                            "Accept": "application/json",
+                            "Authorization": f"Bearer {HF_TOKEN}",
+                            "Content-Type": "application/json"
+                        },
+                        json=json_payload,
+                        timeout=10  # Fast generation should complete within 10 seconds
+                    ) as response:
+                        if response.status != 200:
+                            error_text = await response.text()
+                            # Mark endpoint as in error state
+                            await self._mark_endpoint_error(endpoint)
+                            raise Exception(f"Video generation failed: HTTP {response.status} - {error_text}")
+                        
+                        result = await response.json()
+                        
+                        if "error" in result:
+                            # Mark endpoint as in error state
+                            await self._mark_endpoint_error(endpoint)
+                            raise Exception(f"Video generation failed: {result['error']}")
+                        
+                        video_data_uri = result.get("video")
+                        if not video_data_uri:
+                            # Mark endpoint as in error state
+                            await self._mark_endpoint_error(endpoint)
+                            raise Exception("No video data in response")
+                        
+                        # Reset error count on successful call
+                        endpoint.error_count = 0
+                        endpoint.error_until = 0
+                        
+                        return video_data_uri
+                        
+            except asyncio.TimeoutError:
+                # Handle timeout specifically
+                await self._mark_endpoint_error(endpoint, is_timeout=True)
+                raise Exception(f"Endpoint {endpoint.id} timed out")
+            except Exception as e:
+                # Handle all other exceptions
+                if not isinstance(e, asyncio.TimeoutError):  # Already handled above
+                    await self._mark_endpoint_error(endpoint)
+                raise e
+                
+    async def _mark_endpoint_error(self, endpoint: Endpoint, is_timeout: bool = False):
+        """Mark an endpoint as being in error state with exponential backoff"""
+        async with self.endpoint_manager.lock:
+            endpoint.error_count += 1
+            
+            # Calculate backoff time exponentially based on error count
+            # Start with 15 seconds, then 30, 60, etc. up to a max of 5 minutes
+            # Using shorter backoffs since generation should be fast
+            backoff_seconds = min(15 * (2 ** (endpoint.error_count - 1)), 300)
+            
+            # Add extra backoff for timeouts which are more indicative of serious issues
+            if is_timeout:
+                backoff_seconds *= 2
+                
+            endpoint.error_until = time.time() + backoff_seconds
+            
+            logger.warning(
+                f"Endpoint {endpoint.id} marked as in error state (count: {endpoint.error_count}, "
+                f"unavailable until: {datetime.datetime.fromtimestamp(endpoint.error_until).strftime('%H:%M:%S')})"
+            )
 
 
     async def handle_chat_message(self, data: dict, ws: web.WebSocketResponse) -> dict:

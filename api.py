@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import pathlib
+import time
 from aiohttp import web, WSMsgType
 from typing import Dict, Any
 from api_core import VideoGenerationAPI
@@ -273,11 +274,26 @@ async def process_video_queue(queue: asyncio.Queue, ws: web.WebSocketResponse):
 async def status_handler(request: web.Request) -> web.Response:
     """Handler for API status endpoint"""
     api = request.app['api']
+    
+    # Get current busy status of all endpoints
+    endpoint_statuses = []
+    for ep in api.endpoint_manager.endpoints:
+        endpoint_statuses.append({
+            'id': ep.id,
+            'url': ep.url,
+            'busy': ep.busy,
+            'last_used': ep.last_used,
+            'error_count': ep.error_count,
+            'error_until': ep.error_until
+        })
+    
     return web.json_response({
         'product': PRODUCT_NAME,
-        'version': '0.1.0',
+        'version': PRODUCT_VERSION,
         'maintenance_mode': MAINTENANCE_MODE,
-        'available_endpoints': len(VIDEO_ROUND_ROBIN_ENDPOINT_URLS)
+        'available_endpoints': len(VIDEO_ROUND_ROBIN_ENDPOINT_URLS),
+        'endpoint_status': endpoint_statuses,
+        'active_endpoints': sum(1 for ep in endpoint_statuses if not ep['busy'] and ('error_until' not in ep or ep['error_until'] < time.time()))
     })
 
 async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
@@ -290,7 +306,7 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
         }, status=503)  # 503 Service Unavailable
     
     ws = web.WebSocketResponse(
-        max_msg_size=1024*1024*10,  # 10MB max message size
+        max_msg_size=1024*1024*20,  # 20MB max message size
         timeout=30.0  # we want to keep things tight and short
     )
     
@@ -361,7 +377,7 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
 
 async def init_app() -> web.Application:
     app = web.Application(
-        client_max_size=1024**2*10  # 10MB max size
+        client_max_size=1024**2*20  # 20MB max size
     )
     
     # Create API instance

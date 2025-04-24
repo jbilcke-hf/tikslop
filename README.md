@@ -6,7 +6,7 @@ colorTo: red
 sdk: docker
 app_file: api.py
 pinned: true
-short_description: A Latent YouTube
+short_description: The Latent Video Platform
 app_port: 8080
 disable_embedding: false
 hf_oauth: true
@@ -27,7 +27,7 @@ Stay hooked at @flngr on X!
 
 ## What is AiTube?
 
-AiTube 2 is a reboot of [AiTube 1](https://x.com/danielpikl/status/1737882643625078835), a project made in 2023 which generated AI videos in the background using LLM agents, to simulate an AI generated YouTube.
+AiTube 2 is a reboot of [AiTube 1](https://x.com/danielpikl/status/1737882643625078835), a project made in 2023 which generated AI videos in the background using LLM agents, to simulate an AI generated video platform.
 
 In [AiTube 2](https://x.com/flngr/status/1864127796945011016), this concept is put upside down: now the content is generated on demand (when the user types something in the latent search input) and on the fly (video chunks are generated within a few seconds and streamed continuously).
 

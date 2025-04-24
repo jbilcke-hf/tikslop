@@ -1,6 +1,7 @@
 import os
 
 PRODUCT_NAME = os.environ.get('PRODUCT_NAME', 'AiTube')
+PRODUCT_VERSION = "2.0.0"
 
 TEXT_MODEL = os.environ.get('HF_TEXT_MODEL',
     #'HuggingFaceH4/zephyr-7b-beta'
@@ -12,6 +13,9 @@ IMAGE_MODEL = os.environ.get('HF_IMAGE_MODEL', '')
 # Environment variable to control maintenance mode
 MAINTENANCE_MODE = os.environ.get('MAINTENANCE_MODE', 'false').lower() in ('true', 'yes', '1', 't')
 
+# Environment variable to control how many nodes to use
+MAX_NODES = int(os.environ.get('MAX_NODES', '8'))
+
 ADMIN_ACCOUNTS = [
     "jbilcke-hf"
 ]
@@ -21,10 +25,17 @@ RAW_VIDEO_ROUND_ROBIN_ENDPOINT_URLS = [
     os.environ.get('VIDEO_ROUND_ROBIN_SERVER_2', ''),
     os.environ.get('VIDEO_ROUND_ROBIN_SERVER_3', ''),
     os.environ.get('VIDEO_ROUND_ROBIN_SERVER_4', ''),
+    os.environ.get('VIDEO_ROUND_ROBIN_SERVER_5', ''),
+    os.environ.get('VIDEO_ROUND_ROBIN_SERVER_6', ''),
+    os.environ.get('VIDEO_ROUND_ROBIN_SERVER_7', ''),
+    os.environ.get('VIDEO_ROUND_ROBIN_SERVER_8', ''),
 ]
 
 # Filter out empty strings from the endpoint list
-VIDEO_ROUND_ROBIN_ENDPOINT_URLS = [url for url in RAW_VIDEO_ROUND_ROBIN_ENDPOINT_URLS if url]
+filtered_urls = [url for url in RAW_VIDEO_ROUND_ROBIN_ENDPOINT_URLS if url]
+
+# Limit the number of URLs based on MAX_NODES environment variable
+VIDEO_ROUND_ROBIN_ENDPOINT_URLS = filtered_urls[:MAX_NODES]
 
 HF_TOKEN = os.environ.get('HF_TOKEN')
 
