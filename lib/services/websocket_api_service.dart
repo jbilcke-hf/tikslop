@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' as io;
+// For web platform, conditionally import http instead of HttpClient
+import 'package:http/http.dart' as http;
 import 'package:aitube2/services/settings_service.dart';
 import 'package:synchronized/synchronized.dart';
 import 'dart:convert';
@@ -8,6 +10,7 @@ import 'package:aitube2/models/chat_message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:http/http.dart' as http;
 import '../models/search_state.dart';
 import '../models/video_result.dart';
 
@@ -159,19 +162,37 @@ class WebSocketApiService {
         
         // First check if server is in maintenance mode by making an HTTP request to the status endpoint
         try {
-          final httpUrl = 'http://${baseUrl.authority}/api/status';
-          final httpClient = HttpClient();
-          final request = await httpClient.getUrl(Uri.parse(httpUrl));
-          final response = await request.close();
-          
-          if (response.statusCode == 200) {
-            final responseBody = await response.transform(utf8.decoder).join();
-            final statusData = jsonDecode(responseBody);
+          // Use conditional import to handle platform differences
+          if (kIsWeb) {
+            // For web platform, use http package instead of HttpClient which is only available in dart:io
+            final httpUrl = 'http://${baseUrl.authority}/api/status';
+            final response = await http.get(Uri.parse(httpUrl));
             
-            if (statusData['maintenance_mode'] == true) {
-              debugPrint('WebSocketApiService: Server is in maintenance mode');
-              _setStatus(ConnectionStatus.maintenance);
-              return;
+            if (response.statusCode == 200) {
+              final statusData = jsonDecode(response.body);
+              
+              if (statusData['maintenance_mode'] == true) {
+                debugPrint('WebSocketApiService: Server is in maintenance mode');
+                _setStatus(ConnectionStatus.maintenance);
+                return;
+              }
+            }
+          } else {
+            // For non-web platforms, use HttpClient from dart:io
+            final httpUrl = 'http://${baseUrl.authority}/api/status';
+            final httpClient = io.HttpClient();
+            final request = await httpClient.getUrl(Uri.parse(httpUrl));
+            final response = await request.close();
+            
+            if (response.statusCode == 200) {
+              final responseBody = await response.transform(utf8.decoder).join();
+              final statusData = jsonDecode(responseBody);
+              
+              if (statusData['maintenance_mode'] == true) {
+                debugPrint('WebSocketApiService: Server is in maintenance mode');
+                _setStatus(ConnectionStatus.maintenance);
+                return;
+              }
             }
           }
         } catch (e) {
