@@ -1,12 +1,18 @@
 ---
-title: aitube2
-emoji: 🎥
+title: AiTube2
+emoji: 🍿
 colorFrom: red
-colorTo: yellow
+colorTo: red
 sdk: docker
 app_file: api.py
 pinned: true
 short_description: A Latent YouTube
+app_port: 8080
+disable_embedding: false
+hf_oauth: true
+hf_oauth_expiration_minutes: 43200
+hf_oauth_scopes:
+  - inference-api
 ---
 
 

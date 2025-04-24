@@ -88,6 +88,9 @@ class _VideoScreenState extends State<VideoScreen> {
     }
   }
 
+  // Reference to the current VideoPlayerWidget to force reset when needed
+  Key _videoPlayerKey = UniqueKey();
+
   Future<void> _onVideoSearch(String query) async {
     if (!_isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -99,9 +102,16 @@ class _VideoScreenState extends State<VideoScreen> {
     setState(() => _isSearching = true);
 
     try {
+      // First, cancel any requests for the current video
+      _websocketService.cancelRequestsForVideo(_videoData.id);
+      
+      // Get the search result
       final result = await _websocketService.search(query);
+      
       if (mounted) {
         setState(() {
+          // Generate a new key to force recreation of the VideoPlayerWidget
+          _videoPlayerKey = UniqueKey();
           _videoData = result;
           _isSearching = false;
         });
@@ -190,8 +200,9 @@ class _VideoScreenState extends State<VideoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Video Player
+          // Video Player with unique key to force recreation when needed
           VideoPlayerWidget(
+            key: _videoPlayerKey,
             video: _videoData,
             initialThumbnailUrl: _videoData.thumbnailUrl,
             autoPlay: true,
