@@ -115,7 +115,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Cache Card (existing code)
+                            // Cache Card (existing code)
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),

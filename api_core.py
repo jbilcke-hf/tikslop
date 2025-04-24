@@ -298,16 +298,16 @@ class VideoGenerationAPI:
         """Generate a single search result using HF text generation"""
         prompt = f"""# Instruction
 Your response MUST be a YAML object containing a title, description, and tags, consistent with what we can find on a video sharing platform.
-Format your YAML response with only those fields: "title" (single string of a short sentence), "description" (single string of a few sentences to describe the visuals), and "tags" (array of strings). Do not add any other field.
-The description is a prompt for a generative AI, so please describe the visual elements of the scene in details, including: camera angle and focus, people's appearance, their age, actions, precise look, clothing, the location characteristics, lighting, action, objects, weather.
+Format your YAML response with only those fields: "title" (single string of a short sentence), "description" (single string of a few sentences to describe the visuals: characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette), and "tags" (array of strings). Do not add any other field.
+The description is a prompt for a generative AI, so please describe the visual elements of the scene in details, including: camera angle and focus, people's appearance, their age, actions, precise look, clothing, the location characteristics, lighting, action, objects, weather, texture, color palette. Write as if you were describing the scene to a photograph.
 Make the result unique and different from previous search results. ONLY RETURN YAML AND WITH ENGLISH CONTENT, NOT CHINESE - DO NOT ADD ANY OTHER COMMENT!
 
 # Context
 This is attempt {attempt_count} at generating search result number {search_count}.
 
 # Input
-Describe the video for this theme: "{query}".
-Don't forget to repeat singular elements about the characters, location.. in your description.
+Describe the appearance of a video scene for this theme: "{query}".
+Don't use bullet points or titles/prefixes in your description. Just describe it in plain natural language.
 
 # Output
 
@@ -321,7 +321,7 @@ title: \""""
                 lambda: self.inference_client.text_generation(
                     prompt,
                     model=TEXT_MODEL,
-                    max_new_tokens=300,
+                    max_new_tokens=330,
                     temperature=0.6
                 )
             )
@@ -368,8 +368,12 @@ title: \""""
                 'description': description,
                 'thumbnailUrl': thumbnail,
                 'videoUrl': '',
+
+                # not really used yet, maybe one day if we pre-generate or store content
                 'isLatent': True,
+
                 'useFixedSeed': "webcam" in description.lower(),
+
                 'seed': generate_seed(),
                 'views': 0,
                 'tags': tags
@@ -389,7 +393,7 @@ title: \""""
                 lambda: self.inference_client.text_to_image(
                     prompt=image_prompt,
                     model=IMAGE_MODEL,
-                    width=1024,
+                    width=768,
                     height=512
                 )
             )

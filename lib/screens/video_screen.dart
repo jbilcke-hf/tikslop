@@ -2,6 +2,7 @@
 import 'package:aitube2/widgets/chat_widget.dart';
 import 'package:aitube2/widgets/search_box.dart';
 import 'package:flutter/material.dart';
+import '../config/config.dart';
 import '../models/video_result.dart';
 import '../services/websocket_api_service.dart';
 import '../services/cache_service.dart';
@@ -165,27 +166,30 @@ class _VideoScreenState extends State<VideoScreen> {
                       Expanded(
                         child: _buildMainContent(),
                       ),
-                      const SizedBox(width: 16),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: ChatWidget(videoId: widget.video.id),
-                      ),
+                      if (Configuration.instance.showChatInVideoView) ...[
+                        const SizedBox(width: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: ChatWidget(videoId: widget.video.id),
+                        ),
+                      ],
                     ],
                   )
                 : Column(
                     children: [
                       _buildMainContent(),
-                      const SizedBox(height: 16),
-                      // Modified this part
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: ChatWidget(
-                            videoId: widget.video.id,
-                            isCompact: true,
+                      if (Configuration.instance.showChatInVideoView) ...[
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: ChatWidget(
+                              videoId: widget.video.id,
+                              isCompact: true,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
           ),

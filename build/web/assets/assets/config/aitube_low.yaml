@@ -1,6 +1,7 @@
 ui:
   product_name: AiTube
-  
+  showChatInVideoView: false
+
 render_queue:
   # how many clips should be stored in advance
   buffer_size: 3

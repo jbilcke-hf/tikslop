@@ -17,15 +17,24 @@ source .python_venv/bin/activate
 python3 -m pip install --no-cache-dir --upgrade -r requirements.txt 
 ```
 
+### Local testing
+
+First you need to build the app:
+
+    $ flutter build web
+
+Then run the server.
+
+See paragraph "Running the gateway scheduler"
+
 ### Deployment to production
 
 To deploy the aitube2 api to production:
 
-    $ git push space main
-
-To deploy the aitube2 client to production, simply run:
-
-    $ flutter run web
+    $ flutter build web
+    $ git add .
+    $ got commit -m "<description>"
+    $ git push public main
 
 and upload the assets to:
 

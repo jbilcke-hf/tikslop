@@ -54,6 +54,15 @@ class WebSocketApiService {
       // Get the current host and protocol from the browser window
       final location = Uri.base;
       final protocol = location.scheme == 'https' ? 'wss' : 'ws';
+      
+      // For localhost, explicitly include port 8080
+      if (location.host == 'localhost' || location.host.startsWith('localhost:')) {
+        final url = '$protocol://localhost:8080/ws';
+        debugPrint('WebSocketApiService: Using localhost:8080 WebSocket URL: $url');
+        return url;
+      }
+      
+      // For other hosts, include the original port number in the URL
       final url = '$protocol://${location.host}/ws';
       debugPrint('WebSocketApiService: Using dynamic WebSocket URL: $url');
       return url;
@@ -195,10 +204,27 @@ class WebSocketApiService {
         
         // First check if server is in maintenance mode by making an HTTP request to the status endpoint
         try {
-          // Determine HTTP URL based on WebSocket URL
-          final wsUri = Uri.parse(_wsUrl);
-          final protocol = wsUri.scheme == 'wss' ? 'https' : 'http';
-          final httpUrl = '$protocol://${wsUri.authority}/api/status';
+          // Determine HTTP URL based on WebSocket URL and current location
+          String httpUrl;
+          if (kIsWeb) {
+            // In web, use the current location with api/status appended
+            final location = Uri.base;
+            final protocol = location.scheme;
+            
+            // For localhost, explicitly include port 8080
+            if (location.host == 'localhost' || location.host.startsWith('localhost:')) {
+              httpUrl = '$protocol://localhost:8080/api/status';
+            } else {
+              httpUrl = '$protocol://${location.host}/api/status';
+            }
+          } else {
+            // For non-web, derive from WebSocket URL
+            final wsUri = Uri.parse(_wsUrl);
+            final protocol = wsUri.scheme == 'wss' ? 'https' : 'http';
+            httpUrl = '$protocol://${wsUri.authority}/api/status';
+          }
+          
+          debugPrint('WebSocketApiService: Checking maintenance status at: $httpUrl');
           
           // Use conditional import to handle platform differences
           if (kIsWeb) {

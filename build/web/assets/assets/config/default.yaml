@@ -1,5 +1,6 @@
 ui:
   product_name: AppName
+  showChatInVideoView: true
   
   render_queue:
   # how many clips should be stored in advance

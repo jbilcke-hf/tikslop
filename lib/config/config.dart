@@ -63,6 +63,9 @@ class Configuration {
 
   String get uiProductName => 
       _config['ui']['product_name'];
+      
+  bool get showChatInVideoView => 
+      _config['ui']['showChatInVideoView'] ?? true;
 
   // how many clips should be stored in advance
   int get renderQueueBufferSize => 
