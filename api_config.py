@@ -60,7 +60,7 @@ CONFIG_FOR_ANONYMOUS_USERS = {
     "max_concurrent_generations": 2,
 
     "min_num_inference_steps": 2,
-    "default_num_inference_steps": 2,
+    "default_num_inference_steps": 3,
     "max_num_inference_steps": 4,
 
     "min_num_frames": 9, # 8 + 1
@@ -71,9 +71,9 @@ CONFIG_FOR_ANONYMOUS_USERS = {
     "default_clip_duration_seconds": 2,
     "max_clip_duration_seconds": 2,
 
-    "min_clip_playback_speed": 0.5,
-    "default_clip_playback_speed": 0.5,
-    "max_clip_playback_speed": 0.5,
+    "min_clip_playback_speed": 0.7,
+    "default_clip_playback_speed": 0.7,
+    "max_clip_playback_speed": 0.7,
 
     "min_clip_framerate": 8,
     "default_clip_framerate": 16,
@@ -107,9 +107,9 @@ CONFIG_FOR_STANDARD_HF_USERS = {
     "default_clip_duration_seconds": 2,
     "max_clip_duration_seconds": 2,
 
-    "min_clip_playback_speed": 0.5,
-    "default_clip_playback_speed": 0.7,
-    "max_clip_playback_speed": 0.7,
+    "min_clip_playback_speed": 0.7,
+    "default_clip_playback_speed": 0.8,
+    "max_clip_playback_speed": 0.8,
 
     "min_clip_framerate": 8,
     "default_clip_framerate": 25,
@@ -142,7 +142,7 @@ CONFIG_FOR_PRO_HF_USERS = {
     "default_clip_duration_seconds": 2,
     "max_clip_duration_seconds": 3,
 
-    "min_clip_playback_speed": 0.5,
+    "min_clip_playback_speed": 0.7,
     "default_clip_playback_speed": 0.8,
     "max_clip_playback_speed": 0.8,
 
@@ -177,7 +177,7 @@ CONFIG_FOR_ADMIN_HF_USERS = {
     "default_clip_duration_seconds": 2,
     "max_clip_duration_seconds": 4,
 
-    "min_clip_playback_speed": 0.5,
+    "min_clip_playback_speed": 0.7,
     "default_clip_playback_speed": 0.8,
     "max_clip_playback_speed": 0.9,
 
@@ -193,3 +193,5 @@ CONFIG_FOR_ADMIN_HF_USERS = {
     "default_clip_height": 480,
     "max_clip_height": 704,
 }
+
+CONFIG_FOR_ANONYMOUS_USERS = CONFIG_FOR_STANDARD_HF_USERS

@@ -3,11 +3,14 @@
 import 'dart:async';
 import 'package:aitube2/config/config.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:video_player/video_player.dart';
 import '../models/video_result.dart';
 import '../services/clip_queue_manager.dart';
 import '../theme/colors.dart';
+
+// Conditionally import dart:html for web platform
+import 'web_utils.dart' if (dart.library.html) 'dart:html' as html;
 
 class VideoPlayerWidget extends StatefulWidget {
   final VideoResult video;
@@ -29,7 +32,7 @@ class VideoPlayerWidget extends StatefulWidget {
   State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
 }
 
-class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
+class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindingObserver {
   late final ClipQueueManager _queueManager;
   VideoPlayerController? _currentController;
   VideoPlayerController? _nextController;
@@ -37,8 +40,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   bool _isPlaying = false;
   bool _isLoading = false;
   bool _isInitialLoad = true;
+  bool _wasPlayingBeforeBackground = false;
     
-
   double _loadingProgress = 0.0;
   Timer? _progressTimer;
   Timer? _debugTimer;
@@ -54,8 +57,60 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void initState() {
     super.initState();
+    
+    // Register as an observer to detect app lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
+    
+    // Add web-specific visibility change listener
+    if (kIsWeb) {
+      // These handlers only run on web platforms
+      try {
+        // Add document visibility change listener
+        html.document.onVisibilityChange.listen((_) {
+          _handleVisibilityChange();
+        });
+        
+        // Add before unload listener
+        html.window.onBeforeUnload.listen((_) {
+          // Pause video when navigating away from the page
+          _pauseVideo();
+        });
+      } catch (e) {
+        debugPrint('Error setting up web visibility listeners: $e');
+      }
+    }
+    
     _initializePlayer();
     // if (kDebugMode) { _startDebugPrinting(); }
+  }
+  
+  void _handleVisibilityChange() {
+    if (!kIsWeb) return;
+    
+    try {
+      final visibilityState = html.window.document.visibilityState;
+      if (visibilityState == 'hidden') {
+        _pauseVideo();
+      } else if (visibilityState == 'visible' && _wasPlayingBeforeBackground) {
+        _resumeVideo();
+      }
+    } catch (e) {
+      debugPrint('Error handling visibility change: $e');
+    }
+  }
+  
+  void _pauseVideo() {
+    if (_isPlaying) {
+      _wasPlayingBeforeBackground = true;
+      _togglePlayback();
+    }
+  }
+  
+  void _resumeVideo() {
+    if (!_isPlaying && _wasPlayingBeforeBackground) {
+      _wasPlayingBeforeBackground = false;
+      _togglePlayback();
+    }
   }
 
   void _startNextClipCheck() {
@@ -224,13 +279,33 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // Handle app lifecycle changes for native platforms
+    if (!kIsWeb) {
+      if (state == AppLifecycleState.paused || 
+          state == AppLifecycleState.inactive || 
+          state == AppLifecycleState.detached) {
+        _pauseVideo();
+      } else if (state == AppLifecycleState.resumed && _wasPlayingBeforeBackground) {
+        _resumeVideo();
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _isDisposed = true;
+    
+    // Unregister the observer
+    WidgetsBinding.instance.removeObserver(this);
+    
     _currentController?.dispose();
     _nextController?.dispose();
     _progressTimer?.cancel();
     _debugTimer?.cancel();
-   _playbackTimer?.cancel();
+    _playbackTimer?.cancel();
     _nextClipCheckTimer?.cancel();
     _positionTrackingTimer?.cancel();
     _queueManager.dispose();

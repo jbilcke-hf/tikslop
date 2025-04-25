@@ -1,6 +1,8 @@
 // lib/screens/home_screen.dart
 import 'dart:async';
 import 'package:aitube2/config/config.dart';
+import 'package:aitube2/widgets/web_utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:aitube2/screens/video_screen.dart';
@@ -13,7 +15,12 @@ import 'package:aitube2/widgets/search_box.dart';
 import 'package:aitube2/theme/colors.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String? initialSearchQuery;
+  
+  const HomeScreen({
+    super.key,
+    this.initialSearchQuery,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -34,7 +41,19 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _initializeWebSocket();
     _setupSearchListener();
-    _loadLastResults();
+    
+    // Check if we have an initial search query from URL parameters
+    if (widget.initialSearchQuery != null && widget.initialSearchQuery!.isNotEmpty) {
+      _searchController.text = widget.initialSearchQuery!;
+      // Need to use Future.delayed to ensure WebSocket is initialized
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _search(widget.initialSearchQuery!);
+        }
+      });
+    } else {
+      _loadLastResults();
+    }
   }
 
   Future<void> _loadLastResults() async {
@@ -193,6 +212,11 @@ class _HomeScreenState extends State<HomeScreen> {
       _websocketService.stopContinuousSearch(_currentSearchQuery!);
     }
 
+    // Update URL parameter for web builds
+    if (kIsWeb) {
+      updateUrlParameter('search', trimmedQuery);
+    }
+
     try {
       // Check connection
       if (!_websocketService.isConnected) {
@@ -303,6 +327,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     return GestureDetector(
                       onTap: () {
                         _stopSearch(); // Stop search but keep results
+                        
+                        // Update URL parameter on web platform
+                        if (kIsWeb) {
+                          // Update view parameter and remove search parameter
+                          updateUrlParameter('view', _results[index].title);
+                          removeUrlParameter('search');
+                        }
+                        
                         Navigator.push(
                           context,
                           MaterialPageRoute(

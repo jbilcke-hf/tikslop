@@ -1,6 +1,8 @@
 // lib/screens/video_screen.dart
 import 'package:aitube2/widgets/chat_widget.dart';
 import 'package:aitube2/widgets/search_box.dart';
+import 'package:aitube2/widgets/web_utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../config/config.dart';
 import '../models/video_result.dart';
@@ -101,6 +103,13 @@ class _VideoScreenState extends State<VideoScreen> {
     }
 
     setState(() => _isSearching = true);
+    
+    // Update URL parameter on web platform
+    if (kIsWeb) {
+      // Update view parameter and remove search parameter if present
+      updateUrlParameter('view', query);
+      removeUrlParameter('search');
+    }
 
     try {
       // First, cancel any requests for the current video

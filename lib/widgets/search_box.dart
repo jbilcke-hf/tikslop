@@ -30,7 +30,7 @@ class _SearchBoxState extends State<SearchBox> {
   List<String> _suggestions = [];
   OverlayEntry? _overlayEntry;
   final _layerLink = LayerLink();
-  final bool _isComposing = false;
+  bool _isComposing = false;
 
   @override
   void initState() {
@@ -51,7 +51,10 @@ class _SearchBoxState extends State<SearchBox> {
   }
 
   void _onSearchTextChanged() {
-    if (_focusNode.hasFocus && !_isComposing) {
+    if (_focusNode.hasFocus) {
+      setState(() {
+        _isComposing = widget.controller.text.isNotEmpty;
+      });
       _updateSuggestions();
     }
   }
@@ -154,6 +157,10 @@ class _SearchBoxState extends State<SearchBox> {
       _hideSuggestions();
       FocusScope.of(context).unfocus();
       widget.onSearch(trimmedValue);
+      // Reset _isComposing to ensure the field can be edited again
+      setState(() {
+        _isComposing = false;
+      });
     }
   }
 

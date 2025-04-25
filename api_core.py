@@ -298,16 +298,15 @@ class VideoGenerationAPI:
         """Generate a single search result using HF text generation"""
         prompt = f"""# Instruction
 Your response MUST be a YAML object containing a title, description, and tags, consistent with what we can find on a video sharing platform.
-Format your YAML response with only those fields: "title" (single string of a short sentence), "description" (single string of a few sentences to describe the visuals: characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette), and "tags" (array of strings). Do not add any other field.
-The description is a prompt for a generative AI, so please describe the visual elements of the scene in details, including: camera angle and focus, people's appearance, their age, actions, precise look, clothing, the location characteristics, lighting, action, objects, weather, texture, color palette. Write as if you were describing the scene to a photograph.
+Format your YAML response with only those fields: "title" (a short string), "description" (string caption of the scene), and "tags" (array of 3 to 4 strings). Do not add any other field.
+In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view of a <AGE>yo <GENDER> <CHARACTERS> <ACTIONS>, <LOCATION> <LIGHTING> <WEATHER>". Keep it minimalist but still descriptive, don't use bullets points, use simple words, go to the essential to describe style (cinematic, documentary footage, 3D rendering..), camera modes and angles, characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette.. etc. 
 Make the result unique and different from previous search results. ONLY RETURN YAML AND WITH ENGLISH CONTENT, NOT CHINESE - DO NOT ADD ANY OTHER COMMENT!
 
 # Context
 This is attempt {attempt_count} at generating search result number {search_count}.
 
 # Input
-Describe the appearance of a video scene for this theme: "{query}".
-Don't use bullet points or titles/prefixes in your description. Just describe it in plain natural language.
+Describe the first scene/shot for: "{query}".
 
 # Output
 
