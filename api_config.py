@@ -56,12 +56,9 @@ CONFIG_FOR_ANONYMOUS_USERS = {
     # anons can only watch 2 minutes per video
     "max_rendering_time_per_client_per_video_in_sec": 2 * 60,
 
-    "max_buffer_size": 2,
-    "max_concurrent_generations": 2,
-
     "min_num_inference_steps": 2,
     "default_num_inference_steps": 3,
-    "max_num_inference_steps": 4,
+    "max_num_inference_steps": 3,
 
     "min_num_frames": 9, # 8 + 1
     "default_max_num_frames": 65, # 8*8 + 1
@@ -92,81 +89,73 @@ CONFIG_FOR_ANONYMOUS_USERS = {
 CONFIG_FOR_STANDARD_HF_USERS = {
     "max_rendering_time_per_client_per_video_in_sec": 15 * 60,
 
-    "max_buffer_size": 2,
-    "max_concurrent_generations": 2,
-
     "min_num_inference_steps": 2,
     "default_num_inference_steps": 4,
-    "max_num_inference_steps": 6,
+    "max_num_inference_steps": 4,
     
     "min_num_frames": 9, # 8 + 1
     "default_num_frames": 65, # 8*8 + 1
-    "max_num_frames": 65, # 8*8 + 1
+    "max_num_frames": 65,
 
     "min_clip_duration_seconds": 1,
     "default_clip_duration_seconds": 2,
     "max_clip_duration_seconds": 2,
 
-    "min_clip_playback_speed": 0.7,
-    "default_clip_playback_speed": 0.8,
-    "max_clip_playback_speed": 0.8,
+    "min_clip_playback_speed": 0.65,
+    "default_clip_playback_speed": 0.65,
+    "max_clip_playback_speed": 0.65,
 
     "min_clip_framerate": 8,
     "default_clip_framerate": 25,
     "max_clip_framerate": 25,
 
     "min_clip_width": 544,
-    "default_clip_width": 640,
-    "max_clip_width": 640,
+    "default_clip_width": 768, # 640,
+    "max_clip_width": 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 416,
-    "max_clip_height": 416,
+    "default_clip_height": 480, # 416,
+    "max_clip_height": 480, # 416,
 }
 
 # Hugging Face users with a Pro may enjoy an improved experience
 CONFIG_FOR_PRO_HF_USERS = {
     "max_rendering_time_per_client_per_video_in_sec": 20 * 60,
 
-    "max_buffer_size": 2,
-    "max_concurrent_generations": 2,
-    
     "min_num_inference_steps": 2,
-    "max_num_inference_steps": 8,
-
+    "default_num_inference_steps": 4,
+    "max_num_inference_steps": 4,
+    
     "min_num_frames": 9, # 8 + 1
-    "default_num_frames": 97, # (8*12) + 1
-    "max_num_frames": 97, # (8*12) + 1
+    "default_num_frames": 65, # 8*8 + 1
+    "max_num_frames": 65,
 
-    "min_clip_duration_seconds": 1, 
+    "min_clip_duration_seconds": 1,
     "default_clip_duration_seconds": 2,
-    "max_clip_duration_seconds": 3,
+    "max_clip_duration_seconds": 2,
 
-    "min_clip_playback_speed": 0.7,
-    "default_clip_playback_speed": 0.8,
-    "max_clip_playback_speed": 0.8,
+    "min_clip_playback_speed": 0.65,
+    "default_clip_playback_speed": 0.65,
+    "max_clip_playback_speed": 0.65,
 
     "min_clip_framerate": 8,
     "default_clip_framerate": 25,
-    "max_clip_framerate": 30,
+    "max_clip_framerate": 25,
 
     "min_clip_width": 544,
-    "default_clip_width": 768,
-    "max_clip_width": 768,
+    "default_clip_width": 768, # 640,
+    "max_clip_width": 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 480,
-    "max_clip_height": 480,
+    "default_clip_height": 480, # 416,
+    "max_clip_height": 480, # 416,
 }
 
 CONFIG_FOR_ADMIN_HF_USERS = {
     "max_rendering_time_per_client_per_video_in_sec": 60 * 60,
 
-    "max_buffer_size": 2,
-    "max_concurrent_generations": 2,
-    
     "min_num_inference_steps": 2,
-    "default_num_inference_steps": 4,
+    "default_num_inference_steps": 6,
     "max_num_inference_steps": 8,
 
     "min_num_frames": 9, # 8 + 1

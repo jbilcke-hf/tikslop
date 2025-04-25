@@ -296,6 +296,10 @@ async def status_handler(request: web.Request) -> web.Response:
         'active_endpoints': sum(1 for ep in endpoint_statuses if not ep['busy'] and ('error_until' not in ep or ep['error_until'] < time.time()))
     })
 
+# Dictionary to track connected anonymous clients by IP address
+anon_connections = {}
+anon_connection_lock = asyncio.Lock()
+
 async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
     # Check if maintenance mode is enabled
     if MAINTENANCE_MODE:
@@ -320,6 +324,32 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
     # Validate the token and determine the user role
     user_role = await api.validate_user_token(hf_token)
     logger.info(f"User connected with role: {user_role}")
+    
+    # Get client IP address
+    peername = request.transport.get_extra_info('peername')
+    if peername is not None:
+        client_ip = peername[0]
+    else:
+        client_ip = request.headers.get('X-Forwarded-For', 'unknown').split(',')[0].strip()
+    
+    logger.info(f"Client connecting from IP: {client_ip} with role: {user_role}")
+    
+    # Check for anonymous user connection limits
+    if user_role == 'anon':
+        async with anon_connection_lock:
+            # Check if this IP already has a connection
+            if client_ip in anon_connections and anon_connections[client_ip] > 0:
+                # Return an error for anonymous users with multiple connections
+                return web.json_response({
+                    'error': 'Anonymous user limit exceeded',
+                    'message': 'Anonymous users can enjoy 1 stream per IP address. If you are on a shared IP please enter your HF token, thank you!',
+                    'errorType': 'anon_limit_exceeded'
+                }, status=429)  # 429 Too Many Requests
+            
+            # Track this connection
+            anon_connections[client_ip] = anon_connections.get(client_ip, 0) + 1
+            # Store the IP so we can clean up later
+            ws.client_ip = client_ip
     
     # Store the user role in the websocket
     ws.user_role = user_role
@@ -372,6 +402,16 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
             await asyncio.gather(*background_tasks, return_exceptions=True)
         except asyncio.CancelledError:
             pass
+        
+        # Cleanup anonymous connection tracking
+        if getattr(ws, 'user_role', None) == 'anon' and hasattr(ws, 'client_ip'):
+            client_ip = ws.client_ip
+            async with anon_connection_lock:
+                if client_ip in anon_connections:
+                    anon_connections[client_ip] = max(0, anon_connections[client_ip] - 1)
+                    if anon_connections[client_ip] == 0:
+                        del anon_connections[client_ip]
+                    logger.info(f"Anonymous connection from {client_ip} closed. Remaining: {anon_connections.get(client_ip, 0)}")
     
     return ws
 

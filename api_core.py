@@ -296,14 +296,21 @@ class VideoGenerationAPI:
 
     async def search_video(self, query: str, search_count: int = 0, attempt_count: int = 0) -> Optional[dict]:
         """Generate a single search result using HF text generation"""
-        prompt = f"""# Instruction
-Your response MUST be a YAML object containing a title, description, and tags, consistent with what we can find on a video sharing platform.
-Format your YAML response with only those fields: "title" (a short string), "description" (string caption of the scene), and "tags" (array of 3 to 4 strings). Do not add any other field.
-In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view of a <AGE>yo <GENDER> <CHARACTERS> <ACTIONS>, <LOCATION> <LIGHTING> <WEATHER>". Keep it minimalist but still descriptive, don't use bullets points, use simple words, go to the essential to describe style (cinematic, documentary footage, 3D rendering..), camera modes and angles, characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette.. etc. 
+        # Maximum number of attempts to generate a description without placeholder tags
+        max_attempts = 2
+        current_attempt = attempt_count
+        temperature = 0.75  # Initial temperature
+
+        while current_attempt <= max_attempts:
+            prompt = f"""# Instruction
+Your response MUST be a YAML object containing a title and description, consistent with what we can find on a video sharing platform.
+Format your YAML response with only those fields: "title" (a short string) and "description" (string caption of the scene). Do not add any other field.
+In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view of a <AGE>yo <GENDER> <CHARACTERS> <ACTIONS>, <LOCATION> <LIGHTING> <WEATHER>". This is just an example! you MUST replace the <TAGS>!!. Don't forget to replace <STYLE> etc, by the actual fields!! Keep it minimalist but still descriptive, don't use bullets points, use simple words, go to the essential to describe style (cinematic, documentary footage, 3D rendering..), camera modes and angles, characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette.. etc.
+The most import part is to describe the actions and movements in the scene, so don't forget that!
 Make the result unique and different from previous search results. ONLY RETURN YAML AND WITH ENGLISH CONTENT, NOT CHINESE - DO NOT ADD ANY OTHER COMMENT!
 
 # Context
-This is attempt {attempt_count} at generating search result number {search_count}.
+This is attempt {current_attempt} at generating search result number {search_count}.
 
 # Input
 Describe the first scene/shot for: "{query}".
@@ -313,74 +320,102 @@ Describe the first scene/shot for: "{query}".
 ```yaml
 title: \""""
 
-        try:
-            print(f"search_video(): calling self.inference_client.text_generation({prompt}, model={TEXT_MODEL}, max_new_tokens=300, temperature=0.65)")
-            response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.inference_client.text_generation(
-                    prompt,
-                    model=TEXT_MODEL,
-                    max_new_tokens=330,
-                    temperature=0.6
+            try:
+                print(f"search_video(): calling self.inference_client.text_generation({prompt}, model={TEXT_MODEL}, max_new_tokens=150, temperature={temperature})")
+                response = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self.inference_client.text_generation(
+                        prompt,
+                        model=TEXT_MODEL,
+                        max_new_tokens=150,
+                        temperature=temperature
+                    )
                 )
-            )
 
-            #print("response: ", response)
+                response_text = re.sub(r'^\s*\.\s*\n', '', f"title: \"{response.strip()}")
+                sanitized_yaml = sanitize_yaml_response(response_text)
+                
+                try:
+                    result = yaml.safe_load(sanitized_yaml)
+                except yaml.YAMLError as e:
+                    logger.error(f"YAML parsing failed: {str(e)}")
+                    result = None
+                
+                if not result or not isinstance(result, dict):
+                    logger.error(f"Invalid result format: {result}")
+                    current_attempt += 1
+                    temperature = 0.7  # Try with different temperature on next attempt
+                    continue
 
-            response_text = re.sub(r'^\s*\.\s*\n', '', f"title: \"{response.strip()}")
-            sanitized_yaml = sanitize_yaml_response(response_text)
-            
-            try:
-                result = yaml.safe_load(sanitized_yaml)
-            except yaml.YAMLError as e:
-                logger.error(f"YAML parsing failed: {str(e)}")
-                result = None
-            
-            if not result or not isinstance(result, dict):
-                logger.error(f"Invalid result format: {result}")
-                return None
+                # Extract fields with defaults
+                title = str(result.get('title', '')).strip() or 'Untitled Video'
+                description = str(result.get('description', '')).strip() or 'No description available'
+                
+                # Check if the description still contains placeholder tags like <LOCATION>, <GENDER>, etc.
+                if re.search(r'<[A-Z_]+>', description):
+                    logger.warning(f"Description still contains placeholder tags: {description}")
+                    if current_attempt < max_attempts:
+                        # Try again with a higher temperature
+                        current_attempt += 1
+                        temperature = 0.7
+                        continue
+                    else:
+                        # If we've reached max attempts, use the title as description
+                        description = title
+                
+                # legacy system of tags -- I've decided to to generate them anymore to save some speed
+                tags = result.get('tags', [])
+                
+                # Ensure tags is a list of strings
+                if not isinstance(tags, list):
+                    tags = []
+                tags = [str(t).strip() for t in tags if t and isinstance(t, (str, int, float))]
 
-            # Extract fields with defaults
-            title = str(result.get('title', '')).strip() or 'Untitled Video'
-            description = str(result.get('description', '')).strip() or 'No description available'
-            tags = result.get('tags', [])
-            
-            # Ensure tags is a list of strings
-            if not isinstance(tags, list):
-                tags = []
-            tags = [str(t).strip() for t in tags if t and isinstance(t, (str, int, float))]
+                # Generate thumbnail
+                try:
+                    #thumbnail = await self.generate_thumbnail(title, description)
+                    raise ValueError("thumbnail generation is too buggy and slow right now")
+                except Exception as e:
+                    logger.error(f"Thumbnail generation failed: {str(e)}")
+                    thumbnail = ""
 
-            # Generate thumbnail
-            #print(f"calling self.generate_thumbnail({title}, {description})")
-            try:
-                #thumbnail = await self.generate_thumbnail(title, description)
-                raise ValueError("thumbnail generation is too buggy and slow right now")
+                print("got response thumbnail")
+                # Return valid result with all required fields
+                return {
+                    'id': str(uuid.uuid4()),
+                    'title': title,
+                    'description': description,
+                    'thumbnailUrl': thumbnail,
+                    'videoUrl': '',
+
+                    # not really used yet, maybe one day if we pre-generate or store content
+                    'isLatent': True,
+
+                    'useFixedSeed': "webcam" in description.lower(),
+
+                    'seed': generate_seed(),
+                    'views': 0,
+                    'tags': tags
+                }
+
             except Exception as e:
-                logger.error(f"Thumbnail generation failed: {str(e)}")
-                thumbnail = ""
-
-            print("got response thumbnail")
-            # Return valid result with all required fields
-            return {
-                'id': str(uuid.uuid4()),
-                'title': title,
-                'description': description,
-                'thumbnailUrl': thumbnail,
-                'videoUrl': '',
-
-                # not really used yet, maybe one day if we pre-generate or store content
-                'isLatent': True,
-
-                'useFixedSeed': "webcam" in description.lower(),
-
-                'seed': generate_seed(),
-                'views': 0,
-                'tags': tags
-            }
-
-        except Exception as e:
-            logger.error(f"Search video generation failed: {str(e)}")
-            return None
+                logger.error(f"Search video generation failed: {str(e)}")
+                current_attempt += 1
+                temperature = 0.7  # Try with different temperature on next attempt
+        
+        # If all attempts failed, return a simple result with title only
+        return {
+            'id': str(uuid.uuid4()),
+            'title': f"Video about {query}",
+            'description': f"Video about {query}",
+            'thumbnailUrl': "",
+            'videoUrl': '',
+            'isLatent': True,
+            'useFixedSeed': False,
+            'seed': generate_seed(),
+            'views': 0,
+            'tags': []
+        }
 
     async def generate_thumbnail(self, title: str, description: str) -> str:
         """Generate thumbnail using HF image generation"""
@@ -652,7 +687,7 @@ Your caption:"""
                 # Consider 17 or 18 to be visually lossless or nearly so;
                 # it should look the same or nearly the same as the input but it isn't technically lossless.
                 # The range is exponential, so increasing the CRF value +6 results in roughly half the bitrate / file size, while -6 leads to roughly twice the bitrate.
-                #"quality": 18,
+                "quality": 23,
 
             }
         }

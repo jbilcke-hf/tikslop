@@ -1,4 +1,6 @@
 // lib/screens/video_screen.dart
+import 'dart:async';
+
 import 'package:aitube2/widgets/chat_widget.dart';
 import 'package:aitube2/widgets/search_box.dart';
 import 'package:aitube2/widgets/web_utils.dart';
@@ -8,6 +10,7 @@ import '../config/config.dart';
 import '../models/video_result.dart';
 import '../services/websocket_api_service.dart';
 import '../services/cache_service.dart';
+import '../services/settings_service.dart';
 import '../theme/colors.dart';
 import '../widgets/video_player_widget.dart';
 
@@ -32,12 +35,31 @@ class _VideoScreenState extends State<VideoScreen> {
   final _searchController = TextEditingController();
   bool _isSearching = false;
 
+  // Subscription for limit statuses
+  StreamSubscription? _anonLimitSubscription;
+  StreamSubscription? _deviceLimitSubscription;
+
   @override
   void initState() {
     super.initState();
     _videoData = widget.video;
     _searchController.text = _videoData.title;
     _websocketService.addSubscriber(widget.video.id);
+    
+    // Listen for changes to anonymous limit status
+    _anonLimitSubscription = _websocketService.anonLimitStream.listen((exceeded) {
+      if (exceeded && mounted) {
+        _showAnonLimitExceededDialog();
+      }
+    });
+    
+    // Listen for changes to device limit status (for VIP users on web)
+    _deviceLimitSubscription = _websocketService.deviceLimitStream.listen((exceeded) {
+      if (exceeded && mounted) {
+        _showDeviceLimitExceededDialog();
+      }
+    });
+    
     _initializeConnection();
     _loadCachedThumbnail();
   }
@@ -54,6 +76,15 @@ class _VideoScreenState extends State<VideoScreen> {
   Future<void> _initializeConnection() async {
     try {
       await _websocketService.connect();
+      
+      // Check if anonymous limit is exceeded
+      if (_websocketService.isAnonLimitExceeded) {
+        if (mounted) {
+          _showAnonLimitExceededDialog();
+        }
+        return;
+      }
+      
       if (mounted) {
         setState(() {
           _isConnected = true;
@@ -74,6 +105,155 @@ class _VideoScreenState extends State<VideoScreen> {
         );
       }
     }
+  }
+  
+  void _showAnonLimitExceededDialog() async {
+    // Create a controller outside the dialog for easier access
+    final TextEditingController controller = TextEditingController();
+    
+    final settings = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        bool obscureText = true;
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text(
+                'Connection Limit Reached',
+                style: TextStyle(
+                  color: AiTubeColors.onBackground,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _websocketService.anonLimitMessage.isNotEmpty
+                      ? _websocketService.anonLimitMessage
+                      : 'Anonymous users can enjoy 1 stream per IP address. If you are on a shared IP please enter your HF token, thank you!',
+                    style: const TextStyle(color: AiTubeColors.onSurface),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Enter your HuggingFace API token to continue:',
+                    style: TextStyle(color: AiTubeColors.onSurface),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: controller,
+                    obscureText: obscureText,
+                    decoration: InputDecoration(
+                      labelText: 'API Key',
+                      labelStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureText ? Icons.visibility : Icons.visibility_off,
+                          color: AiTubeColors.onSurfaceVariant,
+                        ),
+                        onPressed: () => setState(() => obscureText = !obscureText),
+                      ),
+                    ),
+                    onSubmitted: (value) {
+                      Navigator.pop(dialogContext, value);
+                    },
+                  ),
+                ],
+              ),
+              backgroundColor: AiTubeColors.surface,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: AiTubeColors.onSurfaceVariant),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, controller.text),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AiTubeColors.primary,
+                  ),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          }
+        );
+      },
+    );
+    
+    // Clean up the controller
+    controller.dispose();
+    
+    // If user provided an API key, save it and retry connection
+    if (settings != null && settings.isNotEmpty) {
+      // Save the API key
+      final settingsService = SettingsService();
+      await settingsService.setHuggingfaceApiKey(settings);
+      
+      // Retry connection
+      if (mounted) {
+        _initializeConnection();
+      }
+    }
+  }
+  
+  void _showDeviceLimitExceededDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Too Many Connections',
+            style: TextStyle(
+              color: AiTubeColors.onBackground,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _websocketService.deviceLimitMessage,
+                style: const TextStyle(color: AiTubeColors.onSurface),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Please close some of your other browser tabs running AiTube to continue.',
+                style: TextStyle(color: AiTubeColors.onSurface),
+              ),
+            ],
+          ),
+          backgroundColor: AiTubeColors.surface,
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                
+                // Try to reconnect after dialog is closed
+                if (mounted) {
+                  Future.delayed(const Duration(seconds: 1), () {
+                    _initializeConnection();
+                  });
+                }
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AiTubeColors.primary,
+              ),
+              child: const Text('Try Again'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<String> _generateCaption() async {
@@ -146,7 +326,7 @@ class _VideoScreenState extends State<VideoScreen> {
           appBar: AppBar(
             titleSpacing: 0,
             title: Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.all(8),
               child: SearchBox(
                 controller: _searchController,
                 isSearching: _isSearching,
@@ -293,6 +473,8 @@ class _VideoScreenState extends State<VideoScreen> {
     
     // Cleanup other resources
     _searchController.dispose();
+    _anonLimitSubscription?.cancel();
+    _deviceLimitSubscription?.cancel();
     super.dispose();
   }
 

@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:aitube2/services/settings_service.dart';
 import 'package:synchronized/synchronized.dart';
 import 'dart:convert';
+// Conditionally import html for web platform with proper handling
+import 'html_stub.dart' if (dart.library.html) 'dart:html' as html;
 import 'package:aitube2/config/config.dart';
 import 'package:aitube2/models/chat_message.dart';
 import 'package:flutter/foundation.dart';
@@ -142,8 +144,20 @@ class WebSocketApiService {
     
     try {
       await connect();
-      // Request user role after connection
-      await _requestUserRole();
+      
+      try {
+        // Request user role after connection
+        await _requestUserRole();
+      } catch (e) {
+        // Handle the case where we fail to get user role due to device connection limit
+        if (e.toString().contains('Device connection limit exceeded')) {
+          // We've already set the appropriate status, just return
+          return;
+        }
+        // Otherwise rethrow
+        rethrow;
+      }
+      
       _initialized = true;
     } catch (e) {
       debugPrint('Failed to initialize WebSocketApiService: $e');
@@ -165,15 +179,199 @@ class WebSocketApiService {
         _userRole = response['user_role'] as String;
         _userRoleController.add(_userRole);
         debugPrint('WebSocketApiService: User role set to $_userRole');
+        
+        // Now that we know the role, check device connection limit for non-anonymous users
+        if (kIsWeb && _userRole != 'anon') {
+          final connectionAllowed = _checkAndRegisterDeviceConnection();
+          if (!connectionAllowed) {
+            _isDeviceLimitExceeded = true;
+            _deviceLimitController.add(true);
+            _setStatus(ConnectionStatus.error);
+            throw Exception('Device connection limit exceeded');
+          }
+        }
       }
     } catch (e) {
       debugPrint('WebSocketApiService: Failed to get user role: $e');
+      rethrow;
     }
+  }
+
+  // New status for anonymous users exceeding connection limit
+  bool _isAnonLimitExceeded = false;
+  bool get isAnonLimitExceeded => _isAnonLimitExceeded;
+  
+  // Status for VIP users exceeding device connection limit (web only)
+  bool _isDeviceLimitExceeded = false;
+  bool get isDeviceLimitExceeded => _isDeviceLimitExceeded;
+  
+  // Message to display when anonymous limit is exceeded
+  String _anonLimitMessage = '';
+  String get anonLimitMessage => _anonLimitMessage;
+  
+  // Message to display when device limit is exceeded
+  String _deviceLimitMessage = 'Too many connections from this device. Please close other tabs running AiTube.';
+  String get deviceLimitMessage => _deviceLimitMessage;
+  
+  // Stream to notify listeners when anonymous limit status changes
+  final _anonLimitController = StreamController<bool>.broadcast();
+  Stream<bool> get anonLimitStream => _anonLimitController.stream;
+  
+  // Stream to notify listeners when device limit status changes
+  final _deviceLimitController = StreamController<bool>.broadcast();
+  Stream<bool> get deviceLimitStream => _deviceLimitController.stream;
+  
+  // Constants for device connection limits
+  static const String _connectionCountKey = 'aitube_connection_count';
+  static const String _connectionIdKey = 'aitube_connection_id';
+  static const int _maxDeviceConnections = 3; // Maximum number of tabs/connections per device
+  static const Duration _connectionHeartbeatInterval = Duration(seconds: 10);
+  Timer? _connectionHeartbeatTimer;
+  String? _connectionId;
+  
+  // Function to check and register device connection (web only)
+  bool _checkAndRegisterDeviceConnection() {
+    if (!kIsWeb) return true; // Only apply on web platform
+    
+    try {
+      // Generate a unique ID for this connection instance
+      if (_connectionId == null) {
+        _connectionId = const Uuid().v4();
+        
+        // Store connection ID in localStorage
+        html.window.localStorage[_connectionIdKey] = _connectionId!;
+      }
+      
+      // Get current connection count from localStorage
+      final countJson = html.window.localStorage[_connectionCountKey];
+      Map<String, dynamic> connections = {};
+      
+      if (countJson != null && countJson.isNotEmpty) {
+        try {
+          connections = json.decode(countJson) as Map<String, dynamic>;
+        } catch (e) {
+          debugPrint('Error parsing connection count: $e');
+          connections = {};
+        }
+      }
+      
+      // Clean up stale connections (older than 30 seconds)
+      final now = DateTime.now().millisecondsSinceEpoch;
+      connections.removeWhere((key, value) {
+        if (value is! int) return true;
+        return now - value > 30000; // 30 seconds timeout
+      });
+      
+      // Add/update this connection
+      connections[_connectionId!] = now;
+      
+      // Store back to localStorage
+      html.window.localStorage[_connectionCountKey] = json.encode(connections);
+      
+      // Check if we're exceeding the limit, but only for non-anonymous users
+      // For anonymous users, we rely on the server-side IP check
+      if (_userRole != 'anon' && connections.length > _maxDeviceConnections) {
+        debugPrint('Device connection limit exceeded: ${connections.length} connections for ${_userRole} user');
+        return false;
+      }
+      
+      return true;
+    } catch (e) {
+      debugPrint('Error checking device connections: $e');
+      return true; // Default to allowing connection on error
+    }
+  }
+  
+  // Function to update the connection heartbeat
+  void _updateConnectionHeartbeat() {
+    if (!kIsWeb || _connectionId == null) return;
+    
+    try {
+      // Get current connection count
+      final countJson = html.window.localStorage[_connectionCountKey];
+      Map<String, dynamic> connections = {};
+      
+      if (countJson != null && countJson.isNotEmpty) {
+        try {
+          connections = json.decode(countJson) as Map<String, dynamic>;
+        } catch (e) {
+          debugPrint('Error parsing connection count: $e');
+          connections = {};
+        }
+      }
+      
+      // Update timestamp for this connection
+      final now = DateTime.now().millisecondsSinceEpoch;
+      connections[_connectionId!] = now;
+      
+      // Store back to localStorage
+      html.window.localStorage[_connectionCountKey] = json.encode(connections);
+    } catch (e) {
+      debugPrint('Error updating connection heartbeat: $e');
+    }
+  }
+  
+  // Function to unregister this connection
+  void _unregisterDeviceConnection() {
+    if (!kIsWeb || _connectionId == null) return;
+    
+    try {
+      // Get current connection count
+      final countJson = html.window.localStorage[_connectionCountKey];
+      Map<String, dynamic> connections = {};
+      
+      if (countJson != null && countJson.isNotEmpty) {
+        try {
+          connections = json.decode(countJson) as Map<String, dynamic>;
+        } catch (e) {
+          debugPrint('Error parsing connection count: $e');
+          connections = {};
+        }
+      }
+      
+      // Remove this connection
+      connections.remove(_connectionId);
+      
+      // Store back to localStorage
+      html.window.localStorage[_connectionCountKey] = json.encode(connections);
+      
+      // Stop the heartbeat timer
+      _connectionHeartbeatTimer?.cancel();
+      _connectionHeartbeatTimer = null;
+    } catch (e) {
+      debugPrint('Error unregistering device connection: $e');
+    }
+  }
+  
+  // Start the connection heartbeat timer
+  void _startConnectionHeartbeat() {
+    if (!kIsWeb) return;
+    
+    _connectionHeartbeatTimer?.cancel();
+    _connectionHeartbeatTimer = Timer.periodic(_connectionHeartbeatInterval, (timer) {
+      _updateConnectionHeartbeat();
+    });
   }
 
   Future<void> connect() async {
     if (_disposed) {
       throw Exception('WebSocketApiService has been disposed');
+    }
+
+    // Reset limit exceeded statuses on connection attempt
+    _isAnonLimitExceeded = false;
+    _isDeviceLimitExceeded = false;
+    
+    // Check device connection limit (for web only, but only after determining user role)
+    // We'll check again after getting the actual role, this is just to prevent excessive connections
+    if (kIsWeb) {
+      final connectionAllowed = _checkAndRegisterDeviceConnection();
+      if (!connectionAllowed) {
+        _isDeviceLimitExceeded = true;
+        _deviceLimitController.add(true);
+        _setStatus(ConnectionStatus.error);
+        throw Exception('Device connection limit exceeded');
+      }
     }
 
     // Prevent multiple simultaneous connection attempts
@@ -288,8 +486,43 @@ class WebSocketApiService {
         } catch (e) {
           debugPrint('WebSocketApiService: Connection failed: $e');
           
+          String errorMessage = e.toString();
+          
+          // Check for anonymous user connection limit exceeded
+          if (errorMessage.contains('429') && (errorMessage.contains('anon_limit_exceeded') || 
+              errorMessage.contains('Anonymous user limit exceeded'))) {
+            debugPrint('WebSocketApiService: Anonymous user connection limit exceeded');
+            
+            // Try to extract the error message from the response
+            String errorMsg = 'Anonymous users can enjoy 1 stream per IP address. If you are on a shared IP please enter your HF token, thank you!';
+            
+            try {
+              // Extract JSON content from the error message if available
+              final match = RegExp(r'\{.*\}').firstMatch(errorMessage);
+              if (match != null) {
+                final jsonStr = match.group(0);
+                if (jsonStr != null) {
+                  final errorData = json.decode(jsonStr);
+                  if (errorData['message'] != null) {
+                    errorMsg = errorData['message'];
+                  }
+                }
+              }
+            } catch (_) {
+              // If parsing fails, use the default message
+            }
+            
+            _setStatus(ConnectionStatus.error);
+            _isAnonLimitExceeded = true;
+            _anonLimitMessage = errorMsg;
+            _anonLimitController.add(true);
+            
+            // We don't rethrow here - we want to handle this specific error differently
+            return;
+          }
+          
           // If server sent a 503 response with maintenance mode indication
-          if (e.toString().contains('503') && e.toString().contains('maintenance')) {
+          if (errorMessage.contains('503') && errorMessage.contains('maintenance')) {
             debugPrint('WebSocketApiService: Server is in maintenance mode');
             _setStatus(ConnectionStatus.maintenance);
             return;
@@ -314,9 +547,41 @@ class WebSocketApiService {
                 },
               );
             } catch (retryError) {
-              // Check again for maintenance mode
-              if (retryError.toString().contains('503') && retryError.toString().contains('maintenance')) {
-                debugPrint('WebSocketApiService: Server is in maintenance mode');
+              // Check again for maintenance mode or anonymous limit
+              final retryErrorMsg = retryError.toString();
+              
+              if (retryErrorMsg.contains('429') && (retryErrorMsg.contains('anon_limit_exceeded') || 
+                  retryErrorMsg.contains('Anonymous user limit exceeded'))) {
+                debugPrint('WebSocketApiService: Anonymous user connection limit exceeded on retry');
+                
+                // Try to extract the error message from the response
+                String errorMsg = 'Anonymous users can enjoy 1 stream per IP address. If you are on a shared IP please enter your HF token, thank you!';
+                
+                try {
+                  // Extract JSON content from the error message if available
+                  final match = RegExp(r'\{.*\}').firstMatch(retryErrorMsg);
+                  if (match != null) {
+                    final jsonStr = match.group(0);
+                    if (jsonStr != null) {
+                      final errorData = json.decode(jsonStr);
+                      if (errorData['message'] != null) {
+                        errorMsg = errorData['message'];
+                      }
+                    }
+                  }
+                } catch (_) {
+                  // If parsing fails, use the default message
+                }
+                
+                _setStatus(ConnectionStatus.error);
+                _isAnonLimitExceeded = true;
+                _anonLimitMessage = errorMsg;
+                _anonLimitController.add(true);
+                return;
+              }
+              
+              if (retryErrorMsg.contains('503') && retryErrorMsg.contains('maintenance')) {
+                debugPrint('WebSocketApiService: Server is in maintenance mode on retry');
                 _setStatus(ConnectionStatus.maintenance);
                 return;
               }
@@ -338,8 +603,24 @@ class WebSocketApiService {
         );
 
         _startHeartbeat();
+        // Start the device connection heartbeat for web (we'll only apply limits to VIP users)
+        if (kIsWeb) {
+          _startConnectionHeartbeat();
+        }
+        
         _setStatus(ConnectionStatus.connected);
         _reconnectAttempts = 0;
+        
+        // Clear limit flags if we successfully connected
+        if (_isAnonLimitExceeded) {
+          _isAnonLimitExceeded = false;
+          _anonLimitController.add(false);
+        }
+        
+        if (_isDeviceLimitExceeded) {
+          _isDeviceLimitExceeded = false;
+          _deviceLimitController.add(false);
+        }
       } catch (e) {
         // Check if the error indicates maintenance mode
         if (e.toString().contains('maintenance')) {
@@ -948,9 +1229,13 @@ class WebSocketApiService {
       _disposed = true;
       _initialized = false;
       
+      // Unregister device connection (web only)
+      _unregisterDeviceConnection();
+      
       // Cancel timers
       _heartbeatTimer?.cancel();
       _reconnectTimer?.cancel();
+      _connectionHeartbeatTimer?.cancel();
       
       // Clear all pending requests
       _cancelPendingRequests('Service is being disposed');
@@ -970,6 +1255,8 @@ class WebSocketApiService {
       await _searchController.close();
       await _chatController.close();
       await _userRoleController.close();
+      await _anonLimitController.close();
+      await _deviceLimitController.close();
       
       _activeSearches.clear();
       _channel = null;

@@ -7,10 +7,10 @@ render_queue:
   buffer_size: 3
 
   # how many requests for clips can be run in parallel
-  max_concurrent_generations: 2
+  max_concurrent_generations: 3
 
   # start playback as soon as we have 1 video over 3 (25%)
-  minimum_buffer_percent_to_start_playback: 20
+  minimum_buffer_percent_to_start_playback: 5
 
 video:
 
@@ -19,7 +19,7 @@ video:
   transition_buffer_duration_ms: 300
 
   # how long a generated clip should be, in Duration
-  original_clip_duration_seconds: 4
+  original_clip_duration_seconds: 3
 
   # The model works on resolutions that are divisible by 32
   # and number of frames that are divisible by 8 + 1 (e.g. 257).
