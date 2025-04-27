@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:aitube2/config/config.dart';
 
 class SettingsService {
   static const String _promptPrefixKey = 'video_prompt_prefix';
   static const String _hfApiKeyKey = 'huggingface_api_key';
+  static const String _negativePromptKey = 'negative_video_prompt';
   static final SettingsService _instance = SettingsService._internal();
   
   factory SettingsService() => _instance;
@@ -23,6 +25,13 @@ class SettingsService {
 
   Future<void> setVideoPromptPrefix(String prefix) async {
     await _prefs.setString(_promptPrefixKey, prefix);
+    _settingsController.add(null);
+  }
+
+  String get negativeVideoPrompt => _prefs.getString(_negativePromptKey) ?? Configuration.instance.defaultNegativePrompt;
+
+  Future<void> setNegativeVideoPrompt(String negativePrompt) async {
+    await _prefs.setString(_negativePromptKey, negativePrompt);
     _settingsController.add(null);
   }
 

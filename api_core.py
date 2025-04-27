@@ -176,7 +176,7 @@ class EndpointManager:
                     # Mark it as busy
                     endpoint.busy = True
                     endpoint.last_used = time.time()
-                    logger.info(f"Using endpoint {endpoint.id} (busy: {endpoint.busy}, last used: {endpoint.last_used})")
+                    #logger.info(f"Using endpoint {endpoint.id} (busy: {endpoint.busy}, last used: {endpoint.last_used})")
                     break
 
             yield endpoint
@@ -687,13 +687,13 @@ Your caption:"""
                 # Consider 17 or 18 to be visually lossless or nearly so;
                 # it should look the same or nearly the same as the input but it isn't technically lossless.
                 # The range is exponential, so increasing the CRF value +6 results in roughly half the bitrate / file size, while -6 leads to roughly twice the bitrate.
-                "quality": 23,
+                #"quality": 23,
 
             }
         }
 
         async with self.endpoint_manager.get_endpoint() as endpoint:
-            logger.info(f"Using endpoint {endpoint.id} for video generation")
+            #logger.info(f"Using endpoint {endpoint.id} for video generation")
             
             try:
                 async with ClientSession() as session:
@@ -705,7 +705,7 @@ Your caption:"""
                             "Content-Type": "application/json"
                         },
                         json=json_payload,
-                        timeout=10  # Fast generation should complete within 10 seconds
+                        timeout=8  # Fast generation should complete within 8 seconds
                     ) as response:
                         if response.status != 200:
                             error_text = await response.text()

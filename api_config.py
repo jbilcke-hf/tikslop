@@ -94,8 +94,8 @@ CONFIG_FOR_STANDARD_HF_USERS = {
     "max_num_inference_steps": 4,
     
     "min_num_frames": 9, # 8 + 1
-    "default_num_frames": 65, # 8*8 + 1
-    "max_num_frames": 65,
+    "default_num_frames": 81, # 8*10 + 1
+    "max_num_frames": 81,
 
     "min_clip_duration_seconds": 1,
     "default_clip_duration_seconds": 2,
@@ -114,8 +114,8 @@ CONFIG_FOR_STANDARD_HF_USERS = {
     "max_clip_width": 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 480, # 416,
-    "max_clip_height": 480, # 416,
+    "default_clip_height": 448, # 416,
+    "max_clip_height": 448, # 416,
 }
 
 # Hugging Face users with a Pro may enjoy an improved experience
@@ -127,8 +127,8 @@ CONFIG_FOR_PRO_HF_USERS = {
     "max_num_inference_steps": 4,
     
     "min_num_frames": 9, # 8 + 1
-    "default_num_frames": 65, # 8*8 + 1
-    "max_num_frames": 65,
+    "default_num_frames": 81, # 8*10 + 1
+    "max_num_frames": 81,
 
     "min_clip_duration_seconds": 1,
     "default_clip_duration_seconds": 2,
@@ -147,8 +147,8 @@ CONFIG_FOR_PRO_HF_USERS = {
     "max_clip_width": 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 480, # 416,
-    "max_clip_height": 480, # 416,
+    "default_clip_height": 448, # 416,
+    "max_clip_height": 448, # 416,
 }
 
 CONFIG_FOR_ADMIN_HF_USERS = {
@@ -159,7 +159,7 @@ CONFIG_FOR_ADMIN_HF_USERS = {
     "max_num_inference_steps": 8,
 
     "min_num_frames": 9, # 8 + 1
-    "default_num_frames": 65, # (8 * 8) + 1
+    "default_num_frames": 81, # (8 * 10) + 1
     "max_num_frames": 129, # (8 * 16) + 1
 
     "min_clip_duration_seconds": 1,

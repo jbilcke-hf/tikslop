@@ -13,6 +13,8 @@ render_queue:
   minimum_buffer_percent_to_start_playback: 5
 
 video:
+  # default negative prompt to filter harmful content
+  default_negative_prompt: "gore, sex, blood, nudity, nude, porn, erotic, worst quality, deformed, distorted, disfigured, blurry, text, watermark"
 
   # transition time between each clip
   # the exit (older) clip will see its playback time reduced by this amount

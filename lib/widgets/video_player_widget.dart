@@ -5,9 +5,11 @@ import 'package:aitube2/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:video_player/video_player.dart';
-import '../models/video_result.dart';
-import '../services/clip_queue_manager.dart';
-import '../theme/colors.dart';
+import 'package:aitube2/models/video_result.dart';
+import 'package:aitube2/services/clip_queue_manager.dart';
+import 'package:aitube2/theme/colors.dart';
+import 'package:aitube2/widgets/ai_content_disclaimer.dart'; 
+
 
 // Conditionally import dart:html for web platform
 import 'web_utils.dart' if (dart.library.html) 'dart:html' as html;
@@ -540,29 +542,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
                 ),
               ),
 
-              // Loading overlay with translucent background
-              if (_isLoading)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(widget.borderRadius),
-                  child: Container(
-                    color: Colors.black54, // Semi-transparent overlay
-                    child: const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(height: 16),
-                                Text(
-                                  'Generating video...',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                ),
-              ),
+
 
             // Play/Pause button overlay
             if (controller?.value.isInitialized ?? false)
@@ -631,14 +611,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   }
 
   Widget _buildPlaceholder() {
+    // Use our new AI Content Disclaimer widget as the placeholder
     if (widget.initialThumbnailUrl?.isEmpty ?? true) {
-      return const Center(
-        child: Icon(
-          Icons.play_circle_outline,
-          size: 64,
-          color: AiTubeColors.onSurfaceVariant,
-        ),
-      );
+      return const AiContentDisclaimer(isInteractive: false);
     }
 
     try {
@@ -667,7 +642,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
     }
   }
 
-   Widget _buildBufferStatus(bool showDuringLoading) {
+  Widget _buildBufferStatus(bool showDuringLoading) {
     final readyOrPlayingClips = _queueManager.clipBuffer.where((c) => c.isReady || c.isPlaying).length;
     final totalClips = _queueManager.clipBuffer.length;
     final bufferPercentage = (readyOrPlayingClips / totalClips * 100).round();

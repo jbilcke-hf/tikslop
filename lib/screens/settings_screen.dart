@@ -13,6 +13,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _promptController = TextEditingController();
+  final _negativePromptController = TextEditingController();
   final _hfApiKeyController = TextEditingController();
   final _settingsService = SettingsService();
 
@@ -20,12 +21,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _promptController.text = _settingsService.videoPromptPrefix;
+    _negativePromptController.text = _settingsService.negativeVideoPrompt;
     _hfApiKeyController.text = _settingsService.huggingfaceApiKey;
   }
 
   @override
   void dispose() {
     _promptController.dispose();
+    _negativePromptController.dispose();
     _hfApiKeyController.dispose();
     super.dispose();
   }
@@ -108,6 +111,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         onChanged: (value) {
                           _settingsService.setVideoPromptPrefix(value);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _negativePromptController,
+                        decoration: const InputDecoration(
+                          labelText: 'Negative Prompt',
+                          helperText: 'Content to avoid in the output generation',
+                          helperMaxLines: 2,
+                        ),
+                        onChanged: (value) {
+                          _settingsService.setNegativeVideoPrompt(value);
                         },
                       ),
                     ],

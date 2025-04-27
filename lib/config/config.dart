@@ -123,6 +123,10 @@ class Configuration {
   // but if you are GPU rich feel feel to play them back at 100% of their speed!
   double get clipPlaybackSpeed => 
       _config['video']['clip_playback_speed'].toDouble();
+      
+  // Default negative prompt to avoid harmful content
+  String get defaultNegativePrompt =>
+      _config['video']['default_negative_prompt'] ?? 'gore, sex, blood, nudity, nude, porn, erotic, worst quality, deformed, distorted, disfigured, blurry, text, watermark';
 
   // Computed properties
 

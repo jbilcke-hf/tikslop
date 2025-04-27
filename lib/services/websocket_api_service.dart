@@ -1095,7 +1095,7 @@ class WebSocketApiService {
           'video_prompt_prefix': settings.videoPromptPrefix,
           'options': {
             'enhance_prompt': enhancePrompt,
-            'negative_prompt': negativePrompt ?? 'low quality, worst quality, deformed, distorted, disfigured, blurry, text, watermark',
+            'negative_prompt': negativePrompt ?? settings.negativeVideoPrompt,
             'frame_rate': Configuration.instance.originalClipFrameRate,
             'num_inference_steps': Configuration.instance.numInferenceSteps,
             'guidance_scale': Configuration.instance.guidanceScale,
