@@ -161,7 +161,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('Clear Cache'),
+                              title: const Text(
+                                'Clear Cache',
+                                style: TextStyle(
+                                  color: AiTubeColors.onBackground,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               content: const Text(
                                 'Are you sure you want to clear all cached data? '
                                 'This will remove all saved search results and videos.',

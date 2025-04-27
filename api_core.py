@@ -353,7 +353,7 @@ title: \""""
                 
                 # Check if the description still contains placeholder tags like <LOCATION>, <GENDER>, etc.
                 if re.search(r'<[A-Z_]+>', description):
-                    logger.warning(f"Description still contains placeholder tags: {description}")
+                    #logger.warning(f"Description still contains placeholder tags: {description}")
                     if current_attempt < max_attempts:
                         # Try again with a higher temperature
                         current_attempt += 1
@@ -615,8 +615,7 @@ Your caption:"""
         frame_rate = self.get_config_value(user_role, 'clip_framerate', options)
         
         # Log the user role and config values being used
-        logger.info(f"Generating video for user with role: {user_role}")
-        logger.info(f"Using config values: width={width}, height={height}, num_frames={num_frames}, steps={num_inference_steps}, fps={frame_rate}")
+        logger.info(f"Using config values: width={width}, height={height}, num_frames={num_frames}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
         
         json_payload = {
             "inputs": {

@@ -1,5 +1,5 @@
 ui:
-  product_name: AiTube
+  product_name: Custom
   showChatInVideoView: false
 
 render_queue:
@@ -13,6 +13,8 @@ render_queue:
   minimum_buffer_percent_to_start_playback: 5
 
 video:
+  # default negative prompt to filter harmful content
+  default_negative_prompt: "pixelated, deformed, distorted, disfigured, blurry, text, watermark, low quality, gore, sex, blood, nudity, nude, porn, erotic"
 
   # transition time between each clip
   # the exit (older) clip will see its playback time reduced by this amount
@@ -45,4 +47,4 @@ video:
 
   # to do more with less, we slow down the videos (a 3s video will become a 4s video)
   # but if you are GPU rich feel feel to play them back at 100% of their speed!
-  clip_playback_speed: 0.7
+  clip_playback_speed: 0.65

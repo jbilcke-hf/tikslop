@@ -613,7 +613,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   Widget _buildPlaceholder() {
     // Use our new AI Content Disclaimer widget as the placeholder
     if (widget.initialThumbnailUrl?.isEmpty ?? true) {
-      return const AiContentDisclaimer(isInteractive: false);
+      // Set isInteractive to true as we generate content on-the-fly
+      return const AiContentDisclaimer(isInteractive: true);
     }
 
     try {

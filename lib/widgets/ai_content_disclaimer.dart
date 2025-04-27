@@ -110,7 +110,7 @@ class AiContentDisclaimer extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -135,7 +135,7 @@ class AiContentDisclaimer extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Text(
                     'artificial intelligence',
                     style: GoogleFonts.arimo(
@@ -153,7 +153,7 @@ class AiContentDisclaimer extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Text(
                     'and may contain hallucinations or factual inaccuracies.',
                     style: GoogleFonts.arimo(

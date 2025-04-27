@@ -1,6 +1,7 @@
 // lib/screens/video_screen.dart
 import 'dart:async';
 
+import 'package:aitube2/screens/home_screen.dart';
 import 'package:aitube2/widgets/chat_widget.dart';
 import 'package:aitube2/widgets/search_box.dart';
 import 'package:aitube2/widgets/web_utils.dart';
@@ -323,8 +324,28 @@ class _VideoScreenState extends State<VideoScreen> {
         final isWideScreen = constraints.maxWidth >= 900;
         
         return Scaffold(
-          appBar: AppBar(
-            titleSpacing: 0,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight + 16),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: AppBar(
+                leading: IconButton(
+                  icon: Navigator.canPop(context) 
+                    ? const Icon(Icons.arrow_back, color: AiTubeColors.onBackground)
+                    : const Icon(Icons.home, color: AiTubeColors.onBackground),
+                  onPressed: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                      // Navigate to home screen if we can't go back
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      );
+                    }
+                  },
+                ),
+                titleSpacing: 0,
             title: Padding(
               padding: const EdgeInsets.all(8),
               child: SearchBox(
@@ -346,6 +367,8 @@ class _VideoScreenState extends State<VideoScreen> {
                 onPressed: _isConnected ? null : _initializeConnection,
               ),
             ],
+              ),
+            ),
           ),
           body: SafeArea(
             child: isWideScreen
