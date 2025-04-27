@@ -20,7 +20,7 @@ class Configuration {
     // Get custom config path from environment
     const customConfigPath = String.fromEnvironment(
       'CONFIG_PATH',
-      defaultValue: 'assets/config/aitube_low.yaml'
+      defaultValue: 'assets/config/aitube.yaml'
     );
 
     try {

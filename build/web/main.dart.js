@@ -43250,7 +43250,7 @@ return A.i(j.a_1("assets/config/default.yaml"),$async$b7)
 case 2:o.a=o.Fx(h.aNt(c))
 q=4
 s=7
-return A.i(j.a_1("assets/config/aitube_low.yaml"),$async$b7)
+return A.i(j.a_1("assets/config/aitube.yaml"),$async$b7)
 case 7:n=c
 m=o.Fx(A.aNt(n))
 o.ahm(m)
@@ -43260,7 +43260,7 @@ break
 case 4:q=3
 i=p.pop()
 l=A.W(i)
-A.ki("Warning: Could not load custom config from assets/config/aitube_low.yaml: "+A.j(l))
+A.ki("Warning: Could not load custom config from assets/config/aitube.yaml: "+A.j(l))
 s=6
 break
 case 3:s=1
