@@ -187,7 +187,7 @@ class AiContentDisclaimer extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'a diffused AI video model',
+                    'a distilled video model',
                     style: GoogleFonts.arimo(
                       fontSize: largeTextSize,
                       color: Colors.white,
