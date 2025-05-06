@@ -9,7 +9,6 @@ import 'package:aitube2/screens/video_screen.dart';
 import 'package:aitube2/screens/settings_screen.dart';
 import 'package:aitube2/models/video_result.dart';
 import 'package:aitube2/services/websocket_api_service.dart';
-import 'package:aitube2/services/cache_service.dart';
 import 'package:aitube2/services/settings_service.dart';
 import 'package:aitube2/widgets/video_card.dart';
 import 'package:aitube2/widgets/search_box.dart';
@@ -30,7 +29,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
   final _websocketService = WebSocketApiService();
-  final _cacheService = CacheService();
   List<VideoResult> _results = [];
   bool _isSearching = false;
   String? _currentSearchQuery;
@@ -62,6 +60,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _initializeWebSocket();
     _setupSearchListener();
     
+    // Force a UI refresh to ensure connection status is displayed correctly
+    Future.microtask(() {
+      if (mounted) {
+        setState(() {});  // Trigger a rebuild to refresh the connection status
+      }
+    });
+    
     // Check if we have an initial search query from URL parameters
     if (widget.initialSearchQuery != null && widget.initialSearchQuery!.isNotEmpty) {
       _searchController.text = widget.initialSearchQuery!;
@@ -71,22 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _search(widget.initialSearchQuery!);
         }
       });
-    } else {
-      _loadLastResults();
-    }
-  }
-
-  Future<void> _loadLastResults() async {
-    try {
-      // Load most recent search results from cache
-      final cachedResults = await _cacheService.getCachedSearchResults('');
-      if (cachedResults.isNotEmpty && mounted) {
-        setState(() {
-          _results = cachedResults.take(maxResults).toList();
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading cached results: $e');
     }
   }
 
@@ -96,14 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           if (_results.length < maxResults) {
             _results.add(result);
-            // Cache each result as it comes in
-            if (_currentSearchQuery != null) {
-              _cacheService.cacheSearchResult(
-                _currentSearchQuery!,
-                result,
-                _results.length,
-              );
-            }
             // Stop search if we've reached max results
             if (_results.length >= maxResults) {
               _stopSearch();
@@ -301,44 +282,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildConnectionStatus() {
+    
     return StreamBuilder<ConnectionStatus>(
       stream: _websocketService.statusStream,
+      initialData: _websocketService.status, // Add initial data to avoid null status
       builder: (context, connectionSnapshot) {
+        // Immediately extract and use the connection status
+        final status = connectionSnapshot.data ?? ConnectionStatus.disconnected;
+        
         return StreamBuilder<String>(
           stream: _websocketService.userRoleStream,
+          initialData: _websocketService.userRole, // Add initial data
           builder: (context, roleSnapshot) {
-            final status = connectionSnapshot.data ?? ConnectionStatus.disconnected;
             final userRole = roleSnapshot.data ?? 'anon';
             
-            final backgroundColor = status == ConnectionStatus.connected
+            final backgroundColor = status == ConnectionStatus.connected || status == ConnectionStatus.connecting
                 ? Colors.green.withOpacity(0.1)
                 : status == ConnectionStatus.error
                     ? Colors.red.withOpacity(0.1)
                     : Colors.orange.withOpacity(0.1);
             
-            final textAndIconColor = status == ConnectionStatus.connected
+            final textAndIconColor = status == ConnectionStatus.connected || status == ConnectionStatus.connecting
                 ? Colors.green
                 : status == ConnectionStatus.error
                     ? Colors.red
                     : Colors.orange;
 
-            final icon = status == ConnectionStatus.connected
+            final icon = status == ConnectionStatus.connected || status == ConnectionStatus.connecting
                 ? Icons.cloud_done
                 : status == ConnectionStatus.error
                     ? Icons.cloud_off
                     : Icons.cloud_sync;
 
-            // Modify the status message to include the user role
-            String statusMessage;
-            if (status == ConnectionStatus.connected) {
-              statusMessage = userRole == 'anon' 
-                  ? 'Connected as anon'
-                  : 'Connected as $userRole';
-            } else if (status == ConnectionStatus.error) {
-              statusMessage = 'Disconnected';
-            } else {
-              statusMessage = _websocketService.statusMessage;
-            }
+            // Get the status message (with user role info for connected state)
+            String statusMessage = _websocketService.statusMessage;
 
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -402,24 +379,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
       _currentSearchQuery = trimmedQuery;
 
-      // Check cache first
-      final cachedResults = await _cacheService.getCachedSearchResults(trimmedQuery);
-      if (cachedResults.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _results = cachedResults.take(maxResults).toList();
-          });
-        }
-        // If we have max results cached, stop searching
-        if (cachedResults.length >= maxResults) {
-          setState(() => _isSearching = false);
-          return;
-        }
-      }
-
       // Start continuous search
       _websocketService.startContinuousSearch(trimmedQuery);
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -508,7 +469,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Update URL parameter on web platform
                         if (kIsWeb) {
                           // Update view parameter and remove search parameter
-                          updateUrlParameter('view', _results[index].title);
+                          // Use description instead of title for the URL parameter
+                          updateUrlParameter('view', _results[index].description);
                           removeUrlParameter('search');
                         }
                         

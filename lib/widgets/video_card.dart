@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../theme/colors.dart';
 import '../models/video_result.dart';
+import './video_player/index.dart';
 
 class VideoCard extends StatelessWidget {
   final VideoResult video;
@@ -25,9 +27,7 @@ class VideoCard extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                // 'Generating preview...',
-                // thumbnail generation
-                '(TODO: thumbnails)',
+                'Generating preview...',
                 style: TextStyle(
                   color: AiTubeColors.onSurfaceVariant,
                   fontSize: 12,
@@ -40,11 +40,13 @@ class VideoCard extends StatelessWidget {
     }
 
     try {
+      // Handle image thumbnails
       if (video.thumbnailUrl.startsWith('data:image')) {
         final uri = Uri.parse(video.thumbnailUrl);
         final base64Data = uri.data?.contentAsBytes();
         
         if (base64Data == null) {
+          debugPrint('Invalid image data in thumbnailUrl');
           throw Exception('Invalid image data');
         }
 
@@ -52,19 +54,38 @@ class VideoCard extends StatelessWidget {
           base64Data,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
+            debugPrint('Error loading image thumbnail: $error');
             return _buildErrorThumbnail();
           },
         );
       }
-
-      return Image.network(
-        video.thumbnailUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildErrorThumbnail();
-        },
-      );
+      // Handle video thumbnails
+      else if (video.thumbnailUrl.startsWith('data:video')) {
+        return NanoVideoPlayer(
+          video: video,
+          autoPlay: true,
+          muted: true,
+          loop: true,
+          borderRadius: 0,
+          showLoadingIndicator: true,
+          playbackSpeed: 0.7,
+        );
+      }
+      // Regular URL thumbnail
+      else if (video.thumbnailUrl.isNotEmpty) {
+        return Image.network(
+          video.thumbnailUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('Error loading network thumbnail: $error');
+            return _buildErrorThumbnail();
+          },
+        );
+      } else {
+        return _buildErrorThumbnail();
+      }
     } catch (e) {
+      debugPrint('Unexpected error in thumbnail rendering: $e');
       return _buildErrorThumbnail();
     }
   }

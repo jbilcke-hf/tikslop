@@ -50,9 +50,7 @@ class Document {
 }
 
 class History {
-  void pushState(dynamic data, String title, String url) {
-    // No-op for non-web platforms
-  }
+  void pushState(dynamic data, String title, String url) {}
 }
 
 class Location {

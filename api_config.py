@@ -8,8 +8,6 @@ TEXT_MODEL = os.environ.get('HF_TEXT_MODEL',
     'HuggingFaceTB/SmolLM2-1.7B-Instruct'
 )
 
-IMAGE_MODEL = os.environ.get('HF_IMAGE_MODEL', '')
-
 # Environment variable to control maintenance mode
 MAINTENANCE_MODE = os.environ.get('MAINTENANCE_MODE', 'false').lower() in ('true', 'yes', '1', 't')
 
@@ -48,6 +46,8 @@ NEGATIVE_PROMPT = "low quality, worst quality, deformed, distorted, disfigured, 
 POSITIVE_PROMPT_SUFFIX = "high quality, cinematic, 4K, intricate details"
 
 GUIDANCE_SCALE = 1.0
+
+THUMBNAIL_FRAMES = 65
 
 # anonymous users are people browing AiTube2 without being connected
 # this category suffers from regular abuse so we need to enforce strict limitations
@@ -110,12 +110,12 @@ CONFIG_FOR_STANDARD_HF_USERS = {
     "max_clip_framerate": 25,
 
     "min_clip_width": 544,
-    "default_clip_width": 1216, # 768, # 640,
-    "max_clip_width": 1216, # 768, # 640,
+    "default_clip_width": 928, # 1216, # 768, # 640,
+    "max_clip_width": 928, # 1216, # 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 640, # 448, # 416,
-    "max_clip_height": 640, # 448, # 416,
+    "default_clip_height": 512, # 448, # 416,
+    "max_clip_height": 512, # 448, # 416,
 }
 
 # Hugging Face users with a Pro may enjoy an improved experience
@@ -143,12 +143,12 @@ CONFIG_FOR_PRO_HF_USERS = {
     "max_clip_framerate": 25,
 
     "min_clip_width": 544,
-    "default_clip_width": 768, # 640,
-    "max_clip_width": 768, # 640,
+    "default_clip_width": 928, # 1216, # 768, # 640,
+    "max_clip_width": 928, # 1216, # 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 448, # 416,
-    "max_clip_height": 448, # 416,
+    "default_clip_height": 512, # 448, # 416,
+    "max_clip_height": 512, # 448, # 416,
 }
 
 CONFIG_FOR_ADMIN_HF_USERS = {

@@ -10,7 +10,6 @@ import 'package:aitube2/widgets/web_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
-import 'services/cache_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +23,6 @@ void main() async {
   try {
     // Initialize services in sequence to ensure proper dependencies
     await SettingsService().initialize();
-    await CacheService().initialize();
     
     // Initialize the WebSocket service
     await wsService.initialize();

@@ -51,3 +51,4 @@ app.*.map.json
 /android/app/release
 
 /assets/config/
+**/.claude/settings.local.json

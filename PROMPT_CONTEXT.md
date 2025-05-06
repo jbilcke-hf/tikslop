@@ -8,3 +8,5 @@ To go back to the Flutter app, when the user open a thumbnail card after doing s
 
 
 Task to perform: <fill your demand here>
+
+Note: For the task to be validated, running the shell command "flutter build web" must succeeed.

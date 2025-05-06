@@ -1,4 +1,4 @@
-// lib/widgets/ai_content_disclaimer_widget.dart
+// lib/widgets/ai_content_disclaimer.dart
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,17 +6,67 @@ import '../theme/colors.dart';
 
 class AiContentDisclaimer extends StatelessWidget {
   final bool isInteractive;
+  final bool compact;
   
   const AiContentDisclaimer({
     super.key,
     this.isInteractive = false,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Get the text scaling factor
-    final textScaler = MediaQuery.textScalerOf(context);
-    
+    if (compact) {
+      return _buildCompactDisclaimer(context);
+    }
+    return _buildFullDisclaimer(context);
+  }
+  
+  Widget _buildCompactDisclaimer(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: const Color(0xFF047857), // emerald-700
+      child: Center(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final baseSize = constraints.maxWidth / 20;
+            final iconSize = baseSize * 1.5;
+            
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.smart_toy_outlined,
+                  color: Colors.white,
+                  size: iconSize,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'AI Content',
+                  style: GoogleFonts.arimo(
+                    fontSize: baseSize,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                    shadows: const [
+                      Shadow(
+                        offset: Offset(0, 1),
+                        blurRadius: 2.0,
+                        color: Color.fromRGBO(0, 0, 0, 0.3),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullDisclaimer(BuildContext context) {    
     return Container(
       width: double.infinity,
       height: double.infinity,

@@ -1,15 +1,15 @@
-ui:
+interface:
   product_name: Custom
   showChatInVideoView: false
 
-render_queue:
+playback:
   # how many clips should be stored in advance
   buffer_size: 3
 
   # how many requests for clips can be run in parallel
   max_concurrent_generations: 3
 
-  # start playback as soon as we have 1 video over 3 (25%)
+  # start playback as soon as we have 1 video over 3
   minimum_buffer_percent_to_start_playback: 5
 
 video:

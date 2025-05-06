@@ -299,7 +299,7 @@ class VideoGenerationAPI:
         # Maximum number of attempts to generate a description without placeholder tags
         max_attempts = 2
         current_attempt = attempt_count
-        temperature = 0.75  # Initial temperature
+        temperature = 0.7  # Initial temperature
 
         while current_attempt <= max_attempts:
             prompt = f"""# Instruction
@@ -321,7 +321,7 @@ Describe the first scene/shot for: "{query}".
 title: \""""
 
             try:
-                print(f"search_video(): calling self.inference_client.text_generation({prompt}, model={TEXT_MODEL}, max_new_tokens=150, temperature={temperature})")
+                #print(f"search_video(): calling self.inference_client.text_generation({prompt}, model={TEXT_MODEL}, max_new_tokens=150, temperature={temperature})")
                 response = await asyncio.get_event_loop().run_in_executor(
                     None,
                     lambda: self.inference_client.text_generation(
@@ -344,7 +344,7 @@ title: \""""
                 if not result or not isinstance(result, dict):
                     logger.error(f"Invalid result format: {result}")
                     current_attempt += 1
-                    temperature = 0.7  # Try with different temperature on next attempt
+                    temperature = 0.65  # Try with different temperature on next attempt
                     continue
 
                 # Extract fields with defaults
@@ -357,7 +357,7 @@ title: \""""
                     if current_attempt < max_attempts:
                         # Try again with a higher temperature
                         current_attempt += 1
-                        temperature = 0.7
+                        temperature = 0.6
                         continue
                     else:
                         # If we've reached max attempts, use the title as description
@@ -371,15 +371,10 @@ title: \""""
                     tags = []
                 tags = [str(t).strip() for t in tags if t and isinstance(t, (str, int, float))]
 
-                # Generate thumbnail
-                try:
-                    #thumbnail = await self.generate_thumbnail(title, description)
-                    raise ValueError("thumbnail generation is too buggy and slow right now")
-                except Exception as e:
-                    logger.error(f"Thumbnail generation failed: {str(e)}")
-                    thumbnail = ""
+                # Don't generate thumbnails upfront - let the frontend generate them on demand
+                # This makes search results load faster
+                thumbnail = ""
 
-                print("got response thumbnail")
                 # Return valid result with all required fields
                 return {
                     'id': str(uuid.uuid4()),
@@ -417,28 +412,9 @@ title: \""""
             'tags': []
         }
 
-    async def generate_thumbnail(self, title: str, description: str) -> str:
-        """Generate thumbnail using HF image generation"""
-        try:
-            image_prompt = f"Thumbnail for video titled '{title}': {description}"
-            
-            image = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.inference_client.text_to_image(
-                    prompt=image_prompt,
-                    model=IMAGE_MODEL,
-                    width=768,
-                    height=512
-                )
-            )
-
-            buffered = io.BytesIO()
-            image.save(buffered, format="JPEG")
-            img_str = base64.b64encode(buffered.getvalue()).decode()
-            return f"data:image/jpeg;base64,{img_str}"
-        except Exception as e:
-            logger.error(f"Error generating thumbnail: {str(e)}")
-            return ""
+    # The generate_thumbnail function has been removed because we now use
+    # generate_video_thumbnail for all thumbnails, which generates a video clip
+    # instead of a static image
 
     async def generate_caption(self, title: str, description: str) -> str:
         """Generate detailed caption using HF text generation"""
@@ -589,6 +565,97 @@ Your caption:"""
             # Fallback to original description if prompt generation fails
             return description
 
+    async def generate_video_thumbnail(self, title: str, description: str, video_prompt_prefix: str, options: dict, user_role: UserRole = 'anon') -> str:
+        """
+        Generate a short, low-resolution video thumbnail for search results and previews.
+        Optimized for quick generation and low resource usage.
+        """
+        video_id = options.get('video_id', str(uuid.uuid4()))
+        seed = options.get('seed', generate_seed())
+        request_id = str(uuid.uuid4())[:8]  # Generate a short ID for logging
+        
+        logger.info(f"[{request_id}] Starting video thumbnail generation for video_id: {video_id}")
+        logger.info(f"[{request_id}] Title: '{title}', User role: {user_role}")
+        
+        # Create a more concise prompt for the thumbnail
+        clip_caption = f"{video_prompt_prefix} - {title.strip()}"
+        
+        # Add the thumbnail generation to event history
+        self._add_event(video_id, {
+            "time": datetime.datetime.utcnow().isoformat() + "Z",
+            "event": "thumbnail_generation",
+            "caption": clip_caption,
+            "seed": seed,
+            "request_id": request_id
+        })
+        
+        # Use a shorter prompt for thumbnails
+        prompt = f"{clip_caption}, {POSITIVE_PROMPT_SUFFIX}"
+        logger.info(f"[{request_id}] Using prompt: '{prompt}'")
+        
+        # Specialized configuration for thumbnails - smaller size, single frame
+        width = 512  # Reduced size for thumbnails
+        height = 288  # 16:9 aspect ratio
+        num_frames = THUMBNAIL_FRAMES  # Just one frame for static thumbnail
+        num_inference_steps = 4  # Fewer steps for faster generation
+        frame_rate = 25  # Standard frame rate
+        
+        # Optionally override with options if specified
+        width = options.get('width', width)
+        height = options.get('height', height)
+        num_frames = options.get('num_frames', num_frames)
+        num_inference_steps = options.get('num_inference_steps', num_inference_steps)
+        frame_rate = options.get('frame_rate', frame_rate)
+        
+        logger.info(f"[{request_id}] Configuration: width={width}, height={height}, frames={num_frames}, steps={num_inference_steps}, fps={frame_rate}")
+        
+        # Add thumbnail-specific tag to help debugging and metrics
+        options['thumbnail'] = True
+        
+        # Check for available endpoints before attempting generation
+        available_endpoints = sum(1 for ep in self.endpoint_manager.endpoints 
+                               if not ep.busy and time.time() > ep.error_until)
+        logger.info(f"[{request_id}] Available endpoints: {available_endpoints}/{len(self.endpoint_manager.endpoints)}")
+        
+        if available_endpoints == 0:
+            logger.error(f"[{request_id}] No available endpoints for thumbnail generation")
+            return ""
+        
+        # Use the same logic as regular video generation but with thumbnail settings
+        try:
+            logger.info(f"[{request_id}] Generating thumbnail for video {video_id} with seed {seed}")
+            
+            start_time = time.time()
+            # Rest of thumbnail generation logic same as regular video but with optimized settings
+            result = await self._generate_video_content(
+                prompt=prompt,
+                negative_prompt=options.get('negative_prompt', NEGATIVE_PROMPT),
+                width=width,
+                height=height,
+                num_frames=num_frames,
+                num_inference_steps=num_inference_steps,
+                frame_rate=frame_rate,
+                seed=seed,
+                options=options,
+                user_role=user_role
+            )
+            duration = time.time() - start_time
+            
+            if result:
+                data_length = len(result)
+                logger.info(f"[{request_id}] Successfully generated thumbnail in {duration:.2f}s, data length: {data_length} chars")
+                return result
+            else:
+                logger.error(f"[{request_id}] Empty result returned from video generation")
+                return ""
+            
+        except Exception as e:
+            logger.error(f"[{request_id}] Error generating thumbnail: {e}")
+            if hasattr(e, "__traceback__"):
+                import traceback
+                logger.error(f"[{request_id}] Traceback: {traceback.format_exc()}")
+            return ""  # Return empty string instead of raising to avoid crashes
+    
     async def generate_video(self, title: str, description: str, video_prompt_prefix: str, options: dict, user_role: UserRole = 'anon') -> str:
         """Generate video using available space from pool"""
         video_id = options.get('video_id', str(uuid.uuid4()))
@@ -617,113 +684,120 @@ Your caption:"""
         # Log the user role and config values being used
         logger.info(f"Using config values: width={width}, height={height}, num_frames={num_frames}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
         
+        # Generate the video with standard settings
+        return await self._generate_video_content(
+            prompt=prompt,
+            negative_prompt=options.get('negative_prompt', NEGATIVE_PROMPT),
+            width=width,
+            height=height,
+            num_frames=num_frames,
+            num_inference_steps=num_inference_steps,
+            frame_rate=frame_rate,
+            seed=options.get('seed', 42),
+            options=options,
+            user_role=user_role
+        )
+        
+    async def _generate_video_content(self, prompt: str, negative_prompt: str, width: int, 
+                                     height: int, num_frames: int, num_inference_steps: int, 
+                                     frame_rate: int, seed: int, options: dict, user_role: UserRole) -> str:
+        """
+        Internal method to generate video content with specific parameters.
+        Used by both regular video generation and thumbnail generation.
+        """
+        is_thumbnail = options.get('thumbnail', False)
+        request_id = options.get('request_id', str(uuid.uuid4())[:8])  # Get or generate request ID
+        video_id = options.get('video_id', 'unknown')
+        
+        logger.info(f"[{request_id}] Generating {'thumbnail' if is_thumbnail else 'video'} for video {video_id} with seed {seed}")
+        
         json_payload = {
             "inputs": {
                 "prompt": prompt,
             },
             "parameters": {
-
                 # ------------------- settings for LTX-Video -----------------------
-                
-                # this param doesn't exist
-                #"enhance_prompt_toggle": options.get('enhance_prompt', False),
-
-                "negative_prompt": options.get('negative_prompt', NEGATIVE_PROMPT),
-
-                # note about resolution:
-                # we cannot use 720 since it cannot be divided by 32
+                "negative_prompt": negative_prompt,
                 "width": width,
                 "height": height,
-
-                # this is a hack to fool LTX-Video into believing our input image is an actual video frame with poor encoding quality
-                #"input_image_quality": 70,
-
-                # LTX-Video requires a frame number divisible by 8, plus one frame
-                # note: glitches might appear if you use more than 168 frames
                 "num_frames": num_frames,
-
-                # using 30 steps seems to be enough for most cases, otherwise use 50 for best quality
-                # I think using a large number of steps (> 30) might create some overexposure and saturation
                 "num_inference_steps": num_inference_steps,
-
-                # values between 3.0 and 4.0 are nice
                 "guidance_scale": options.get('guidance_scale', GUIDANCE_SCALE),
-
-                "seed": options.get('seed', 42),
+                "seed": seed,
             
-                # ----------------------------------------------------------------
-
                 # ------------------- settings for Varnish -----------------------
-                # This will double the number of frames.
-                # You can activate this if you want:
-                # - a slow motion effect (in that case use double_num_frames=True and fps=24, 25 or 30)
-                # - a HD soap / video game effect (in that case use double_num_frames=True and fps=60)
-                "double_num_frames": False, # <- False as we want real-time generation
-
-                # controls the number of frames per second
-                # use this in combination with the num_frames and double_num_frames settings to control the duration and "feel" of your video
-                # typical values are: 24, 25, 30, 60
+                "double_num_frames": False,  # <- False for real-time generation
                 "fps": frame_rate,
-
-                # upscale the video using Real-ESRGAN.
-                # This upscaling algorithm is relatively fast,
-                # but might create an uncanny "3D render" or "drawing" effect.
-                "super_resolution": False, # <- False as we want real-time generation
-
-                # for cosmetic purposes and get a "cinematic" feel, you can optionally add some film grain.
-                # it is not recommended to add film grain if your theme doesn't match (film grain is great for black & white, retro looks)
-                # and if you do, adding more than 12% will start to negatively impact file size (video codecs aren't great are compressing film grain)
-                # 0% = no grain
-                # 10% = a bit of grain
-                "grain_amount": 0, # value between 0-100
-
-
-                # The range of the CRF scale is 0–51, where:
-                # 0 is lossless (for 8 bit only, for 10 bit use -qp 0)
-                # 23 is the default
-                # 51 is worst quality possible
-                # A lower value generally leads to higher quality, and a subjectively sane range is 17–28.
-                # Consider 17 or 18 to be visually lossless or nearly so;
-                # it should look the same or nearly the same as the input but it isn't technically lossless.
-                # The range is exponential, so increasing the CRF value +6 results in roughly half the bitrate / file size, while -6 leads to roughly twice the bitrate.
-                #"quality": 23,
-
+                "super_resolution": False,  # <- False for real-time generation
+                "grain_amount": 0,  # No film grain
             }
         }
+        
+        # Add thumbnail flag to help with metrics and debugging
+        if is_thumbnail:
+            json_payload["metadata"] = {
+                "is_thumbnail": True,
+                "thumbnail_version": "1.0",
+                "request_id": request_id
+            }
 
+        # logger.info(f"[{request_id}] Waiting for an available endpoint...")
         async with self.endpoint_manager.get_endpoint() as endpoint:
-            #logger.info(f"Using endpoint {endpoint.id} for video generation")
+            # logger.info(f"[{request_id}] Using endpoint {endpoint.id} for generation")
             
             try:
                 async with ClientSession() as session:
+                    #logger.info(f"[{request_id}] Sending request to endpoint {endpoint.id}: {endpoint.url}")
+                    start_time = time.time()
+                    
+                    # Proceed with actual request
                     async with session.post(
                         endpoint.url,
                         headers={
                             "Accept": "application/json",
                             "Authorization": f"Bearer {HF_TOKEN}",
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json",
+                            "X-Request-ID": request_id  # Add request ID to headers
                         },
                         json=json_payload,
-                        timeout=8  # Fast generation should complete within 8 seconds
+                        timeout=12  # Extended timeout for thumbnails (was 8s)
                     ) as response:
+                        request_duration = time.time() - start_time
+                        #logger.info(f"[{request_id}] Received response from endpoint {endpoint.id} in {request_duration:.2f}s: HTTP {response.status}")
+                        
                         if response.status != 200:
                             error_text = await response.text()
+                            logger.error(f"[{request_id}] Failed response: {error_text}")
                             # Mark endpoint as in error state
                             await self._mark_endpoint_error(endpoint)
+                            if "paused" in error_text:
+                                logger.error(f"[{request_id}] Endpoint is paused")
+                                return ""
                             raise Exception(f"Video generation failed: HTTP {response.status} - {error_text}")
                         
                         result = await response.json()
+                        logger.info(f"[{request_id}] Successfully parsed JSON response")
                         
                         if "error" in result:
+                            error_msg = result['error']
+                            logger.error(f"[{request_id}] Error in response: {error_msg}")
                             # Mark endpoint as in error state
                             await self._mark_endpoint_error(endpoint)
-                            raise Exception(f"Video generation failed: {result['error']}")
+                            if "paused" in str(error_msg).lower():
+                                logger.error(f"[{request_id}] Endpoint is paused")
+                                return ""
+                            raise Exception(f"Video generation failed: {error_msg}")
                         
                         video_data_uri = result.get("video")
                         if not video_data_uri:
+                            logger.error(f"[{request_id}] No video data in response")
                             # Mark endpoint as in error state
                             await self._mark_endpoint_error(endpoint)
                             raise Exception("No video data in response")
+                        
+                        # Get data size
+                        data_size = len(video_data_uri)
+                        logger.info(f"[{request_id}] Received video data: {data_size} chars")
                         
                         # Reset error count on successful call
                         endpoint.error_count = 0
@@ -733,13 +807,15 @@ Your caption:"""
                         
             except asyncio.TimeoutError:
                 # Handle timeout specifically
+                logger.error(f"[{request_id}] Timeout occurred after {time.time() - start_time:.2f}s")
                 await self._mark_endpoint_error(endpoint, is_timeout=True)
-                raise Exception(f"Endpoint {endpoint.id} timed out")
+                return ""
             except Exception as e:
                 # Handle all other exceptions
+                logger.error(f"[{request_id}] Exception during video generation: {str(e)}")
                 if not isinstance(e, asyncio.TimeoutError):  # Already handled above
                     await self._mark_endpoint_error(endpoint)
-                raise e
+                return ""
                 
     async def _mark_endpoint_error(self, endpoint: Endpoint, is_timeout: bool = False):
         """Mark an endpoint as being in error state with exponential backoff"""

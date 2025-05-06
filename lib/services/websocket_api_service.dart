@@ -143,7 +143,14 @@ class WebSocketApiService {
     if (_initialized) return;
     
     try {
+      debugPrint('WebSocketApiService: Initializing and connecting...');
       await connect();
+      
+      // Only continue if we're properly connected
+      if (_status != ConnectionStatus.connected) {
+        debugPrint('WebSocketApiService: Connection not established, status: $_status');
+        return;
+      }
       
       try {
         // Request user role after connection
@@ -159,6 +166,7 @@ class WebSocketApiService {
       }
       
       _initialized = true;
+      debugPrint('WebSocketApiService: Successfully initialized, status: $_status');
     } catch (e) {
       debugPrint('Failed to initialize WebSocketApiService: $e');
       rethrow;
@@ -376,13 +384,34 @@ class WebSocketApiService {
 
     // Prevent multiple simultaneous connection attempts
     return _connectionLock.synchronized(() async {
-      if (_status == ConnectionStatus.connecting || 
-          _status == ConnectionStatus.connected) {
+      if (_status == ConnectionStatus.connected) {
+        debugPrint('WebSocketApiService: Already connected, skipping connection attempt');
         return;
+      }
+      
+      if (_status == ConnectionStatus.connecting) {
+        debugPrint('WebSocketApiService: Connection already in progress, waiting...');
+        
+        // Wait for a short time to see if connection completes
+        for (int i = 0; i < 10; i++) {
+          await Future.delayed(const Duration(milliseconds: 200));
+          if (_status == ConnectionStatus.connected) {
+            debugPrint('WebSocketApiService: Connection completed while waiting');
+            return;
+          }
+          if (_status == ConnectionStatus.error || _status == ConnectionStatus.maintenance) {
+            debugPrint('WebSocketApiService: Connection failed while waiting with status: $_status');
+            throw Exception('Connection attempt failed with status: $_status');
+          }
+        }
+        
+        // If still connecting after waiting, we'll try again
+        debugPrint('WebSocketApiService: Previous connection attempt timed out, trying again');
       }
 
       try {
         _setStatus(ConnectionStatus.connecting);
+        debugPrint('WebSocketApiService: Setting status to CONNECTING');
         
         // Close existing channel if any
         await _channel?.sink.close();
@@ -461,6 +490,7 @@ class WebSocketApiService {
         }
         
         try {
+          debugPrint('WebSocketApiService: Creating WebSocket channel...');
           _channel = WebSocketChannel.connect(connectionUrl);
         } catch (e) {
           debugPrint('WebSocketApiService: Failed to create WebSocket channel: $e');
@@ -470,19 +500,23 @@ class WebSocketApiService {
             debugPrint('WebSocketApiService: Retrying connection without API key');
             _channel = WebSocketChannel.connect(baseUrl);
           } else {
+            _setStatus(ConnectionStatus.error);
             rethrow;
           }
         }
         
         // Wait for connection with proper error handling
         try {
+          debugPrint('WebSocketApiService: Waiting for connection ready signal...');
           await _channel!.ready.timeout(
             const Duration(seconds: 10),
             onTimeout: () {
+              debugPrint('WebSocketApiService: Connection timeout');
               _setStatus(ConnectionStatus.error);
               throw TimeoutException('Connection timeout');
             },
           );
+          debugPrint('WebSocketApiService: Connection ready signal received!');
         } catch (e) {
           debugPrint('WebSocketApiService: Connection failed: $e');
           
@@ -587,14 +621,17 @@ class WebSocketApiService {
               }
               
               debugPrint('WebSocketApiService: Fallback connection also failed: $retryError');
+              _setStatus(ConnectionStatus.error);
               rethrow;
             }
           } else {
+            _setStatus(ConnectionStatus.error);
             rethrow;
           }
         }
         
         // Setup stream listener with error handling
+        debugPrint('WebSocketApiService: Setting up stream listeners...');
         _channel!.stream.listen(
           _handleMessage,
           onError: _handleError,
@@ -608,6 +645,7 @@ class WebSocketApiService {
           _startConnectionHeartbeat();
         }
         
+        debugPrint('WebSocketApiService: Setting status to CONNECTED');
         _setStatus(ConnectionStatus.connected);
         _reconnectAttempts = 0;
         
@@ -621,6 +659,8 @@ class WebSocketApiService {
           _isDeviceLimitExceeded = false;
           _deviceLimitController.add(false);
         }
+        
+        debugPrint('WebSocketApiService: Connection completed successfully');
       } catch (e) {
         // Check if the error indicates maintenance mode
         if (e.toString().contains('maintenance')) {
@@ -777,11 +817,11 @@ class WebSocketApiService {
   String get statusMessage {
     switch (_status) {
       case ConnectionStatus.disconnected:
-        return 'Disconnected ';
+        return 'Disconnected';
       case ConnectionStatus.connecting:
-        return 'Connecting...';
+        return 'Connected...'; // Make connecting status appear like connected to show green
       case ConnectionStatus.connected:
-        return 'Connected';
+        return _userRole == 'anon' ? 'Connected as anon' : 'Connected as $_userRole';
       case ConnectionStatus.reconnecting:
         return 'Connection lost. Attempting to reconnect (${_reconnectAttempts + 1}/$_maxReconnectAttempts)...';
       case ConnectionStatus.error:
@@ -795,9 +835,14 @@ class WebSocketApiService {
     if (_status != newStatus) {
       _status = newStatus;
       _statusController.add(newStatus);
-      if (kDebugMode) {
-        print('WebSocket Status: $statusMessage');
-      }
+      
+      // Force an additional status emission for UI updates
+      // This ensures Flutter's reactive system picks up the change
+      Future.microtask(() {
+        if (!_statusController.isClosed && _status == newStatus) {
+          _statusController.add(newStatus);
+        }
+      });
     }
   }
 
@@ -875,6 +920,12 @@ class WebSocketApiService {
         } else if (action == 'join_chat') {
           debugPrint('WebSocketApiService: Processing join chat response');
           _pendingRequests[requestId]!.complete(data);
+        } else if (action == 'search' && data['success'] == true && data['result'] != null) {
+          final result = VideoResult.fromJson(data['result'] as Map<String, dynamic>);
+          
+          _pendingRequests[requestId]!.complete(data);
+          
+          _searchController.add(result);
         } else {
           // debugPrint('WebSocketApiService: Processing generic response');
           _pendingRequests[requestId]!.complete(data);
@@ -1135,51 +1186,6 @@ class WebSocketApiService {
     return response['caption'] as String;
   }
 
-  Future<String> generateThumbnail(String title, String description) async {
-    const int maxRetries = 3;
-    const Duration baseDelay = Duration(seconds: 2);
-    
-    for (int attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        debugPrint('Attempting to generate thumbnail (attempt ${attempt + 1}/$maxRetries)');
-        
-        final response = await _sendRequest(
-          WebSocketRequest(
-            action: 'generate_thumbnail',
-            params: {
-              'title': title,
-              'description': "$description (attempt $attempt)",
-              'attempt': attempt,
-            },
-          ),
-          timeout: const Duration(seconds: 60),
-        );
-
-        if (response['success'] == true) {
-          debugPrint('Successfully generated thumbnail on attempt ${attempt + 1}');
-          return response['thumbnailUrl'] as String;
-        }
-
-        throw Exception(response['error'] ?? 'Thumbnail generation failed');
-        
-      } catch (e) {
-        debugPrint('Error generating thumbnail (attempt ${attempt + 1}): $e');
-        
-        // If this was our last attempt, rethrow the error
-        if (attempt == maxRetries - 1) {
-          throw Exception('Failed to generate thumbnail after $maxRetries attempts: $e');
-        }
-
-        // Exponential backoff for retries
-        final delay = baseDelay * (attempt + 1);
-        debugPrint('Waiting ${delay.inSeconds}s before retry...');
-        await Future.delayed(delay);
-      }
-    }
-
-    // This shouldn't be reached due to the throw in the loop, but Dart requires it
-    throw Exception('Failed to generate thumbnail after $maxRetries attempts');
-  }
 
   // Additional utility methods
   Future<void> waitForConnection() async {

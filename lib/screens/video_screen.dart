@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import '../config/config.dart';
 import '../models/video_result.dart';
 import '../services/websocket_api_service.dart';
-import '../services/cache_service.dart';
 import '../services/settings_service.dart';
 import '../theme/colors.dart';
 import '../widgets/video_player_widget.dart';
@@ -30,7 +29,6 @@ class VideoScreen extends StatefulWidget {
 class _VideoScreenState extends State<VideoScreen> {
   Future<String>? _captionFuture;
   final _websocketService = WebSocketApiService();
-  final _cacheService = CacheService();
   bool _isConnected = false;
   late VideoResult _videoData;
   final _searchController = TextEditingController();
@@ -62,16 +60,6 @@ class _VideoScreenState extends State<VideoScreen> {
     });
     
     _initializeConnection();
-    _loadCachedThumbnail();
-  }
-
-  Future<void> _loadCachedThumbnail() async {
-    final cachedThumbnail = await _cacheService.getThumbnail(_videoData.id);
-    if (cachedThumbnail != null && mounted) {
-      setState(() {
-        _videoData = _videoData.copyWith(thumbnailUrl: cachedThumbnail);
-      });
-    }
   }
 
   Future<void> _initializeConnection() async {
@@ -287,9 +275,9 @@ class _VideoScreenState extends State<VideoScreen> {
     
     // Update URL parameter on web platform
     if (kIsWeb) {
-      // Update view parameter and remove search parameter if present
-      updateUrlParameter('view', query);
-      removeUrlParameter('search');
+      // Update view parameter with the description instead of the query
+      // We'll get the actual description from the search result
+      // removeUrlParameter('search') will happen after we get the result
     }
 
     try {
@@ -306,6 +294,13 @@ class _VideoScreenState extends State<VideoScreen> {
           _videoData = result;
           _isSearching = false;
         });
+        
+        // Now that we have the result, update the URL parameter on web platform
+        if (kIsWeb) {
+          // Update view parameter with the description
+          updateUrlParameter('view', result.description);
+          removeUrlParameter('search');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -334,6 +329,21 @@ class _VideoScreenState extends State<VideoScreen> {
                     ? const Icon(Icons.arrow_back, color: AiTubeColors.onBackground)
                     : const Icon(Icons.home, color: AiTubeColors.onBackground),
                   onPressed: () {
+                    // Restore the search parameter in URL when navigating back
+                    if (kIsWeb) {
+                      // Remove the view parameter
+                      removeUrlParameter('view');
+                      
+                      // Get the search query from the video description
+                      // This matches what we stored in the view parameter when
+                      // navigating to this screen
+                      final searchQuery = _videoData.description.trim();
+                      if (searchQuery.isNotEmpty) {
+                        // Update URL to show search parameter again
+                        updateUrlParameter('search', searchQuery);
+                      }
+                    }
+                    
                     if (Navigator.canPop(context)) {
                       Navigator.pop(context);
                     } else {
