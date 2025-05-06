@@ -160,14 +160,14 @@ class AiContentDisclaimer extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        'using',
+                        'on the fly using a',
                         style: GoogleFonts.arimo(
                           fontSize: smallTextSize,
                           color: Colors.white,
@@ -185,9 +185,9 @@ class AiContentDisclaimer extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   Text(
-                    'a distilled video model',
+                    'distilled video model',
                     style: GoogleFonts.arimo(
                       fontSize: largeTextSize,
                       color: Colors.white,
@@ -203,7 +203,7 @@ class AiContentDisclaimer extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   Text(
                     'and may contains visual glitches or hallucinations.',
                     style: GoogleFonts.arimo(

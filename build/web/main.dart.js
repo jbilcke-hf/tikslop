@@ -44539,7 +44539,7 @@ return A.dE(A.b([A.nv(B.HX,B.j,s,r*1.5),B.cS,A.bQ("AI Content",s,s,s,A.te().$5$c
 $S:333}
 A.a13.prototype={
 $2(a,b){var s=null,r=b.b/40,q=r*0.7,p=A.bQ("The following ",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,q,B.R,1,1.2,B.da),s,s),o=A.bQ("footage",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,r,B.aA,1,1.2,B.da),s,s),n=t.p
-return new A.by(B.bM,A.dE(A.b([A.iI(A.b([p,o,A.bQ(" will be ",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,q,B.R,1,1.2,B.da),s,s),A.bQ("synthesized",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,r,B.aA,1,1.2,B.da),s,s)],n),B.dN,B.cp,B.a7,B.n),B.lG,A.iI(A.b([A.bQ("using",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,q,B.R,1,1.2,B.da),s,s)],n),B.dN,B.cp,B.a7,B.n),B.lG,A.bQ("a distilled video model",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,r*1.1,B.aA,1,1.2,B.da),s,s),B.lG,A.bQ("and may contains visual glitches or hallucinations.",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,q,B.R,1,1.2,B.da),B.dq,s)],n),B.a6,B.cp,B.a7),s)},
+return new A.by(B.bM,A.dE(A.b([A.iI(A.b([p,o,A.bQ(" will be ",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,q,B.R,1,1.2,B.da),s,s),A.bQ("synthesized",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,r,B.aA,1,1.2,B.da),s,s)],n),B.dN,B.cp,B.a7,B.n),B.lG,A.iI(A.b([A.bQ("on the fly using a",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,q,B.R,1,1.2,B.da),s,s)],n),B.dN,B.cp,B.a7,B.n),B.lG,A.bQ("distilled video model",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,r*1.1,B.aA,1,1.2,B.da),s,s),B.lG,A.bQ("and may contains visual glitches or hallucinations.",s,s,s,A.te().$6$color$fontSize$fontWeight$height$letterSpacing$shadows(B.j,q,B.R,1,1.2,B.da),B.dq,s)],n),B.a6,B.cp,B.a7),s)},
 $S:334}
 A.tE.prototype={
 aj(){var s=$.aJW()
@@ -99856,7 +99856,7 @@ B.RK=new A.eB(1/0,1/0,null,null)
 B.Ep=new A.tH(2,null)
 B.Ag=new A.eB(20,20,B.Ep,null)
 B.be=new A.eB(null,16,null,null)
-B.lG=new A.eB(null,20,null,null)
+B.lG=new A.eB(null,18,null,null)
 B.Ah=new A.eB(null,24,null,null)
 B.Ai=new A.eB(null,4,null,null)
 B.RL=new A.De(null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
