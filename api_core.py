@@ -307,7 +307,7 @@ class VideoGenerationAPI:
             prompt = f"""# Instruction
 Your response MUST be a YAML object containing a title and description, consistent with what we can find on a video sharing platform.
 Format your YAML response with only those fields: "title" (a short string) and "description" (string caption of the scene). Do not add any other field.
-In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view. In the foreground a <AGE>yo <GENDER> <CHARACTERS> <ACTIONS>. In the background <DESCRIBE THE LOCATION>. The scene is lit by <LIGHTING> <WEATHER>". This is just an example! you MUST replace the <TAGS>!!.
+In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view. In the foreground a <AGE>yo <GENDER> <CHARACTERS> <ACTIONS>. In the background <DESCRIBE THE LOCATION, BACKGROUND CHARACTERS OR OBJECTS ETC>. The scene is lit by <LIGHTING> <WEATHER>". This is just an example! you MUST replace the <TAGS>!!.
 Don't forget to replace <STYLE> etc, by the actual fields!!
 For the style, be creative, for instance you can use anything like a "documentary footage", "japanese animation", "movie scene", "tv series", "tv show", "security footage" etc.
 If the user ask for something specific eg an anime use "japanese animation, ", for a documentary about animals in nature use "documentary footage, " as a style etc.
