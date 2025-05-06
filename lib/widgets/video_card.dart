@@ -27,7 +27,7 @@ class VideoCard extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                'Generating preview...',
+                '(TODO: thumbnails)',
                 style: TextStyle(
                   color: AiTubeColors.onSurfaceVariant,
                   fontSize: 12,

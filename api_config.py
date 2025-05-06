@@ -55,8 +55,8 @@ CONFIG_FOR_ANONYMOUS_USERS = {
     "max_rendering_time_per_client_per_video_in_sec": 2 * 60,
 
     "min_num_inference_steps": 2,
-    "default_num_inference_steps": 3,
-    "max_num_inference_steps": 3,
+    "default_num_inference_steps": 4,
+    "max_num_inference_steps": 4,
 
     "min_num_frames": 9, # 8 + 1
     "default_max_num_frames": 65, # 8*8 + 1
@@ -75,12 +75,12 @@ CONFIG_FOR_ANONYMOUS_USERS = {
     "max_clip_framerate": 16,
 
     "min_clip_width": 544,
-    "default_clip_width": 544,
-    "max_clip_width": 544,
+    "default_clip_width": 640,
+    "max_clip_width": 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 320,
-    "max_clip_height": 320,
+    "default_clip_height": 352,
+    "max_clip_height": 352,
 }
 
 # Hugging Face users enjoy a more normal and calibrated experience
@@ -181,4 +181,4 @@ CONFIG_FOR_ADMIN_HF_USERS = {
     "max_clip_height": 640, # 512, # 448, # 416,
 }
 
-CONFIG_FOR_ANONYMOUS_USERS = CONFIG_FOR_STANDARD_HF_USERS
+CONFIG_FOR_ANONYMOUS_USERS

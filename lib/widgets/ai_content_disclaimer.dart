@@ -76,7 +76,7 @@ class AiContentDisclaimer extends StatelessWidget {
           builder: (context, constraints) {
             // Scale text based on container width
             final baseSize = constraints.maxWidth / 40;
-            final smallTextSize = baseSize * 0.8;
+            final smallTextSize = baseSize * 0.7;
             final mediumTextSize = baseSize;
             final largeTextSize = baseSize * 1.1;
             
@@ -108,7 +108,7 @@ class AiContentDisclaimer extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'content',
+                        'footage',
                         style: GoogleFonts.arimo(
                           fontSize: mediumTextSize,
                           color: Colors.white,
@@ -187,7 +187,7 @@ class AiContentDisclaimer extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'a generative AI model',
+                    'a diffused AI video model',
                     style: GoogleFonts.arimo(
                       fontSize: largeTextSize,
                       color: Colors.white,
@@ -205,7 +205,7 @@ class AiContentDisclaimer extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'and may contain hallucinations or factual inaccuracies.',
+                    'and may contains visual glitches or hallucinations.',
                     style: GoogleFonts.arimo(
                       fontSize: smallTextSize,
                       color: Colors.white,
