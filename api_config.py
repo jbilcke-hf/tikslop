@@ -108,12 +108,12 @@ CONFIG_FOR_STANDARD_HF_USERS = {
     "max_clip_framerate": 25,
 
     "min_clip_width": 544,
-    "default_clip_width": 1216, # 928, # 1216, # 768, # 640,
-    "max_clip_width": 1216, # 928, # 1216, # 768, # 640,
+    "default_clip_width": 1152, # 928, # 1216, # 768, # 640,
+    "max_clip_width": 1152, # 928, # 1216, # 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 672, # 512, # 448, # 416,
-    "max_clip_height": 672, # 512, # 448, # 416,
+    "default_clip_height": 640, # 512, # 448, # 416,
+    "max_clip_height": 640, # 512, # 448, # 416,
 }
 
 # Hugging Face users with a Pro may enjoy an improved experience
@@ -141,12 +141,12 @@ CONFIG_FOR_PRO_HF_USERS = {
     "max_clip_framerate": 25,
 
     "min_clip_width": 544,
-    "default_clip_width": 928, # 1216, # 768, # 640,
-    "max_clip_width": 928, # 1216, # 768, # 640,
+    "default_clip_width": 1152, # 928, # 1216, # 768, # 640,
+    "max_clip_width": 1152, # 928, # 1216, # 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 512, # 448, # 416,
-    "max_clip_height": 512, # 448, # 416,
+    "default_clip_height": 640, # 512, # 448, # 416,
+    "max_clip_height": 640, # 512, # 448, # 416,
 }
 
 CONFIG_FOR_ADMIN_HF_USERS = {
@@ -173,12 +173,12 @@ CONFIG_FOR_ADMIN_HF_USERS = {
     "max_clip_framerate": 60,
 
     "min_clip_width": 544,
-    "default_clip_width": 768,
-    "max_clip_width": 1216,
+    "default_clip_width": 1152, # 928, # 1216, # 768, # 640,
+    "max_clip_width": 1152, # 928, # 1216, # 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 480,
-    "max_clip_height": 672,
+    "default_clip_height": 640, # 512, # 448, # 416,
+    "max_clip_height": 640, # 512, # 448, # 416,
 }
 
 CONFIG_FOR_ANONYMOUS_USERS = CONFIG_FOR_STANDARD_HF_USERS
