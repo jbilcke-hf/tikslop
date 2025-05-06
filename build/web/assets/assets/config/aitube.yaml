@@ -37,7 +37,8 @@ video:
   # number of frames below 257.
 
   # number of inference steps
-  num_inference_steps: 4
+  # (this is capped by the backend API)
+  num_inference_steps: 8
 
   guidance_scale: 1.0
 
@@ -45,8 +46,11 @@ video:
   # in frames per second (so an integer)
   original_clip_frame_rate: 25
 
-  original_clip_width: 1216 # 544
-  original_clip_height: 704 # 320
+  # (this is capped by the backend API)
+  original_clip_width: 1216
+
+  # (this is capped by the backend API)
+  original_clip_height: 672
 
   # to do more with less, we slow down the videos (a 3s video will become a 4s video)
   # but if you are GPU rich feel feel to play them back at 100% of their speed!

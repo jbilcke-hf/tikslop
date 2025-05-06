@@ -131,6 +131,8 @@ class VideoCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 _buildThumbnail(),
+                /*
+                Will be used in the future release
                 Positioned(
                   right: 8,
                   top: 8,
@@ -157,6 +159,7 @@ class VideoCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                */
               ],
             ),
           ),
@@ -192,11 +195,16 @@ class VideoCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Generated using LTX Video',
-                        style: TextStyle(
-                          color: AiTubeColors.onSurfaceVariant,
-                          fontSize: 12,
+                      SizedBox(
+                        height: 36, // Approximately height for 3 lines of text with fontSize 12
+                        child: Text(
+                          video.description,
+                          style: const TextStyle(
+                            color: AiTubeColors.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

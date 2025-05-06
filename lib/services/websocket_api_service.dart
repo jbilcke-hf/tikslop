@@ -769,7 +769,6 @@ class WebSocketApiService {
             action: 'search',
             params: {
               'query': query,
-              'searchCount': _currentSearchState?.resultCount ?? 0,
               'attemptCount': failedAttempts,
             },
           ),
@@ -923,9 +922,12 @@ class WebSocketApiService {
         } else if (action == 'search' && data['success'] == true && data['result'] != null) {
           final result = VideoResult.fromJson(data['result'] as Map<String, dynamic>);
           
+          // Complete the pending request but don't add to search results here
+          // The search results will be handled by the startContinuousSearch method
           _pendingRequests[requestId]!.complete(data);
           
-          _searchController.add(result);
+          // Don't add to search controller here to avoid duplicates
+          // _searchController.add(result);
         } else {
           // debugPrint('WebSocketApiService: Processing generic response');
           _pendingRequests[requestId]!.complete(data);

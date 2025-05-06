@@ -3,10 +3,8 @@ import os
 PRODUCT_NAME = os.environ.get('PRODUCT_NAME', 'AiTube')
 PRODUCT_VERSION = "2.0.0"
 
-TEXT_MODEL = os.environ.get('HF_TEXT_MODEL',
-    #'HuggingFaceH4/zephyr-7b-beta'
-    'HuggingFaceTB/SmolLM2-1.7B-Instruct'
-)
+# you should use Mistral 7b instruct for good performance and accuracy balance
+TEXT_MODEL = os.environ.get('HF_TEXT_MODEL', '')
 
 # Environment variable to control maintenance mode
 MAINTENANCE_MODE = os.environ.get('MAINTENANCE_MODE', 'false').lower() in ('true', 'yes', '1', 't')
@@ -90,8 +88,8 @@ CONFIG_FOR_STANDARD_HF_USERS = {
     "max_rendering_time_per_client_per_video_in_sec": 15 * 60,
 
     "min_num_inference_steps": 2,
-    "default_num_inference_steps": 8,
-    "max_num_inference_steps": 8,
+    "default_num_inference_steps": 4,
+    "max_num_inference_steps": 4,
     
     "min_num_frames": 9, # 8 + 1
     "default_num_frames": 81, # 8*10 + 1
@@ -110,12 +108,12 @@ CONFIG_FOR_STANDARD_HF_USERS = {
     "max_clip_framerate": 25,
 
     "min_clip_width": 544,
-    "default_clip_width": 928, # 1216, # 768, # 640,
-    "max_clip_width": 928, # 1216, # 768, # 640,
+    "default_clip_width": 1216, # 928, # 1216, # 768, # 640,
+    "max_clip_width": 1216, # 928, # 1216, # 768, # 640,
 
     "min_clip_height": 320,
-    "default_clip_height": 512, # 448, # 416,
-    "max_clip_height": 512, # 448, # 416,
+    "default_clip_height": 672, # 512, # 448, # 416,
+    "max_clip_height": 672, # 512, # 448, # 416,
 }
 
 # Hugging Face users with a Pro may enjoy an improved experience
@@ -123,8 +121,8 @@ CONFIG_FOR_PRO_HF_USERS = {
     "max_rendering_time_per_client_per_video_in_sec": 20 * 60,
 
     "min_num_inference_steps": 2,
-    "default_num_inference_steps": 8,
-    "max_num_inference_steps": 8,
+    "default_num_inference_steps": 4,
+    "max_num_inference_steps": 4,
     
     "min_num_frames": 9, # 8 + 1
     "default_num_frames": 81, # 8*10 + 1
@@ -155,8 +153,8 @@ CONFIG_FOR_ADMIN_HF_USERS = {
     "max_rendering_time_per_client_per_video_in_sec": 60 * 60,
 
     "min_num_inference_steps": 2,
-    "default_num_inference_steps": 6,
-    "max_num_inference_steps": 8,
+    "default_num_inference_steps": 4,
+    "max_num_inference_steps": 4,
 
     "min_num_frames": 9, # 8 + 1
     "default_num_frames": 81, # (8 * 10) + 1
@@ -180,7 +178,7 @@ CONFIG_FOR_ADMIN_HF_USERS = {
 
     "min_clip_height": 320,
     "default_clip_height": 480,
-    "max_clip_height": 704,
+    "max_clip_height": 672,
 }
 
 CONFIG_FOR_ANONYMOUS_USERS = CONFIG_FOR_STANDARD_HF_USERS

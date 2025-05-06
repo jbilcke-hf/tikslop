@@ -196,10 +196,9 @@ class UserSession:
                 data = await self.search_queue.get()
                 request_id = data.get('requestId')
                 query = data.get('query', '').strip()
-                search_count = data.get('searchCount', 0)
                 attempt_count = data.get('attemptCount', 0)
 
-                logger.info(f"Processing search request for user {self.user_id}: query='{query}', search_count={search_count}, attempt={attempt_count}")
+                logger.info(f"Processing search request for user {self.user_id}: query='{query}', attempt={attempt_count}")
 
                 if not query:
                     logger.warning(f"Empty query received in request from user {self.user_id}: {data}")
@@ -213,12 +212,11 @@ class UserSession:
                     try:
                         search_result = await self.shared_api.search_video(
                             query,
-                            search_count=search_count,
                             attempt_count=attempt_count
                         )
                         
                         if search_result:
-                            logger.info(f"Search successful for user {self.user_id}, query '{query}' (#{search_count})")
+                            logger.info(f"Search successful for user {self.user_id}, query '{query}'")
                             result = {
                                 'action': 'search',
                                 'requestId': request_id,
@@ -226,7 +224,7 @@ class UserSession:
                                 'result': search_result
                             }
                         else:
-                            logger.warning(f"No results found for user {self.user_id}, query '{query}' (#{search_count})")
+                            logger.warning(f"No results found for user {self.user_id}, query '{query}'")
                             result = {
                                 'action': 'search',
                                 'requestId': request_id,
@@ -234,7 +232,7 @@ class UserSession:
                                 'error': 'No results found'
                             }
                     except Exception as e:
-                        logger.error(f"Search error for user {self.user_id}, query '{query}' (#{search_count}, attempt {attempt_count}): {str(e)}")
+                        logger.error(f"Search error for user {self.user_id}, query '{query}' (attempt {attempt_count}): {str(e)}")
                         result = {
                             'action': 'search',
                             'requestId': request_id,

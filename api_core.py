@@ -294,23 +294,31 @@ class VideoGenerationAPI:
                     raise Exception(f"Failed to download video: HTTP {response.status}")
                 return await response.read()
 
-    async def search_video(self, query: str, search_count: int = 0, attempt_count: int = 0) -> Optional[dict]:
+    async def search_video(self, query: str, attempt_count: int = 0) -> Optional[dict]:
         """Generate a single search result using HF text generation"""
         # Maximum number of attempts to generate a description without placeholder tags
         max_attempts = 2
         current_attempt = attempt_count
-        temperature = 0.7  # Initial temperature
+        # Use a random temperature between 0.68 and 0.72 to generate more diverse results
+        # and prevent duplicate results from successive calls with the same prompt
+        temperature = random.uniform(0.68, 0.72)
 
         while current_attempt <= max_attempts:
             prompt = f"""# Instruction
 Your response MUST be a YAML object containing a title and description, consistent with what we can find on a video sharing platform.
 Format your YAML response with only those fields: "title" (a short string) and "description" (string caption of the scene). Do not add any other field.
-In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view of a <AGE>yo <GENDER> <CHARACTERS> <ACTIONS>, <LOCATION> <LIGHTING> <WEATHER>". This is just an example! you MUST replace the <TAGS>!!. Don't forget to replace <STYLE> etc, by the actual fields!! Keep it minimalist but still descriptive, don't use bullets points, use simple words, go to the essential to describe style (cinematic, documentary footage, 3D rendering..), camera modes and angles, characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette.. etc.
+In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view of a <AGE>yo <GENDER> <CHARACTERS> <ACTIONS>, <LOCATION> <LIGHTING> <WEATHER>". This is just an example! you MUST replace the <TAGS>!!.
+Don't forget to replace <STYLE> etc, by the actual fields!!
+For the style, be creative, for instance you can use anything like a "documentary footage", "japanese animation", "movie scene", "tv series", "tv show", "security footage" etc.
+If the user ask for something specific eg an anime use "japanese animation, ", for a documentary about animals in nature use "documentary footage, " as a style etc.
+Keep it minimalist but still descriptive, don't use bullets points, use simple words, go to the essential to describe style (cinematic, documentary footage, 3D rendering..), camera modes and angles, characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette.. etc).
 The most import part is to describe the actions and movements in the scene, so don't forget that!
+Don't describe sound, so ever say things like "atmospheric music playing in the background".
+Instead describe the visual elements we can see in the background, be precise, (if there are anything, cars, objects, people, bricks, birds, clouds, trees, leaves or grass then say it so etc).
 Make the result unique and different from previous search results. ONLY RETURN YAML AND WITH ENGLISH CONTENT, NOT CHINESE - DO NOT ADD ANY OTHER COMMENT!
 
 # Context
-This is attempt {current_attempt} at generating search result number {search_count}.
+This is attempt {current_attempt}.
 
 # Input
 Describe the first scene/shot for: "{query}".
@@ -321,13 +329,12 @@ Describe the first scene/shot for: "{query}".
 title: \""""
 
             try:
-                #print(f"search_video(): calling self.inference_client.text_generation({prompt}, model={TEXT_MODEL}, max_new_tokens=150, temperature={temperature})")
                 response = await asyncio.get_event_loop().run_in_executor(
                     None,
                     lambda: self.inference_client.text_generation(
                         prompt,
                         model=TEXT_MODEL,
-                        max_new_tokens=150,
+                        max_new_tokens=200,
                         temperature=temperature
                     )
                 )
@@ -344,7 +351,7 @@ title: \""""
                 if not result or not isinstance(result, dict):
                     logger.error(f"Invalid result format: {result}")
                     current_attempt += 1
-                    temperature = 0.65  # Try with different temperature on next attempt
+                    temperature = random.uniform(0.68, 0.72)  # Try with different random temperature on next attempt
                     continue
 
                 # Extract fields with defaults
@@ -355,32 +362,20 @@ title: \""""
                 if re.search(r'<[A-Z_]+>', description):
                     #logger.warning(f"Description still contains placeholder tags: {description}")
                     if current_attempt < max_attempts:
-                        # Try again with a higher temperature
+                        # Try again with a different random temperature
                         current_attempt += 1
-                        temperature = 0.6
+                        temperature = random.uniform(0.68, 0.72)
                         continue
                     else:
                         # If we've reached max attempts, use the title as description
                         description = title
-                
-                # legacy system of tags -- I've decided to to generate them anymore to save some speed
-                tags = result.get('tags', [])
-                
-                # Ensure tags is a list of strings
-                if not isinstance(tags, list):
-                    tags = []
-                tags = [str(t).strip() for t in tags if t and isinstance(t, (str, int, float))]
-
-                # Don't generate thumbnails upfront - let the frontend generate them on demand
-                # This makes search results load faster
-                thumbnail = ""
 
                 # Return valid result with all required fields
                 return {
                     'id': str(uuid.uuid4()),
                     'title': title,
                     'description': description,
-                    'thumbnailUrl': thumbnail,
+                    'thumbnailUrl': '',
                     'videoUrl': '',
 
                     # not really used yet, maybe one day if we pre-generate or store content
@@ -390,23 +385,23 @@ title: \""""
 
                     'seed': generate_seed(),
                     'views': 0,
-                    'tags': tags
+                    'tags': []
                 }
 
             except Exception as e:
                 logger.error(f"Search video generation failed: {str(e)}")
                 current_attempt += 1
-                temperature = 0.7  # Try with different temperature on next attempt
+                temperature = random.uniform(0.68, 0.72)  # Try with different random temperature on next attempt
         
         # If all attempts failed, return a simple result with title only
         return {
             'id': str(uuid.uuid4()),
             'title': f"Video about {query}",
             'description': f"Video about {query}",
-            'thumbnailUrl': "",
+            'thumbnailUrl': '',
             'videoUrl': '',
             'isLatent': True,
-            'useFixedSeed': False,
+            'useFixedSeed': "query" in description.lower(),
             'seed': generate_seed(),
             'views': 0,
             'tags': []
@@ -523,6 +518,7 @@ Please write the caption for a new clip.
 5. Keep visual consistency with previous clips (in most cases you should repeat the same exact description of the location, characters etc but only change a few elements. If this is a webcam scenario, don't touch the camera orientation or focus)
 6. Return ONLY the caption text, no additional formatting or explanation
 7. Write in English, about 200 words.
+8. Keep the visual style consistant, but content as well (repeat the style, character, locations, appearance etc.. across scenes, when it makes sense).
 8. Your caption must describe visual elements of the scene in details, including: camera angle and focus, people's appearance, age, look, costumes, clothes, the location visual characteristics and geometry, lighting, action, objects, weather, textures, lighting.
 
 # Examples

@@ -75,10 +75,10 @@ class AiContentDisclaimer extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Scale text based on container width
-            final baseSize = constraints.maxWidth / 25;
-            final smallTextSize = baseSize * 0.7;
+            final baseSize = constraints.maxWidth / 40;
+            final smallTextSize = baseSize * 0.8;
             final mediumTextSize = baseSize;
-            final largeTextSize = baseSize * 1.3;
+            final largeTextSize = baseSize * 1.1;
             
             return Padding(
               padding: const EdgeInsets.all(16.0),
@@ -187,7 +187,7 @@ class AiContentDisclaimer extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'artificial intelligence',
+                    'a generative AI model',
                     style: GoogleFonts.arimo(
                       fontSize: largeTextSize,
                       color: Colors.white,
