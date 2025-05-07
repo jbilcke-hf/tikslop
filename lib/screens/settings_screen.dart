@@ -67,11 +67,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     obscureText: true,
                     onChanged: (value) async {
                       await _settingsService.setHuggingfaceApiKey(value);
+                      
+                      // Show a snackbar to indicate the API key was saved
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('API Key saved. Reconnecting...'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                      
                       // Reinitialize the websocket connection when the API key changes
                       final websocket = WebSocketApiService();
-                      if (websocket.isConnected) {
+                      try {
+                        // First dispose the current connection
                         await websocket.dispose();
+                        
+                        // Then create a new connection with the new API key
                         await websocket.connect();
+                        
+                        // Finally, initialize the connection completely
+                        await websocket.initialize();
+                        
+                        // Show success message
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Connected successfully with new API key'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        // Show error message if connection fails
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to connect: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     },
                   ),

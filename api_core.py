@@ -258,16 +258,24 @@ class VideoGenerationAPI:
                 lambda: self.hf_api.whoami(token=token)
             )
             
-            logger.info(f"Token valid for user: {user_info.name}")
+            # Handle both object and dict response formats from whoami
+            username = user_info.get('name') if isinstance(user_info, dict) else getattr(user_info, 'name', None)
+            is_pro = user_info.get('is_pro') if isinstance(user_info, dict) else getattr(user_info, 'is_pro', False)
+            
+            if not username:
+                logger.error(f"Could not determine username from user_info: {user_info}")
+                return 'anon'
+                
+            logger.info(f"Token valid for user: {username}")
             
             # Determine the user role based on the information
             user_role: UserRole
             
             # Check if the user is an admin
-            if user_info.name in ADMIN_ACCOUNTS:
+            if username in ADMIN_ACCOUNTS:
                 user_role = 'admin'
             # Check if the user has a pro account
-            elif hasattr(user_info, 'is_pro') and user_info.is_pro:
+            elif is_pro:
                 user_role = 'pro'
             else:
                 user_role = 'normal'
@@ -276,7 +284,7 @@ class VideoGenerationAPI:
             self.user_role_cache[token] = {
                 'role': user_role,
                 'timestamp': current_time,
-                'username': user_info.name
+                'username': username
             }
             
             return user_role

@@ -511,7 +511,7 @@ class _VideoScreenState extends State<VideoScreen> {
           IconButton(
             icon: const Icon(Icons.share, color: AiTubeColors.primary),
             onPressed: _shareVideo,
-            tooltip: 'Share video',
+            tooltip: 'Share prompt',
           ),
         ],
       ),
