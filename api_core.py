@@ -619,7 +619,7 @@ Your caption:"""
         
         # Use the same logic as regular video generation but with thumbnail settings
         try:
-            logger.info(f"[{request_id}] Generating thumbnail for video {video_id} with seed {seed}")
+            # logger.info(f"[{request_id}] Generating thumbnail for video {video_id} with seed {seed}")
             
             start_time = time.time()
             # Rest of thumbnail generation logic same as regular video but with optimized settings
@@ -684,16 +684,14 @@ Your caption:"""
         if orientation == 'PORTRAIT' and width > height:
             # Swap width and height for portrait orientation
             width, height = height, width
-            logger.info(f"Orientation: {orientation}, swapped dimensions to width={width}, height={height}")
+            # logger.info(f"Orientation: {orientation}, swapped dimensions to width={width}, height={height}")
         elif orientation == 'LANDSCAPE' and height > width:
             # Swap height and width for landscape orientation
             height, width = width, height
-            logger.info(f"Orientation: {orientation}, swapped dimensions to width={width}, height={height}")
+            #logger.info(f"Orientation: {orientation}, swapped dimensions to width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
         else:
-            logger.info(f"Orientation: {orientation}, using original dimensions width={width}, height={height}")
-        
-        # Log the user role and config values being used
-        logger.info(f"Using config values: width={width}, height={height}, num_frames={num_frames}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
+            #logger.info(f"Orientation: {orientation}, using original dimensions width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
+            pass
         
         # Generate the video with standard settings
         return await self._generate_video_content(
@@ -720,7 +718,7 @@ Your caption:"""
         request_id = options.get('request_id', str(uuid.uuid4())[:8])  # Get or generate request ID
         video_id = options.get('video_id', 'unknown')
         
-        logger.info(f"[{request_id}] Generating {'thumbnail' if is_thumbnail else 'video'} for video {video_id} with seed {seed}")
+        # logger.info(f"[{request_id}] Generating {'thumbnail' if is_thumbnail else 'video'} for video {video_id} with seed {seed}")
         
         json_payload = {
             "inputs": {

@@ -73,6 +73,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   
   /// Current orientation
   VideoOrientation _currentOrientation = VideoOrientation.LANDSCAPE;
+  
+  /// Last time orientation was changed
+  DateTime _lastOrientationChange = DateTime.now();
+  
+  /// Timer for debouncing orientation changes
+  Timer? _orientationDebounceTimer;
 
   @override
   void initState() {
@@ -134,11 +140,33 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   Future<void> _initializePlayer() async {
     if (_isDisposed) return;
     
-    // Get initial orientation
+    // Determine initial orientation based on platform
     final mediaQuery = MediaQuery.of(context);
-    _currentOrientation = mediaQuery.orientation == Orientation.landscape
-        ? VideoOrientation.LANDSCAPE
-        : VideoOrientation.PORTRAIT;
+    if (kIsWeb) {
+      // For web, use screen dimensions to determine initial orientation
+      final screenWidth = mediaQuery.size.width;
+      final screenHeight = mediaQuery.size.height;
+      final aspectRatio = screenWidth / screenHeight;
+      
+      // debugPrint('Initial screen size: ${screenWidth.toInt()}x${screenHeight.toInt()}, aspect ratio: ${aspectRatio.toStringAsFixed(2)}');
+      
+      // Set initial orientation based on aspect ratio
+      if (aspectRatio > 1.2) {
+        _currentOrientation = VideoOrientation.LANDSCAPE;
+      } else if (aspectRatio < 0.8) {
+        _currentOrientation = VideoOrientation.PORTRAIT;
+      } else {
+        // Default to landscape for square-ish windows
+        _currentOrientation = VideoOrientation.LANDSCAPE;
+      }
+      
+      // debugPrint('Initial orientation set to: ${_currentOrientation.name}');
+    } else {
+      // For mobile, use device orientation
+      _currentOrientation = mediaQuery.orientation == Orientation.landscape
+          ? VideoOrientation.LANDSCAPE
+          : VideoOrientation.PORTRAIT;
+    }
     
     _playbackController = PlaybackController();
     _playbackController.isLoading = true;
@@ -160,6 +188,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
       
       // Initialize buffer manager with current orientation
       await _bufferManager.initialize();
+      
+      // Update orientation after initialization
+      await _bufferManager.updateOrientation(_currentOrientation);
     }
     
     if (!_isDisposed && mounted) {
@@ -272,8 +303,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
       debugPrint('Error playing clip: $e');
       if (!_isDisposed) {
         if (!_isDisposed && mounted) {
-        setState(() => _playbackController.isLoading = true);
-      }
+          setState(() => _playbackController.isLoading = true);
+        }
         await Future.delayed(const Duration(milliseconds: 500));
       }
     }
@@ -366,35 +397,41 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
     // Dispose controllers and timers
     _playbackController.dispose();
     _bufferManager.dispose();
+    _orientationDebounceTimer?.cancel();
     
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Get the actual screen/window dimensions from MediaQuery
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
+    
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Determine orientation based on form factor rather than device orientation
-        // This ensures proper behavior on desktop platforms
+        // Determine orientation based on the screen dimensions rather than the constraints
+        // This avoids issues with infinite heights in ScrollViews
         VideoOrientation newOrientation;
         
-        if (kIsWeb || !defaultTargetPlatform.isMobile) {
-          // For web and desktop platforms, use form factor (width vs height) to determine orientation
-          newOrientation = constraints.maxWidth > constraints.maxHeight 
-              ? VideoOrientation.LANDSCAPE 
-              : VideoOrientation.PORTRAIT;
+        if (kIsWeb) {
+          // Use the screen dimensions to determine orientation
+          // This is more reliable than constraints in scrollable containers
+          double aspectRatio = screenWidth / screenHeight;
+          // debugPrint('Screen size: ${screenWidth.toInt()}x${screenHeight.toInt()}, aspect ratio: ${aspectRatio.toStringAsFixed(2)}');
           
-          // Add a small buffer so we don't change orientation too frequently on borderline cases
-          if (newOrientation == VideoOrientation.LANDSCAPE && 
-              constraints.maxWidth / constraints.maxHeight < 1.05) {
-            newOrientation = _currentOrientation;
-          } else if (newOrientation == VideoOrientation.PORTRAIT &&
-              constraints.maxHeight / constraints.maxWidth < 1.05) {
+          if (aspectRatio > 1.2) {
+            newOrientation = VideoOrientation.LANDSCAPE;
+          } else if (aspectRatio < 0.8) {
+            newOrientation = VideoOrientation.PORTRAIT;
+          } else {
+            // In middle zone (near square), maintain current orientation for stability
             newOrientation = _currentOrientation;
           }
         } else {
-          // For mobile platforms, use the device orientation
-          final orientation = MediaQuery.of(context).orientation;
+          // For mobile platforms, still use the device orientation
+          final orientation = mediaQuery.orientation;
           newOrientation = orientation == Orientation.landscape
               ? VideoOrientation.LANDSCAPE
               : VideoOrientation.PORTRAIT;
@@ -402,21 +439,87 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
         
         // Check if orientation changed
         if (newOrientation != _currentOrientation) {
-          debugPrint('Orientation changed to ${newOrientation.name} (form factor: ${constraints.maxWidth}x${constraints.maxHeight})');
-          _currentOrientation = newOrientation;
+          // Ensure we don't change orientation too frequently
+          final now = DateTime.now();
+          final timeSinceLastChange = now.difference(_lastOrientationChange);
           
-          // Update buffer manager orientation (without awaiting to avoid blocking UI)
-          Future.microtask(() async {
-            if (!_isDisposed && mounted) {
-              await _bufferManager.updateOrientation(newOrientation);
-            }
-          });
+          // Debug log the orientation change request with more details
+          // debugPrint('Orientation change request: ${_currentOrientation.name} -> ${newOrientation.name}');
+          // debugPrint('  • Current orientation: ${_currentOrientation.name}');
+          // debugPrint('  • New orientation: ${newOrientation.name}');
+          // debugPrint('  • Screen size: ${screenWidth.toInt()}x${screenHeight.toInt()}');
+          // debugPrint('  • Aspect ratio: ${(screenWidth / screenHeight).toStringAsFixed(2)}');
+          // debugPrint('  • Time since last change: ${timeSinceLastChange.inMilliseconds}ms');
+     
+          // Cancel any pending orientation change
+          _orientationDebounceTimer?.cancel();
+          
+          if (timeSinceLastChange.inMilliseconds >= 500) {
+            // debugPrint('Applying immediate orientation change to ${newOrientation.name}');
+            
+            // Force immediate orientation change
+            setState(() {
+              _currentOrientation = newOrientation;
+              _lastOrientationChange = now;
+            });
+            
+            // Update buffer manager orientation
+            _bufferManager.updateOrientation(newOrientation);
+          } else {
+            // For recent changes, set a short timer to check if the orientation remains stable
+            _orientationDebounceTimer = Timer(const Duration(milliseconds: 800), () {
+              if (!_isDisposed && mounted) {
+                // Get the latest screen dimensions
+                final latestMediaQuery = MediaQuery.of(context);
+                final latestWidth = latestMediaQuery.size.width;
+                final latestHeight = latestMediaQuery.size.height;
+                final latestAspectRatio = latestWidth / latestHeight;
+                
+                // debugPrint('Delayed check - screen size: ${latestWidth.toInt()}x${latestHeight.toInt()}, ratio: ${latestAspectRatio.toStringAsFixed(2)}');
+                
+                // Determine if the orientation is still requesting the same change
+                VideoOrientation latestOrientation;
+                if (latestAspectRatio > 1.2) {
+                  latestOrientation = VideoOrientation.LANDSCAPE;
+                } else if (latestAspectRatio < 0.8) {
+                  latestOrientation = VideoOrientation.PORTRAIT;
+                } else {
+                  latestOrientation = _currentOrientation;
+                }
+                
+                // Only apply the change if the orientation is still the same as requested
+                if (latestOrientation == newOrientation && _currentOrientation != newOrientation) {
+                  // debugPrint('Applying delayed orientation change to ${newOrientation.name}');
+                  
+                  if (!_isDisposed && mounted) {
+                    setState(() {
+                      _currentOrientation = newOrientation;
+                      _lastOrientationChange = DateTime.now();
+                    });
+                    
+                    // Update buffer manager orientation
+                    _bufferManager.updateOrientation(newOrientation);
+                  }
+                }
+              }
+            });
+          }
         }
         
         // Video player layout
         final controller = _playbackController.currentController;
         final aspectRatio = controller?.value.aspectRatio ?? 16/9;
-        final playerHeight = constraints.maxWidth / aspectRatio;
+        
+        // Calculate player height based on the available width from constraints
+        // (which will be finite in the row/column layout)
+        double playerHeight = constraints.maxWidth / aspectRatio;
+        
+        // Safety check - if width was somehow infinite or the result is invalid
+        if (!constraints.maxWidth.isFinite || !playerHeight.isFinite) {
+          // Use a percentage of screen height as fallback
+          playerHeight = screenHeight * 0.4;
+          debugPrint('Using fallback height: $playerHeight (percentage of screen height)');
+        }
 
         return SizedBox(
           width: constraints.maxWidth,

@@ -444,7 +444,9 @@ class _VideoScreenState extends State<VideoScreen> {
                   )
                 : Column(
                     children: [
-                      _buildMainContent(),
+                      Expanded(
+                        child: _buildMainContent(),
+                      ),
                       if (Configuration.instance.showChatInVideoView) ...[
                         const SizedBox(height: 16),
                         Expanded(
@@ -466,23 +468,27 @@ class _VideoScreenState extends State<VideoScreen> {
   }
 
   Widget _buildMainContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Video Player with unique key to force recreation when needed
-          VideoPlayerWidget(
-            key: _videoPlayerKey,
-            video: _videoData,
-            initialThumbnailUrl: _videoData.thumbnailUrl,
-            autoPlay: true,
-          ),
-          const SizedBox(height: 16),
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Video Player with unique key to force recreation when needed
+            VideoPlayerWidget(
+              key: _videoPlayerKey,
+              video: _videoData,
+              initialThumbnailUrl: _videoData.thumbnailUrl,
+              autoPlay: true,
+            ),
+            const SizedBox(height: 16),
 
-          // Collapsible Title and Description Section
-          _buildCollapsibleInfoSection(),
-        ],
+            // Collapsible Title and Description Section
+            _buildCollapsibleInfoSection(),
+          ],
+        ),
       ),
     );
   }
