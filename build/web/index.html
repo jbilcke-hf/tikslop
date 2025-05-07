@@ -18,21 +18,172 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="AI-powered video generation platform">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="aitube2">
+  <meta name="apple-mobile-web-app-title" content="AITube">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>aitube2</title>
+  <title>AITube</title>
   <link rel="manifest" href="manifest.json">
+  
+  <style>
+    html, body {
+      background-color: #1a1a1a;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #1a1a1a;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    
+    .logo-container {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .logo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      animation: shake 1.2s infinite ease-in-out;
+      transform-origin: bottom center;
+    }
+    
+    .loading-text {
+      color: #ffffff;
+      font-size: 20px;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    
+    @keyframes shake {
+      0%, 100% {
+        transform: translateX(0) rotate(0deg);
+      }
+      10% {
+        transform: translateX(-5px) rotate(-10deg);
+      }
+      20% {
+        transform: translateX(5px) rotate(10deg);
+      }
+      30% {
+        transform: translateX(-5px) rotate(-10deg);
+      }
+      40% {
+        transform: translateX(5px) rotate(10deg);
+      }
+      50% {
+        transform: translateX(0) rotate(0deg);
+      }
+      /* Pause between 50% and 100% */
+    }
+    
+    #flutter-target {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  </style>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <div id="flutter-target"></div>
+  
+  <div class="loading-container" id="loading">
+    <div class="logo-container">
+      <img src="aitube.svg" alt="AITube Logo" class="logo">
+    </div>
+    <div class="loading-text">Loading AITube...</div>
+  </div>
+
+  <script>
+    // Hide loading screen once Flutter app is ready
+    window.addEventListener('flutter-first-frame', function() {
+      var loading = document.getElementById('loading');
+      var flutterTarget = document.getElementById('flutter-target');
+      
+      // Fade out loading screen
+      loading.style.opacity = '0';
+      loading.style.transition = 'opacity 0.5s ease';
+      
+      // Show Flutter app
+      flutterTarget.style.display = 'block';
+      
+      // Remove loading completely after transition
+      setTimeout(function() {
+        loading.style.display = 'none';
+      }, 500);
+    });
+  </script>
+  
+  <!-- Add version parameter for cache busting -->
+  <script src="flutter_bootstrap.js?v=1746632609" async></script>
+  
+  <!-- Add cache busting script -->
+  <script>
+    // Check for app updates on each load
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.ready.then(function(registration) {
+          // Check for updates every time the page loads
+          registration.update();
+          
+          // Listen for updates
+          registration.addEventListener('updatefound', function() {
+            // New service worker found
+            const newWorker = registration.installing;
+            
+            newWorker.addEventListener('statechange', function() {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New content is available, prompt user to refresh
+                if (confirm('A new version is available. Reload now?')) {
+                  window.location.reload();
+                }
+              }
+            });
+          });
+        });
+      });
+    }
+  </script>
 </body>
 </html>
