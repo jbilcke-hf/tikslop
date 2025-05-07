@@ -15,6 +15,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import '../models/search_state.dart';
 import '../models/video_result.dart';
+import '../models/video_orientation.dart';
 
 class WebSocketRequest {
   final String requestId;
@@ -1136,6 +1137,7 @@ class WebSocketApiService {
     int width = 512,
     int seed = 0,
     Duration timeout = const Duration(seconds: 12), // we keep things super tight, as normally a video only takes 2~3s to generate
+    VideoOrientation orientation = VideoOrientation.LANDSCAPE,
   }) async {
     final settings = SettingsService();
 
@@ -1155,6 +1157,7 @@ class WebSocketApiService {
             'height': Configuration.instance.originalClipHeight,
             'width': Configuration.instance.originalClipWidth,
             'num_frames': Configuration.instance.originalClipNumberOfFrames,
+            'orientation': orientation.value, // Add orientation parameter
             'seed': seed,
           },
         },

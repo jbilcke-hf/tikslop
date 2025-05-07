@@ -5,6 +5,7 @@ import 'package:aitube2/config/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
 import '../../models/video_result.dart';
+import '../../models/video_orientation.dart';
 import '../websocket_api_service.dart';
 import '../../utils/seed.dart';
 import 'clip_states.dart';
@@ -87,8 +88,14 @@ class ClipQueueManager {
   /// Unmodifiable view of the clip history
   List<VideoClip> get clipHistory => List.unmodifiable(_clipHistory);
 
+  /// Current orientation of clips being generated
+  VideoOrientation _currentOrientation = VideoOrientation.LANDSCAPE;
+  
+  /// Get the current orientation
+  VideoOrientation get currentOrientation => _currentOrientation;
+
   /// Initialize the clip queue
-  Future<void> initialize() async {
+  Future<void> initialize({VideoOrientation? orientation}) async {
     if (_isDisposed) return;
     
     _logger.logStateChange(
@@ -100,6 +107,12 @@ class ClipQueueManager {
     );
     _clipBuffer.clear();
     
+    // Set initial orientation
+    _currentOrientation = orientation ?? getOrientationFromDimensions(
+      Configuration.instance.originalClipWidth, 
+      Configuration.instance.originalClipHeight
+    );
+    
     try {
       final bufferSize = Configuration.instance.renderQueueBufferSize;
       while (_clipBuffer.length < bufferSize) {
@@ -108,9 +121,10 @@ class ClipQueueManager {
         final newClip = VideoClip(
           prompt: "${video.title}\n${video.description}",
           seed: video.useFixedSeed && video.seed > 0 ? video.seed : generateSeed(),
+          orientation: _currentOrientation,
         );
         _clipBuffer.add(newClip);
-        ClipQueueConstants.logEvent('Added initial clip ${newClip.seed} to buffer');
+        ClipQueueConstants.logEvent('Added initial clip ${newClip.seed} to buffer with orientation: ${_currentOrientation.name}');
       }
 
       if (_isDisposed) return;
@@ -182,9 +196,10 @@ class ClipQueueManager {
       final newClip = VideoClip(
         prompt: "${video.title}\n${video.description}",
         seed: video.useFixedSeed && video.seed > 0 ? video.seed : generateSeed(),
+        orientation: _currentOrientation,
       );
       _clipBuffer.add(newClip);
-      ClipQueueConstants.logEvent('Added new clip ${newClip.seed} to maintain buffer size');
+      ClipQueueConstants.logEvent('Added new clip ${newClip.seed} with orientation ${_currentOrientation.name} to maintain buffer size');
     }
 
     // Process played clips first
@@ -301,13 +316,14 @@ class ClipQueueManager {
       _clipBuffer.remove(clip);
       _clipHistory.add(clip);
       
-      // Add a new pending clip
+      // Add a new pending clip with current orientation
       final newClip = VideoClip(
         prompt: "${video.title}\n${video.description}",
         seed: video.useFixedSeed && video.seed > 0 ? video.seed : generateSeed(),
+        orientation: _currentOrientation,
       );
       _clipBuffer.add(newClip);
-      ClipQueueConstants.logEvent('Replaced played clip ${clip.seed} with new clip ${newClip.seed}');
+      ClipQueueConstants.logEvent('Replaced played clip ${clip.seed} with new clip ${newClip.seed} using orientation ${_currentOrientation.name}');
     }
     
     // Immediately trigger buffer fill to start generating new clips
@@ -366,6 +382,32 @@ class ClipQueueManager {
   void fillBuffer() {
     ClipQueueConstants.logEvent('Manual buffer fill requested');
     _fillBuffer();
+  }
+  
+  /// Handle orientation change
+  Future<void> updateOrientation(VideoOrientation newOrientation) async {
+    if (_currentOrientation == newOrientation) {
+      ClipQueueConstants.logEvent('Orientation unchanged: ${newOrientation.name}');
+      return;
+    }
+    
+    ClipQueueConstants.logEvent('Orientation changed from ${_currentOrientation.name} to ${newOrientation.name}');
+    _currentOrientation = newOrientation;
+    
+    // Cancel any active generations
+    for (var clipSeed in _activeGenerations.toList()) {
+      _activeGenerations.remove(clipSeed);
+    }
+    
+    // Clear buffer and history
+    _clipBuffer.clear();
+    _clipHistory.clear();
+    
+    // Re-initialize the queue with the new orientation
+    await initialize(orientation: newOrientation);
+    
+    // Notify listeners
+    onQueueUpdated?.call();
   }
 
   /// Print the current state of the queue

@@ -3,10 +3,10 @@
 /// Enum representing the orientation of a video clip.
 enum VideoOrientation {
   /// Landscape orientation (horizontal, typically 16:9)
-  landscape,
+  LANDSCAPE,
   
   /// Portrait orientation (vertical, typically 9:16)
-  portrait
+  PORTRAIT
 }
 
 /// Extension methods for VideoOrientation enum
@@ -14,24 +14,34 @@ extension VideoOrientationExtension on VideoOrientation {
   /// Get the string representation of the orientation
   String get name {
     switch (this) {
-      case VideoOrientation.landscape:
-        return 'landscape';
-      case VideoOrientation.portrait:
-        return 'portrait';
+      case VideoOrientation.LANDSCAPE:
+        return 'LANDSCAPE';
+      case VideoOrientation.PORTRAIT:
+        return 'PORTRAIT';
     }
+  }
+  
+  /// Value for API communication
+  String get value {
+    return name;
   }
   
   /// Get the orientation from a string
   static VideoOrientation fromString(String? str) {
-    if (str?.toLowerCase() == 'portrait') {
-      return VideoOrientation.portrait;
+    if (str?.toUpperCase() == 'PORTRAIT') {
+      return VideoOrientation.PORTRAIT;
     }
-    return VideoOrientation.landscape; // Default to landscape
+    return VideoOrientation.LANDSCAPE; // Default to landscape
   }
   
   /// Whether this orientation is portrait
-  bool get isPortrait => this == VideoOrientation.portrait;
+  bool get isPortrait => this == VideoOrientation.PORTRAIT;
   
   /// Whether this orientation is landscape
-  bool get isLandscape => this == VideoOrientation.landscape;
+  bool get isLandscape => this == VideoOrientation.LANDSCAPE;
+}
+
+/// Helper function to determine orientation from width and height
+VideoOrientation getOrientationFromDimensions(int width, int height) {
+  return width >= height ? VideoOrientation.LANDSCAPE : VideoOrientation.PORTRAIT;
 }

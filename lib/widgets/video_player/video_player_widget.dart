@@ -1,11 +1,15 @@
 // lib/widgets/video_player/video_player_widget.dart
 
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:io' show Platform;
 import 'package:aitube2/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
 import 'package:aitube2/models/video_result.dart';
+import 'package:aitube2/models/video_orientation.dart';
 import 'package:aitube2/theme/colors.dart';
 
 // Import components
@@ -15,6 +19,13 @@ import 'ui_components.dart' as ui;
 
 // Conditionally import dart:html for web platform
 import '../web_utils.dart' if (dart.library.html) 'dart:html' as html;
+
+// Extension to check if target platform is mobile
+extension TargetPlatformExtension on TargetPlatform {
+  bool get isMobile => 
+      this == TargetPlatform.iOS || 
+      this == TargetPlatform.android;
+}
 
 /// A widget that plays video clips with buffering and automatic playback
 class VideoPlayerWidget extends StatefulWidget {
@@ -59,6 +70,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   
   /// Whether playback was happening before going to background
   bool _wasPlayingBeforeBackground = false;
+  
+  /// Current orientation
+  VideoOrientation _currentOrientation = VideoOrientation.LANDSCAPE;
 
   @override
   void initState() {
@@ -120,6 +134,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   Future<void> _initializePlayer() async {
     if (_isDisposed) return;
     
+    // Get initial orientation
+    final mediaQuery = MediaQuery.of(context);
+    _currentOrientation = mediaQuery.orientation == Orientation.landscape
+        ? VideoOrientation.LANDSCAPE
+        : VideoOrientation.PORTRAIT;
+    
     _playbackController = PlaybackController();
     _playbackController.isLoading = true;
     _playbackController.isInitialLoad = true;
@@ -138,7 +158,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
         },
       );
       
-      // Initialize buffer manager
+      // Initialize buffer manager with current orientation
       await _bufferManager.initialize();
     }
     
@@ -354,6 +374,46 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Determine orientation based on form factor rather than device orientation
+        // This ensures proper behavior on desktop platforms
+        VideoOrientation newOrientation;
+        
+        if (kIsWeb || !defaultTargetPlatform.isMobile) {
+          // For web and desktop platforms, use form factor (width vs height) to determine orientation
+          newOrientation = constraints.maxWidth > constraints.maxHeight 
+              ? VideoOrientation.LANDSCAPE 
+              : VideoOrientation.PORTRAIT;
+          
+          // Add a small buffer so we don't change orientation too frequently on borderline cases
+          if (newOrientation == VideoOrientation.LANDSCAPE && 
+              constraints.maxWidth / constraints.maxHeight < 1.05) {
+            newOrientation = _currentOrientation;
+          } else if (newOrientation == VideoOrientation.PORTRAIT &&
+              constraints.maxHeight / constraints.maxWidth < 1.05) {
+            newOrientation = _currentOrientation;
+          }
+        } else {
+          // For mobile platforms, use the device orientation
+          final orientation = MediaQuery.of(context).orientation;
+          newOrientation = orientation == Orientation.landscape
+              ? VideoOrientation.LANDSCAPE
+              : VideoOrientation.PORTRAIT;
+        }
+        
+        // Check if orientation changed
+        if (newOrientation != _currentOrientation) {
+          debugPrint('Orientation changed to ${newOrientation.name} (form factor: ${constraints.maxWidth}x${constraints.maxHeight})');
+          _currentOrientation = newOrientation;
+          
+          // Update buffer manager orientation (without awaiting to avoid blocking UI)
+          Future.microtask(() async {
+            if (!_isDisposed && mounted) {
+              await _bufferManager.updateOrientation(newOrientation);
+            }
+          });
+        }
+        
+        // Video player layout
         final controller = _playbackController.currentController;
         final aspectRatio = controller?.value.aspectRatio ?? 16/9;
         final playerHeight = constraints.maxWidth / aspectRatio;

@@ -99,10 +99,11 @@ class ClipGenerationHandler {
         return;
       }
 
-      // Generate new video with timeout
+      // Generate new video with timeout, passing the orientation
       String videoData = await _websocketService.generateVideo(
         video,
         seed: clip.seed,
+        orientation: clip.orientation,
       ).timeout(ClipQueueConstants.generationTimeout);
 
       if (!_isDisposed) {

@@ -2,7 +2,9 @@
 
 import 'dart:async';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/foundation.dart';
 import 'clip_states.dart';
+import '../../models/video_orientation.dart';
 
 /// Represents a video clip in the queue
 class VideoClip {
@@ -17,6 +19,9 @@ class VideoClip {
   
   /// Current state of the clip
   ClipState state;
+  
+  /// Device orientation for the clip
+  final VideoOrientation orientation;
   
   /// Base64 encoded video data
   String? base64Data;
@@ -47,6 +52,7 @@ class VideoClip {
     String? id,
     required this.prompt,
     required this.seed,
+    this.orientation = VideoOrientation.LANDSCAPE,
     this.state = ClipState.generationPending,
     this.base64Data,
   }): id = id ?? const Uuid().v4(); 

@@ -677,6 +677,21 @@ Your caption:"""
         num_inference_steps = self.get_config_value(user_role, 'num_inference_steps', options)
         frame_rate = self.get_config_value(user_role, 'clip_framerate', options)
         
+        # Get orientation from options
+        orientation = options.get('orientation', 'LANDSCAPE')
+        
+        # Adjust width and height based on orientation if needed
+        if orientation == 'PORTRAIT' and width > height:
+            # Swap width and height for portrait orientation
+            width, height = height, width
+            logger.info(f"Orientation: {orientation}, swapped dimensions to width={width}, height={height}")
+        elif orientation == 'LANDSCAPE' and height > width:
+            # Swap height and width for landscape orientation
+            height, width = width, height
+            logger.info(f"Orientation: {orientation}, swapped dimensions to width={width}, height={height}")
+        else:
+            logger.info(f"Orientation: {orientation}, using original dimensions width={width}, height={height}")
+        
         # Log the user role and config values being used
         logger.info(f"Using config values: width={width}, height={height}, num_frames={num_frames}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
         
@@ -725,7 +740,7 @@ Your caption:"""
                 "double_num_frames": False,  # <- False for real-time generation
                 "fps": frame_rate,
                 "super_resolution": False,  # <- False for real-time generation
-                "grain_amount": 0,  # No film grain
+                "grain_amount": 0,  # No film grain (on low-res, low-quality generation the effects aren't worth it + it adds weight to the MP4 payload)
             }
         }
         
@@ -772,7 +787,7 @@ Your caption:"""
                             raise Exception(f"Video generation failed: HTTP {response.status} - {error_text}")
                         
                         result = await response.json()
-                        logger.info(f"[{request_id}] Successfully parsed JSON response")
+                        #logger.info(f"[{request_id}] Successfully parsed JSON response")
                         
                         if "error" in result:
                             error_msg = result['error']
@@ -793,7 +808,7 @@ Your caption:"""
                         
                         # Get data size
                         data_size = len(video_data_uri)
-                        logger.info(f"[{request_id}] Received video data: {data_size} chars")
+                        #logger.info(f"[{request_id}] Received video data: {data_size} chars")
                         
                         # Reset error count on successful call
                         endpoint.error_count = 0

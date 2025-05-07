@@ -7,6 +7,7 @@ import 'package:aitube2/services/clip_queue/video_clip.dart';
 import 'package:aitube2/services/clip_queue/clip_queue_manager.dart';
 import 'package:video_player/video_player.dart';
 import 'package:aitube2/models/video_result.dart';
+import 'package:aitube2/models/video_orientation.dart';
 
 /// Manages buffering and clip preloading for video player
 class BufferManager {
@@ -25,10 +26,16 @@ class BufferManager {
   /// Timer for debug printing
   Timer? debugTimer;
   
+  /// The video result
+  final VideoResult video;
+  
+  /// Callback when queue is updated
+  final Function() onQueueUpdated;
+  
   /// Constructor
   BufferManager({
-    required VideoResult video,
-    required Function() onQueueUpdated,
+    required this.video,
+    required this.onQueueUpdated,
     ClipQueueManager? existingQueueManager,
   }) : queueManager = existingQueueManager ?? ClipQueueManager(
          video: video,
@@ -147,6 +154,20 @@ class BufferManager {
       ensureBufferFull();
     }
     return null;
+  }
+  
+  /// Update the orientation when device rotates
+  Future<void> updateOrientation(VideoOrientation newOrientation) async {
+    if (isDisposed) return;
+    if (queueManager.currentOrientation == newOrientation) return;
+    
+    debugPrint('Updating video orientation to ${newOrientation.name}');
+    
+    // Start loading progress again as we'll be regenerating clips
+    startLoadingProgress();
+    
+    // Update the orientation in the queue manager
+    await queueManager.updateOrientation(newOrientation);
   }
   
   /// Dispose resources
