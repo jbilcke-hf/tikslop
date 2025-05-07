@@ -7,6 +7,8 @@ import 'package:aitube2/widgets/search_box.dart';
 import 'package:aitube2/widgets/web_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:universal_html/html.dart' if (dart.library.io) 'package:aitube2/services/html_stub.dart' as html;
 import '../config/config.dart';
 import '../models/video_result.dart';
 import '../services/websocket_api_service.dart';
@@ -260,6 +262,50 @@ class _VideoScreenState extends State<VideoScreen> {
     }
   }
 
+  void _shareVideo() async {
+
+    // For non-web platforms
+    final uri = Uri.parse("https://aitube.at");
+    final params = Map<String, String>.from(uri.queryParameters);
+    
+    // Ensure title and description are in the URL parameters
+    params['title'] = _videoData.title;
+    params['description'] = _videoData.description;
+    
+    // Create a new URL with updated parameters
+    final shareUri = uri.replace(queryParameters: params);
+    final shareUrl = shareUri.toString();
+
+
+    try {
+      // this is a text to share on social media
+      // final textToCopy = 'Messing around with #aitube2 👀 $shareUrl';
+      
+      // but for now let's just use the url
+      final textToCopy = shareUrl;
+      
+      // Copy to clipboard
+      await Clipboard.setData(ClipboardData(text: textToCopy));
+      
+      // Show a temporary "Copied!" message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Copied to clipboard!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error copying to clipboard: $e')),
+        );
+      }
+    }
+  }
+
   // Reference to the current VideoPlayerWidget to force reset when needed
   Key _videoPlayerKey = UniqueKey();
 
@@ -275,8 +321,7 @@ class _VideoScreenState extends State<VideoScreen> {
     
     // Update URL parameter on web platform
     if (kIsWeb) {
-      // Update view parameter with the description instead of the query
-      // We'll get the actual description from the search result
+      // We'll update title and description parameters after we get the search result
       // removeUrlParameter('search') will happen after we get the result
     }
 
@@ -297,8 +342,9 @@ class _VideoScreenState extends State<VideoScreen> {
         
         // Now that we have the result, update the URL parameter on web platform
         if (kIsWeb) {
-          // Update view parameter with the description
-          updateUrlParameter('view', result.description);
+          // Update title and description parameters
+          updateUrlParameter('title', result.title);
+          updateUrlParameter('description', result.description);
           removeUrlParameter('search');
         }
       }
@@ -331,12 +377,11 @@ class _VideoScreenState extends State<VideoScreen> {
                   onPressed: () {
                     // Restore the search parameter in URL when navigating back
                     if (kIsWeb) {
-                      // Remove the view parameter
-                      removeUrlParameter('view');
+                      // Remove the title and description parameters
+                      removeUrlParameter('title');
+                      removeUrlParameter('description');
                       
                       // Get the search query from the video description
-                      // This matches what we stored in the view parameter when
-                      // navigating to this screen
                       final searchQuery = _videoData.description.trim();
                       if (searchQuery.isNotEmpty) {
                         // Update URL to show search parameter again
@@ -446,12 +491,23 @@ class _VideoScreenState extends State<VideoScreen> {
     return ExpansionTile(
       initiallyExpanded: false,
       tilePadding: EdgeInsets.zero,
-      title: Text(
-        _videoData.title,
-        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-          color: AiTubeColors.onBackground,
-          fontWeight: FontWeight.bold,
-        ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _videoData.title,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: AiTubeColors.onBackground,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.share, color: AiTubeColors.primary),
+            onPressed: _shareVideo,
+            tooltip: 'Share video',
+          ),
+        ],
       ),
       iconColor: AiTubeColors.primary,
       collapsedIconColor: AiTubeColors.primary,

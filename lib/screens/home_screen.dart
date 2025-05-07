@@ -468,9 +468,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         
                         // Update URL parameter on web platform
                         if (kIsWeb) {
-                          // Update view parameter and remove search parameter
-                          // Use description instead of title for the URL parameter
-                          updateUrlParameter('view', _results[index].description);
+                          // Update title and description parameters and remove search parameter
+                          updateUrlParameter('title', _results[index].title);
+                          updateUrlParameter('description', _results[index].description);
                           removeUrlParameter('search');
                         }
                         

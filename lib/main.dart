@@ -42,33 +42,47 @@ void main() async {
           homeWidget = HomeScreen(initialSearchQuery: searchQuery);
         }
       } 
-      // Handle view parameter (higher priority than search if both are present)
-      else if (params.containsKey('view')) {
-        final viewQuery = params['view'] ?? '';
-        if (viewQuery.isNotEmpty) {
-          // Create a loading widget that will transition to VideoScreen once search completes
-          homeWidget = FutureBuilder<VideoResult>(
-            future: wsService.search(viewQuery),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                // Navigate to VideoScreen once we have the result
-                return VideoScreen(video: snapshot.data!);
-              } else if (snapshot.hasError) {
-                return Scaffold(
-                  body: Center(
-                    child: Text('Error loading video: ${snapshot.error}'),
-                  ),
-                );
-              } else {
-                // Show loading indicator while waiting
-                return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-            },
-          );
+      // Handle title parameter
+      else if (params.containsKey('title')) {
+        final titleQuery = params['title'] ?? '';
+        
+        if (titleQuery.isNotEmpty) {
+          // If both title and description are provided, create video directly
+          if (params.containsKey('description')) {
+            final description = params['description'] ?? '';
+            final videoResult = VideoResult(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              title: titleQuery,
+              description: description,
+              thumbnailUrl: '',
+              tags: [],
+            );
+            homeWidget = VideoScreen(video: videoResult);
+          } else {
+            // If only title is provided, use search like before (same as legacy 'view' parameter)
+            homeWidget = FutureBuilder<VideoResult>(
+              future: wsService.search(titleQuery),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                  // Navigate to VideoScreen once we have the result
+                  return VideoScreen(video: snapshot.data!);
+                } else if (snapshot.hasError) {
+                  return Scaffold(
+                    body: Center(
+                      child: Text('Error loading video: ${snapshot.error}'),
+                    ),
+                  );
+                } else {
+                  // Show loading indicator while waiting
+                  return const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+              },
+            );
+          }
         }
       }
     }
