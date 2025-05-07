@@ -1,5 +1,5 @@
 ---
-title: AiTube2
+title: "#aitube2"
 emoji: 🍿
 colorFrom: red
 colorTo: red
@@ -16,7 +16,7 @@ hf_oauth_scopes:
 ---
 
 
-# AiTube2
+# #aitube2
 
 ## Configuration
 
@@ -29,22 +29,22 @@ hf_oauth_scopes:
 
 ## News
 
-aitube2 is coming sooner than expected!
+#aitube2 is coming sooner than expected!
 
 Stay hooked at @flngr on X!
 
 
 ## What is AiTube?
 
-AiTube 2 is a reboot of [AiTube 1](https://x.com/danielpikl/status/1737882643625078835), a project made in 2023 which generated AI videos in the background using LLM agents, to simulate an AI generated video platform.
+#aitube2 is a reboot of [AiTube 1](https://x.com/danielpikl/status/1737882643625078835), a project made in 2023 which generated AI videos in the background using LLM agents, to simulate an AI generated video platform.
 
-In [AiTube 2](https://x.com/flngr/status/1864127796945011016), this concept is put upside down: now the content is generated on demand (when the user types something in the latent search input) and on the fly (video chunks are generated within a few seconds and streamed continuously).
+In [#aitube2](https://x.com/flngr/status/1864127796945011016), this concept is put upside down: now the content is generated on demand (when the user types something in the latent search input) and on the fly (video chunks are generated within a few seconds and streamed continuously).
 
 This allows for new ways of consuming AI generated content, such as collaborative and interactive prompting.
 
 # Where can I use it?
 
-AiTube 2 is not ready yet: this is an experimental side project and the [platform](https://aitube.at), code and documentation will be in development for most of 2025.
+#aitube2 is not ready yet: this is an experimental side project and the [platform](https://aitube.at), code and documentation will be in development for most of 2025.
 
 # Why can't I use it?
 
