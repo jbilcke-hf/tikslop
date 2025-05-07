@@ -25,7 +25,7 @@ class MaintenanceScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'AiTube2 is currently in maintenance',
+                '#aitube2 is currently in maintenance',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.grey,
