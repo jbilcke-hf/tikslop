@@ -1,6 +1,6 @@
 ui:
   product_name: "#aitube2"
-  showChatInVideoView: false
+  showChatInVideoView: true
 
 render_queue:
   # how many clips should be stored in advance
