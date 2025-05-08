@@ -126,14 +126,28 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   void _pauseVideo() {
     if (_playbackController.isPlaying) {
       _wasPlayingBeforeBackground = true;
-      _togglePlayback();
+      
+      // Manually pause playback and simulation together
+      _playbackController.togglePlayback();
+      _bufferManager.queueManager.setSimulationPaused(true);
+      
+      if (!_isDisposed && mounted) {
+        setState(() {});
+      }
     }
   }
   
   void _resumeVideo() {
     if (!_playbackController.isPlaying && _wasPlayingBeforeBackground) {
       _wasPlayingBeforeBackground = false;
-      _togglePlayback();
+      
+      // Manually resume playback and simulation together
+      _playbackController.togglePlayback();
+      _bufferManager.queueManager.setSimulationPaused(false);
+      
+      if (!_isDisposed && mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -229,6 +243,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
     }
     
     if (!_isDisposed && mounted) {
+      // Initialize simulation pause state based on initial autoPlay setting
+      _bufferManager.queueManager.setSimulationPaused(!widget.autoPlay);
+      
       setState(() {
         _playbackController.isLoading = false;
         _playbackController.isInitialLoad = false;
@@ -238,6 +255,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
 
   void _togglePlayback() {
     _playbackController.togglePlayback();
+    
+    // Control the simulation based on playback state
+    _bufferManager.queueManager.setSimulationPaused(!_playbackController.isPlaying);
+    
     if (!_isDisposed && mounted) {
       setState(() {});
     }
@@ -390,6 +411,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   @override
   void dispose() {
     _isDisposed = true;
+    
+    // Ensure simulation is paused when widget is disposed
+    if (_bufferManager.queueManager != null) {
+      _bufferManager.queueManager.setSimulationPaused(true);
+    }
     
     // Unregister the observer
     WidgetsBinding.instance.removeObserver(this);

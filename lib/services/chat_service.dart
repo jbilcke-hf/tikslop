@@ -116,6 +116,9 @@ class ChatService {
         color: _userColor,
       );
 
+      // Add message to the local stream before sending to avoid duplicates
+      _chatController.add(message);
+      
       debugPrint('ChatService: Sending message via WebSocket...');
       await _websocketService.sendChatMessage(message);
       debugPrint('ChatService: Message sent successfully');
@@ -146,11 +149,24 @@ class ChatService {
     }
   }
 
-  void dispose() {
+  // This method is only for application shutdown
+  // Individual widgets should use leaveRoom instead
+  Future<void> dispose() async {
+    // Properly leave current room first if connected
     if (_currentRoomId != null) {
-      leaveRoom(_currentRoomId!);
+      try {
+        await leaveRoom(_currentRoomId!);
+      } catch (e) {
+        debugPrint('ChatService: Error leaving room during disposal: $e');
+      }
     }
-    _chatController.close();
+    
+    // Only close the controller if we're truly shutting down
+    if (!_chatController.isClosed) {
+      _chatController.close();
+    }
+    
     _isInitialized = false;
+    debugPrint('ChatService: Successfully disposed');
   }
 }

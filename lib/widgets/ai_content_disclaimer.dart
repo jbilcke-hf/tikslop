@@ -75,7 +75,7 @@ class AiContentDisclaimer extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Scale text based on container width
-            final baseSize = constraints.maxWidth / 40;
+            final baseSize = constraints.maxWidth / 35;
             final smallTextSize = baseSize * 0.7;
             final mediumTextSize = baseSize;
             final largeTextSize = baseSize * 1.1;
@@ -91,7 +91,7 @@ class AiContentDisclaimer extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        'The following ',
+                        'THE FOLLOWING ',
                         style: GoogleFonts.arimo(
                           fontSize: smallTextSize,
                           color: Colors.white,
@@ -108,7 +108,7 @@ class AiContentDisclaimer extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'footage',
+                        'CONTENT',
                         style: GoogleFonts.arimo(
                           fontSize: mediumTextSize,
                           color: Colors.white,
@@ -125,7 +125,7 @@ class AiContentDisclaimer extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        isInteractive ? ' will be ' : ' has been ',
+                        isInteractive ? ' WILL BE ' : ' HAS BEEN ',
                         style: GoogleFonts.arimo(
                           fontSize: smallTextSize,
                           color: Colors.white,
@@ -142,7 +142,7 @@ class AiContentDisclaimer extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'synthesized',
+                        'SYNTHESIZED',
                         style: GoogleFonts.arimo(
                           fontSize: mediumTextSize,
                           color: Colors.white,
@@ -158,16 +158,8 @@ class AiContentDisclaimer extends StatelessWidget {
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
                       Text(
-                        'on the fly using a',
+                        ' BY A',
                         style: GoogleFonts.arimo(
                           fontSize: smallTextSize,
                           color: Colors.white,
@@ -185,9 +177,10 @@ class AiContentDisclaimer extends StatelessWidget {
                       ),
                     ],
                   ),
+                  
                   const SizedBox(height: 18),
                   Text(
-                    'distilled video model',
+                    'DISTILLED AI VIDEO MODEL',
                     style: GoogleFonts.arimo(
                       fontSize: largeTextSize,
                       color: Colors.white,
@@ -204,23 +197,102 @@ class AiContentDisclaimer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  Text(
-                    'and may contains visual glitches or hallucinations.',
-                    style: GoogleFonts.arimo(
-                      fontSize: smallTextSize,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.2,
-                      height: 1.0,
-                      shadows: const [
-                        Shadow(
-                          offset: Offset(0, 2),
-                          blurRadius: 3.0,
-                          color: Color.fromRGBO(0, 0, 0, 0.3),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        'AND MAY CONTAIN',
+                        style: GoogleFonts.arimo(
+                          fontSize: smallTextSize,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.2,
+                          height: 1.0,
+                          shadows: const [
+                            Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 3.0,
+                              color: Color.fromRGBO(0, 0, 0, 0.3),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        ' VISUAL GLITCHES',
+                        style: GoogleFonts.arimo(
+                          fontSize: mediumTextSize,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                          height: 1.0,
+                          shadows: const [
+                            Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 3.0,
+                              color: Color.fromRGBO(0, 0, 0, 0.3),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        ' OR',
+                        style: GoogleFonts.arimo(
+                          fontSize: smallTextSize,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.2,
+                          height: 1.0,
+                          shadows: const [
+                            Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 3.0,
+                              color: Color.fromRGBO(0, 0, 0, 0.3),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        ' HALLUCINATIONS',
+                        style: GoogleFonts.arimo(
+                          fontSize: mediumTextSize,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                          height: 1.0,
+                          shadows: const [
+                            Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 3.0,
+                              color: Color.fromRGBO(0, 0, 0, 0.3),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                       Text(
+                        '.',
+                        style: GoogleFonts.arimo(
+                          fontSize: smallTextSize,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.2,
+                          height: 1.0,
+                          shadows: const [
+                            Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 3.0,
+                              color: Color.fromRGBO(0, 0, 0, 0.3),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ]
                   ),
                 ],
               ),

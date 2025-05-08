@@ -127,6 +127,10 @@ class Configuration {
   // Default negative prompt to avoid harmful content
   String get defaultNegativePrompt =>
       _config['video']['default_negative_prompt'] ?? 'gore, sex, blood, nudity, nude, porn, erotic, worst quality, deformed, distorted, disfigured, blurry, text, watermark';
+      
+  // Simulation settings
+  int get simLoopFrequencyInSec =>
+      _config['simulation']?['sim_loop_frequency_in_sec'] ?? 0;
 
   // Computed properties
 

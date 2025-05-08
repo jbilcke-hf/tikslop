@@ -52,10 +52,7 @@ class QueueStatsLogger {
         !_areStatesEqual(_lastLoggedState!, currentState) ||
         _shouldLogDueToTimeout()) {
       
-      debugPrint('\n=== Queue State Change [$trigger] ===');
-      debugPrint('Ready: ${currentState['readyClips']}');
-      debugPrint('Playing: ${currentState['playingClips']}');
-      debugPrint('Generating: ${currentState['generatingClips']}');
+      // debugPrint('Queue State Change [$trigger] => Ready: ${currentState['readyClips']}, Playing: ${currentState['playingClips']}, Generating: ${currentState['generatingClips']}');
       
       /*
       debugPrint('Pending: ${currentState['pendingClips']}');

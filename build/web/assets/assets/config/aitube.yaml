@@ -1,6 +1,6 @@
 ui:
   product_name: "#aitube2"
-  showChatInVideoView: true
+  showChatInVideoView: false
 
 render_queue:
   # how many clips should be stored in advance
@@ -11,6 +11,11 @@ render_queue:
 
   # start playback as soon as we have 1 video over 3 (25%)
   minimum_buffer_percent_to_start_playback: 5
+
+simulation:
+  # how often the description should evolve (in seconds)
+  # setting to 0 disables description evolution
+  sim_loop_frequency_in_sec: 10
 
 # it's OK to use high values here,
 # because some of those values are limited by the backend config,

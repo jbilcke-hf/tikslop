@@ -15,6 +15,10 @@ class VideoResult {
   final bool useFixedSeed;
   final int seed;
 
+  // Evolved description fields for dynamic narrative
+  final String evolvedDescription;
+  final String condensedHistory;
+
   final int views;
   final String createdAt;
 
@@ -28,6 +32,8 @@ class VideoResult {
     this.isLatent = true,
     this.useFixedSeed = false,
     this.seed = 0,
+    this.evolvedDescription = '',
+    this.condensedHistory = '',
     this.views = 0,
     String? createdAt,
   }) : id = id ?? const Uuid().v4(),
@@ -44,6 +50,8 @@ class VideoResult {
       isLatent: json['isLatent'] as bool? ?? true,
       useFixedSeed: json['useFixedSeed'] as bool? ?? false,
       seed: json['seed'] as int? ?? 0,
+      evolvedDescription: json['evolvedDescription'] as String? ?? '',
+      condensedHistory: json['condensedHistory'] as String? ?? '',
       views: json['views'] as int? ?? 0,
       createdAt: json['createdAt'] as String?,
     );
@@ -59,6 +67,8 @@ class VideoResult {
     'isLatent': isLatent,
     'useFixedSeed': useFixedSeed,
     'seed': seed,
+    'evolvedDescription': evolvedDescription,
+    'condensedHistory': condensedHistory,
     'views': views,
     'createdAt': createdAt,
   };
@@ -74,6 +84,8 @@ class VideoResult {
     bool? isLatent,
     bool? useFixedSeed,
     int? seed,
+    String? evolvedDescription,
+    String? condensedHistory,
     int? views,
     String? createdAt,
   }) {
@@ -87,6 +99,8 @@ class VideoResult {
       isLatent: isLatent ?? this.isLatent,
       useFixedSeed: useFixedSeed ?? this.useFixedSeed,
       seed: seed ?? this.seed,
+      evolvedDescription: evolvedDescription ?? this.evolvedDescription,
+      condensedHistory: condensedHistory ?? this.condensedHistory,
       views: views ?? this.views,
       createdAt: createdAt ?? this.createdAt,
     );

@@ -67,7 +67,7 @@ class _SearchBoxState extends State<SearchBox> {
           FocusScope.of(context).unfocus();
         },
         decoration: InputDecoration(
-          hintText: 'Describe a video you want to generate...',
+          hintText: 'Imagine anything eg "F1 race with farming trucks"',
           hintStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant),
           filled: true,
           fillColor: AiTubeColors.surface,

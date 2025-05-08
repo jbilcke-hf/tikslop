@@ -449,9 +449,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? Center(
                     child: Text(
                       _isSearching
-                          ? 'Generating videos...'
-                          : 'Start by typing a description of the video you want to generate',
-                      style: const TextStyle(color: AiTubeColors.onSurfaceVariant),
+                          ? 'Hallucinating search results using AI...'
+                          : 'Results are generated on demand, videos rendered on the fly.',
+                      style: const TextStyle(
+                        color: AiTubeColors.onSurfaceVariant,
+                        fontSize: 20
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   )

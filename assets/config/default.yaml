@@ -12,6 +12,11 @@ ui:
   # start playback as soon as we have 1 video over 4 (25%)
   minimum_buffer_percent_to_start_playback: 25
 
+simulation:
+  # how often the description should evolve (in seconds)
+  # setting to 0 disables description evolution
+  sim_loop_frequency_in_sec: 8
+
 video:
   # default negative prompt to filter harmful content
   default_negative_prompt: "pixelated, deformed, distorted, disfigured, blurry, text, watermark, low quality, gore, sex, blood, nudity, nude, porn, erotic"

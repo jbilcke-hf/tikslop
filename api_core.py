@@ -451,6 +451,126 @@ A video can be anything from a tutorial, webcam, trailer, movie, live stream etc
         except Exception as e:
             logger.error(f"Error generating caption: {str(e)}")
             return ""
+            
+    async def simulate(self, original_title: str, original_description: str, 
+                         current_description: str, condensed_history: str, 
+                         evolution_count: int = 0, chat_messages: str = '') -> dict:
+        """
+        Simulate a video by evolving its description to create a dynamic narrative.
+        
+        Args:
+            original_title: The original video title
+            original_description: The original video description
+            current_description: The current description (last evolved or original if first evolution)
+            condensed_history: A condensed summary of previous scene developments
+            evolution_count: How many times the simulation has already evolved
+            chat_messages: Chat messages from users to incorporate into the simulation
+            
+        Returns:
+            A dictionary containing the evolved description and updated condensed history
+        """
+        try:
+            # Determine if this is the first simulation
+            is_first_simulation = evolution_count == 0 or not condensed_history
+            
+            logger.info(f"simulate(): is_first_simulation={is_first_simulation}")
+                
+            # Create an appropriate prompt based on whether this is the first simulation
+            chat_section = ""
+            if chat_messages:
+                chat_section = f"""
+People are watching this content right now and have shared their thoughts. Like a game master, please take their feedback as input to adjust the story and/or the scene. Here are their messages:
+
+{chat_messages}
+"""
+
+            if is_first_simulation:
+                prompt = f"""You are tasked with evolving the narrative for a video titled: "{original_title}"
+
+Original description:
+{original_description}
+{chat_section}
+
+Instructions:
+1. Imagine the next logical scene or development that would follow this description.
+2. Create a compelling new description (200-300 words) that builds on the original but introduces new elements, developments, or perspectives.
+3. Maintain the original style, tone, and setting.
+4. If viewers have shared messages, consider their input and incorporate relevant suggestions or reactions into your narrative evolution.
+5. Also create a brief "scene history" (50-75 words) that summarizes what has happened so far.
+
+Return your response in this format:
+EVOLVED_DESCRIPTION: [your new evolved description here]
+CONDENSED_HISTORY: [your scene history summary]"""
+            else:
+                prompt = f"""You are tasked with continuing to evolve the narrative for a video titled: "{original_title}"
+
+Original description:
+{original_description}
+
+Condensed history of scenes so far:
+{condensed_history}
+
+Current description (most recent scene):
+{current_description}
+{chat_section}
+
+Instructions:
+1. Imagine the next logical scene or development that would follow the current description.
+2. Create a compelling new description (200-300 words) that builds on the narrative but introduces new elements, developments, or perspectives.
+3. Maintain consistency with the previous scenes while advancing the story.
+4. If viewers have shared messages, consider their input and incorporate relevant suggestions or reactions into your narrative evolution.
+5. Also update the condensed history (50-75 words) to include this new development.
+
+Return your response in this format:
+EVOLVED_DESCRIPTION: [your new evolved description here]
+CONDENSED_HISTORY: [your updated scene history summary]"""
+
+            # Generate the evolved description
+            response = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: self.inference_client.text_generation(
+                    prompt,
+                    model=TEXT_MODEL,
+                    max_new_tokens=200,
+                    temperature=0.7
+                )
+            )
+            
+            # Extract the evolved description and condensed history from the response
+            evolved_description = ""
+            new_condensed_history = ""
+            
+            # Parse the response
+            if "EVOLVED_DESCRIPTION:" in response and "CONDENSED_HISTORY:" in response:
+                parts = response.split("CONDENSED_HISTORY:")
+                if len(parts) >= 2:
+                    desc_part = parts[0].strip()
+                    if "EVOLVED_DESCRIPTION:" in desc_part:
+                        evolved_description = desc_part.split("EVOLVED_DESCRIPTION:", 1)[1].strip()
+                    new_condensed_history = parts[1].strip()
+            
+            # If parsing failed, use some fallbacks
+            if not evolved_description:
+                evolved_description = current_description
+                logger.warning(f"Failed to parse evolved description, using current description as fallback")
+            
+            if not new_condensed_history and condensed_history:
+                new_condensed_history = condensed_history
+                logger.warning(f"Failed to parse condensed history, using current history as fallback")
+            elif not new_condensed_history:
+                new_condensed_history = f"The video begins with {original_title}: {original_description[:100]}..."
+            
+            return {
+                "evolved_description": evolved_description,
+                "condensed_history": new_condensed_history
+            }
+            
+        except Exception as e:
+            logger.error(f"Error simulating video: {str(e)}")
+            return {
+                "evolved_description": current_description,
+                "condensed_history": condensed_history or f"The video shows {original_title}."
+            }
 
 
     def get_config_value(self, role: UserRole, field: str, options: dict = None) -> Any:
@@ -696,9 +816,9 @@ Your caption:"""
         elif orientation == 'LANDSCAPE' and height > width:
             # Swap height and width for landscape orientation
             height, width = width, height
-            #logger.info(f"Orientation: {orientation}, swapped dimensions to width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
+            logger.info(f"generate_video()  Orientation: {orientation}, swapped dimensions to width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
         else:
-            #logger.info(f"Orientation: {orientation}, using original dimensions width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
+            logger.info(f"generate_video()  Orientation: {orientation}, using original dimensions width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
             pass
         
         # Generate the video with standard settings

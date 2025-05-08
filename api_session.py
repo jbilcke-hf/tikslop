@@ -24,19 +24,22 @@ class UserSession:
         self.chat_queue = asyncio.Queue()
         self.video_queue = asyncio.Queue()
         self.search_queue = asyncio.Queue()
+        self.simulation_queue = asyncio.Queue()  # New queue for description evolution
         
         # Track request counts and rate limits
         self.request_counts = {
             'chat': 0,
             'video': 0,
-            'search': 0
+            'search': 0,
+            'simulation': 0  # New counter for simulation requests
         }
         
         # Last request timestamps for rate limiting
         self.last_request_times = {
             'chat': time.time(),
             'video': time.time(),
-            'search': time.time()
+            'search': time.time(),
+            'simulation': time.time()  # New timestamp for simulation requests
         }
         
         # Session creation time
@@ -50,7 +53,8 @@ class UserSession:
         self.background_tasks = [
             asyncio.create_task(self._process_chat_queue()),
             asyncio.create_task(self._process_video_queue()),
-            asyncio.create_task(self._process_search_queue())
+            asyncio.create_task(self._process_search_queue()),
+            asyncio.create_task(self._process_simulation_queue())  # New worker for simulation requests
         ]
         logger.info(f"Started session for user {self.user_id} with role {self.user_role}")
         
@@ -78,9 +82,13 @@ class UserSession:
                     result = await self.shared_api.handle_chat_message(data, self.ws)
                 elif data['action'] == 'leave_chat':
                     result = await self.shared_api.handle_leave_chat(data, self.ws)
-                # Handle thumbnail requests as chat requests for immediate processing
+                # Redirect thumbnail requests to process_generic_request for consistent handling
                 elif data['action'] == 'generate_video_thumbnail':
-                    result = await self._handle_thumbnail_request(data)
+                    # Pass to the generic request handler to maintain consistent logic
+                    await self.process_generic_request(data)
+                    # Skip normal response handling since process_generic_request already sends a response
+                    self.chat_queue.task_done()
+                    continue
                 else:
                     raise ValueError(f"Unknown chat action: {data['action']}")
                     
@@ -262,6 +270,82 @@ class UserSession:
                 if 'search_queue' in self.__dict__:
                     self.search_queue.task_done()
                     
+    async def _process_simulation_queue(self):
+        """Dedicated queue for video simulation requests"""
+        while True:
+            try:
+                data = await self.simulation_queue.get()
+                request_id = data.get('requestId')
+                
+                # Extract parameters from the request
+                video_id = data.get('video_id', '')
+                original_title = data.get('original_title', '')
+                original_description = data.get('original_description', '')
+                current_description = data.get('current_description', '')
+                condensed_history = data.get('condensed_history', '')
+                evolution_count = data.get('evolution_count', 0)
+                chat_messages = data.get('chat_messages', '')
+                
+                logger.info(f"Processing video simulation for user {self.user_id}, video_id={video_id}, evolution_count={evolution_count}")
+                
+                # Validate required parameters
+                if not original_title or not original_description or not current_description:
+                    result = {
+                        'action': 'simulate',
+                        'requestId': request_id,
+                        'success': False,
+                        'error': 'Missing required parameters'
+                    }
+                else:
+                    try:
+                        # Call the simulate method in the API
+                        simulation_result = await self.shared_api.simulate(
+                            original_title=original_title,
+                            original_description=original_description,
+                            current_description=current_description,
+                            condensed_history=condensed_history,
+                            evolution_count=evolution_count,
+                            chat_messages=chat_messages
+                        )
+                        
+                        result = {
+                            'action': 'simulate',
+                            'requestId': request_id,
+                            'success': True,
+                            'evolved_description': simulation_result['evolved_description'],
+                            'condensed_history': simulation_result['condensed_history']
+                        }
+                    except Exception as e:
+                        logger.error(f"Error simulating video for user {self.user_id}, video_id={video_id}: {str(e)}")
+                        result = {
+                            'action': 'simulate',
+                            'requestId': request_id,
+                            'success': False,
+                            'error': f'Simulation error: {str(e)}'
+                        }
+                
+                await self.ws.send_json(result)
+                
+                # Update metrics
+                self.request_counts['simulation'] += 1
+                self.last_request_times['simulation'] = time.time()
+                
+            except Exception as e:
+                logger.error(f"Error in simulation queue processor for user {self.user_id}: {str(e)}")
+                try:
+                    error_response = {
+                        'action': 'simulate',
+                        'requestId': data.get('requestId') if 'data' in locals() else None,
+                        'success': False,
+                        'error': f'Internal server error: {str(e)}'
+                    }
+                    await self.ws.send_json(error_response)
+                except Exception as send_error:
+                    logger.error(f"Error sending error response: {send_error}")
+            finally:
+                if 'simulation_queue' in self.__dict__:
+                    self.simulation_queue.task_done()
+                    
     async def process_generic_request(self, data: dict) -> None:
         """Handle general requests that don't fit into specialized queues"""
         try:
@@ -310,7 +394,9 @@ class UserSession:
                     'caption': caption
                 })
                 
-            elif action == 'generate_thumbnail' or action == 'generate_video_thumbnail':
+            # evolve_description is now handled by the dedicated simulation queue processor
+                
+            elif action == 'generate_video_thumbnail':
                 title = data.get('title', '') or data.get('params', {}).get('title', '')
                 description = data.get('description', '') or data.get('params', {}).get('description', '')
                 video_prompt_prefix = data.get('video_prompt_prefix', '') or data.get('params', {}).get('video_prompt_prefix', '')
@@ -345,61 +431,56 @@ class UserSession:
                         title, description, video_prompt_prefix, options, self.user_role
                     )
                     
-                    await self.ws.send_json({
-                        'action': action,
-                        'requestId': request_id,
-                        'success': True,
-                        'thumbnail': thumbnail_data,
-                    })
+                    # Respond with appropriate format based on the parameter names used in the request
+                    if 'thumbnailUrl' in data or 'thumbnailUrl' in data.get('params', {}):
+                        # Legacy format using thumbnailUrl
+                        await self.ws.send_json({
+                            'action': action,
+                            'requestId': request_id,
+                            'success': True,
+                            'thumbnailUrl': thumbnail_data or "",
+                        })
+                    else:
+                        # New format using thumbnail
+                        await self.ws.send_json({
+                            'action': action,
+                            'requestId': request_id,
+                            'success': True,
+                            'thumbnail': thumbnail_data,
+                        })
                 except Exception as e:
                     logger.error(f"Error generating thumbnail: {str(e)}")
                     await self.ws.send_json(error_response(f"Thumbnail generation failed: {str(e)}"))
-                    
-            elif action == 'old_generate_thumbnail' or action == 'generate_thumbnail':
-                # Redirect to video thumbnail generation instead of static image
-                title = data.get('params', {}).get('title')
-                description = data.get('params', {}).get('description')
+                
+            # Handle deprecated thumbnail actions
+            elif action == 'generate_thumbnail' or action == 'old_generate_thumbnail':
+                # Redirect to video thumbnail generation
+                logger.warning(f"Deprecated thumbnail action '{action}' used, redirecting to generate_video_thumbnail")
+                
+                # Extract parameters
+                title = data.get('title', '') or data.get('params', {}).get('title', '')
+                description = data.get('description', '') or data.get('params', {}).get('description', '')
                 
                 if not title or not description:
                     await self.ws.send_json(error_response('Missing title or description'))
                     return
                 
-                # Use the video thumbnail function instead
-                options = {
-                    'width': 512,
-                    'height': 288,
-                    'thumbnail': True,
-                    'video_id': f"thumbnail-{request_id}"
+                # Create a new request with the correct action
+                new_request = {
+                    'action': 'generate_video_thumbnail',
+                    'requestId': request_id,
+                    'title': title,
+                    'description': description,
+                    'options': {
+                        'width': 512,
+                        'height': 288,
+                        'thumbnail': True,
+                        'video_id': f"thumbnail-{request_id}"
+                    }
                 }
                 
-                try:
-                    thumbnail = await self.shared_api.generate_video_thumbnail(
-                        title, description, "", options, self.user_role
-                    )
-                    
-                    # Check thumbnail is not empty
-                    if thumbnail is None or thumbnail == "":
-                        await self.ws.send_json({
-                            'action': action,
-                            'requestId': request_id,
-                            'success': True,
-                            'thumbnailUrl': ""
-                        })
-                    else:
-                        await self.ws.send_json({
-                            'action': action,
-                            'requestId': request_id,
-                            'success': True,
-                            'thumbnailUrl': thumbnail
-                        })
-                except Exception as e:
-                    logger.error(f"Error generating video thumbnail: {str(e)}")
-                    await self.ws.send_json({
-                        'action': action,
-                        'requestId': request_id,
-                        'success': True,  # Still return success to avoid client errors
-                        'thumbnailUrl': ""  # But with empty thumbnail
-                    })
+                # Process with the new action
+                await self.process_generic_request(new_request)
                 
             else:
                 await self.ws.send_json(error_response(f'Unknown action: {action}'))
@@ -473,7 +554,8 @@ class SessionManager:
             'requests': {
                 'chat': 0,
                 'video': 0,
-                'search': 0
+                'search': 0,
+                'simulation': 0
             }
         }
         
@@ -482,5 +564,6 @@ class SessionManager:
             stats['requests']['chat'] += session.request_counts['chat']
             stats['requests']['video'] += session.request_counts['video']
             stats['requests']['search'] += session.request_counts['search']
+            stats['requests']['simulation'] += session.request_counts['simulation']
             
         return stats

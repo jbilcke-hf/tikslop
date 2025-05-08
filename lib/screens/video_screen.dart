@@ -436,7 +436,7 @@ class _VideoScreenState extends State<VideoScreen> {
                       if (Configuration.instance.showChatInVideoView) ...[
                         const SizedBox(width: 16),
                         Padding(
-                          padding: const EdgeInsets.only(right: 16),
+                          padding: const EdgeInsets.only(left: 0, top: 16, right: 16, bottom: 4),
                           child: ChatWidget(videoId: widget.video.id),
                         ),
                       ],
@@ -451,7 +451,9 @@ class _VideoScreenState extends State<VideoScreen> {
                         const SizedBox(height: 16),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16
+                            ),
                             child: ChatWidget(
                               videoId: widget.video.id,
                               isCompact: true,
@@ -505,13 +507,14 @@ class _VideoScreenState extends State<VideoScreen> {
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: AiTubeColors.onBackground,
                 fontWeight: FontWeight.bold,
+                fontSize: 18
               ),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.share, color: AiTubeColors.primary),
             onPressed: _shareVideo,
-            tooltip: 'Share prompt',
+            tooltip: 'Share this creation',
           ),
         ],
       ),
@@ -523,29 +526,7 @@ class _VideoScreenState extends State<VideoScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tags
-            if (_videoData.tags.isNotEmpty) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _videoData.tags.map((tag) => Chip(
-                  label: Text(tag),
-                  backgroundColor: AiTubeColors.surface,
-                  labelStyle: const TextStyle(color: AiTubeColors.onSurface),
-                )).toList(),
-              ),
-              const SizedBox(height: 16),
-            ],
-
             // Description Section
-            const Text(
-              'Description',
-              style: TextStyle(
-                color: AiTubeColors.onBackground,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
             const SizedBox(height: 8),
             Text(
               _videoData.description,
@@ -554,6 +535,7 @@ class _VideoScreenState extends State<VideoScreen> {
                 height: 1.5,
               ),
             ),
+            const SizedBox(height: 8),
           ],
         ),
       ],

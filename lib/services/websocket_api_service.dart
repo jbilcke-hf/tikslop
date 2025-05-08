@@ -859,6 +859,11 @@ class WebSocketApiService {
   }
 
   Future<bool> sendChatMessage(ChatMessage message) async {
+    if (_disposed) {
+      debugPrint('WebSocketApiService: Cannot send message, service is disposed');
+      throw Exception('WebSocketApiService is disposed');
+    }
+    
     if (!_initialized) {
       debugPrint('WebSocketApiService: Initializing before sending message...');
       await initialize();
@@ -866,6 +871,12 @@ class WebSocketApiService {
 
     try {
       debugPrint('WebSocketApiService: Sending chat message...');
+      
+      // Check if the chatController is still open to avoid "Cannot add events after calling close" error
+      if (_chatController.isClosed) {
+        debugPrint('WebSocketApiService: Chat controller is closed, cannot process messages');
+        throw Exception('Chat controller is closed');
+      }
       
       final response = await _sendRequest(
         WebSocketRequest(
@@ -897,7 +908,7 @@ class WebSocketApiService {
       final action = data['action'] as String?;
       final requestId = data['requestId'] as String?;
 
-      // debugPrint('WebSocketApiService: Received message for action: $action, requestId: $requestId');
+      debugPrint('WebSocketApiService: Received message for action: $action, requestId: $requestId');
       
       // Update user role if present in response (from heartbeat or get_user_role)
       if (data['user_role'] != null) {
@@ -912,10 +923,8 @@ class WebSocketApiService {
       if (requestId != null && _pendingRequests.containsKey(requestId)) {
         if (action == 'chat_message') {
           debugPrint('WebSocketApiService: Processing chat message response');
-          // Extract the message data for chat messages
-          if (data['success'] == true && data['message'] != null) {
-            _handleChatMessage(data['message'] as Map<String, dynamic>);
-          }
+          // Don't process the message data from our own request since we already added it locally
+          // We only need to complete the request to signal success/failure
           _pendingRequests[requestId]!.complete(data);
         } else if (action == 'join_chat') {
           debugPrint('WebSocketApiService: Processing join chat response');
@@ -948,6 +957,11 @@ class WebSocketApiService {
   }
 
   void _handleChatMessage(Map<String, dynamic> data) {
+    if (_disposed) {
+      debugPrint('WebSocketApiService: Skipping message handling, service is disposed');
+      return;
+    }
+    
     try {
       // Log the exact data we're trying to parse
       debugPrint('Parsing chat message data: ${json.encode(data)}');
@@ -964,7 +978,13 @@ class WebSocketApiService {
       
       final message = ChatMessage.fromJson(data);
       debugPrint('Successfully parsed message: ${message.toString()}');
-      _chatController.add(message);
+      
+      // Only add to stream if it's still open
+      if (!_chatController.isClosed) {
+        _chatController.add(message);
+      } else {
+        debugPrint('WebSocketApiService: Chat controller is closed, cannot add message');
+      }
     } catch (e, stackTrace) {
       debugPrint('Error handling chat message: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -974,9 +994,20 @@ class WebSocketApiService {
 
 
   void _handleChatHistory(Map<String, dynamic> data) {
+    if (_disposed) {
+      debugPrint('WebSocketApiService: Skipping chat history handling, service is disposed');
+      return;
+    }
+    
     try {
       if (data['messages'] == null) {
         debugPrint('No messages found in chat history');
+        return;
+      }
+      
+      // Check if chat controller is still open
+      if (_chatController.isClosed) {
+        debugPrint('WebSocketApiService: Chat controller is closed, cannot process chat history');
         return;
       }
 
@@ -992,8 +1023,13 @@ class WebSocketApiService {
       
       debugPrint('Processing ${messages.length} historical messages');
       
-      for (final message in messages) {
-        _chatController.add(message);
+      // Check again before adding messages in case it was closed during processing
+      if (!_chatController.isClosed) {
+        for (final message in messages) {
+          _chatController.add(message);
+        }
+      } else {
+        debugPrint('WebSocketApiService: Chat controller was closed during processing');
       }
     } catch (e, stackTrace) {
       debugPrint('Error handling chat history: $e');
@@ -1075,7 +1111,7 @@ class WebSocketApiService {
 
     try {
       final requestData = request.toJson();
-      // debugPrint('WebSocketApiService: Sending request ${request.requestId} (${request.action}): ${json.encode(requestData)}');
+      debugPrint('WebSocketApiService: Sending request ${request.requestId} (${request.action}): ${json.encode(requestData)}');
       _channel!.sink.add(json.encode(requestData));
       
       final response = await completer.future.timeout(
@@ -1189,6 +1225,59 @@ class WebSocketApiService {
     }
 
     return response['caption'] as String;
+  }
+
+  /// Simulate a video by evolving its description to create a dynamic narrative
+  Future<Map<String, String>> simulate({
+    required String videoId,
+    required String originalTitle,
+    required String originalDescription,
+    required String currentDescription,
+    required String condensedHistory,
+    int evolutionCount = 0,
+    String chatMessages = '',
+  }) async {
+    // Skip if the API is not connected
+    if (!isConnected) {
+      debugPrint('WebSocketApiService: Cannot simulate video, not connected');
+      return {
+        'evolved_description': currentDescription,
+        'condensed_history': condensedHistory
+      };
+    }
+
+    try {
+      final response = await _sendRequest(
+        WebSocketRequest(
+          action: 'simulate',
+          params: {
+            'video_id': videoId,
+            'original_title': originalTitle,
+            'original_description': originalDescription,
+            'current_description': currentDescription,
+            'condensed_history': condensedHistory,
+            'evolution_count': evolutionCount,
+            'chat_messages': chatMessages,
+          },
+        ),
+        timeout: const Duration(seconds: 60),
+      );
+
+      if (!response['success']) {
+        throw Exception(response['error'] ?? 'Simulation failed');
+      }
+
+      return {
+        'evolved_description': response['evolved_description'] as String? ?? currentDescription,
+        'condensed_history': response['condensed_history'] as String? ?? condensedHistory
+      };
+    } catch (e) {
+      debugPrint('WebSocketApiService: Error simulating video: $e');
+      return {
+        'evolved_description': currentDescription,
+        'condensed_history': condensedHistory
+      };
+    }
   }
 
 

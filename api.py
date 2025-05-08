@@ -155,6 +155,8 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
                         request_type = 'video'
                     elif action == 'search':
                         request_type = 'search'
+                    elif action == 'simulate':
+                        request_type = 'simulation'
                     
                     # Record the request for metrics
                     await metrics_tracker.record_request(user_id, client_ip, request_type, user_role)
@@ -176,6 +178,8 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
                         await user_session.video_queue.put(data)
                     elif action == 'search':
                         await user_session.search_queue.put(data)
+                    elif action == 'simulate':
+                        await user_session.simulation_queue.put(data)
                     else:
                         await user_session.process_generic_request(data)
                         

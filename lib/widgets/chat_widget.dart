@@ -25,6 +25,8 @@ class _ChatWidgetState extends State<ChatWidget> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final _messages = <ChatMessage>[];
+  // Track message IDs to prevent duplicates
+  final _messageIds = <String>{};
   bool _isLoading = true;
   bool _isSending = false;
   String? _error;
@@ -120,11 +122,19 @@ class _ChatWidgetState extends State<ChatWidget> {
   void _onNewMessage(ChatMessage message) {
     if (!mounted) return;
     
+    // Check if we already have this message (prevent duplicates)
+    if (_messageIds.contains(message.id)) {
+      debugPrint('ChatWidget: Skipping duplicate message with ID: ${message.id}');
+      return;
+    }
+    
     setState(() {
       _messages.add(message);
+      _messageIds.add(message.id);
       // Keep only last 100 messages
       if (_messages.length > 100) {
-        _messages.removeAt(0);
+        final removedMessage = _messages.removeAt(0);
+        _messageIds.remove(removedMessage.id);
       }
     });
 
@@ -179,7 +189,7 @@ class _ChatWidgetState extends State<ChatWidget> {
             child: Text(
               message.username.substring(0, 1).toUpperCase(),
               style: const TextStyle(
-                color: Colors.white,
+                color: Colors.black,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -225,7 +235,7 @@ class _ChatWidgetState extends State<ChatWidget> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: const BoxDecoration(
-        color: AiTubeColors.surface,
+        color: AiTubeColors.transparent,
         border: Border(
           top: BorderSide(
             color: AiTubeColors.surfaceVariant,
@@ -239,18 +249,48 @@ class _ChatWidgetState extends State<ChatWidget> {
             child: TextField(
               controller: _messageController,
               style: const TextStyle(color: AiTubeColors.onSurface),
-              maxLength: 256,
+              maxLength: 255,
+              maxLines: 1,
+              onChanged: (value) {
+                // Enforce the character limit by trimming excess characters
+                if (value.length > 255) {
+                  _messageController.text = value.substring(0, 255);
+                  _messageController.selection = TextSelection.fromPosition(
+                    const TextPosition(offset: 255),
+                  );
+                }
+              },
               decoration: InputDecoration(
-                hintText: 'Type a message...',
-                hintStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant),
+                hintText: 'Chat with this aituber..',
+                hintStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant, fontSize: 16),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0x20FFFFFF),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0x20FFFFFF),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AiTubeColors.primary,
+                    width: 1,
+                  ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+                  horizontal: 8,
+                  vertical: 4,
                 ),
                 counterText: '',
+                filled: true,
+                fillColor: const Color(0x10000000),
               ),
             ),
           ),
@@ -262,7 +302,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Icon(Icons.send),
+              : const Icon(Icons.reply),
             color: AiTubeColors.primary,
             onPressed: _isSending ? null : _sendMessage,
           ),
@@ -377,7 +417,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                 Icon(Icons.chat, color: AiTubeColors.onBackground),
                 SizedBox(width: 8),
                 Text(
-                  'Live Chat',
+                  'Simulation log',
                   style: TextStyle(
                     color: AiTubeColors.onBackground,
                     fontSize: 16,
@@ -402,11 +442,10 @@ class _ChatWidgetState extends State<ChatWidget> {
     _messageController.dispose();
     _scrollController.dispose();
     
-    // Ensure chat room is left before disposal
-    _chatService.leaveRoom(widget.videoId).then((_) {
-      _chatService.dispose();
-    }).catchError((error) {
-      debugPrint('ChatWidget: Error during disposal: $error');
+    // Just leave the chat room, but don't dispose the ChatService
+    // since it's a singleton that may be used by other widgets
+    _chatService.leaveRoom(widget.videoId).catchError((error) {
+      debugPrint('ChatWidget: Error leaving chat room during disposal: $error');
     });
     
     super.dispose();
