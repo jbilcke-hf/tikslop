@@ -7,6 +7,9 @@ sdk: docker
 app_file: api.py
 pinned: true
 short_description: The Latent Video Platform
+models:
+  - mistralai/Mistral-7B-Instruct-v0.3
+  - Lightricks/LTX-Video
 app_port: 8080
 disable_embedding: false
 hf_oauth: true
