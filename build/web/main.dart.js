@@ -43668,7 +43668,7 @@ if(s==null){s=$.bt
 s=(s==null?$.bt=new A.cY():s).a
 s===$&&A.a()
 s=J.ab(s.h(0,"video"),"default_negative_prompt")
-if(s==null)s="gore, sex, blood, nudity, nude, porn, erotic, worst quality, deformed, distorted, disfigured, blurry, text, watermark"}return s},
+if(s==null)s="captions, subtitles, logo, text, watermark, low quality, worst quality, gore, sex, blood, nudity, nude, porn, erotic"}return s},
 wV(a){return this.a0f(a)},
 a0f(a){var s=0,r=A.z(t.H),q=this,p
 var $async$wV=A.A(function(b,c){if(b===1)return A.w(c,r)

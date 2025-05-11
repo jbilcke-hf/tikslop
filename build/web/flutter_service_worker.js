@@ -3,11 +3,11 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"flutter_bootstrap.js": "ca820311adf57370155f8379182a5d7d",
+const RESOURCES = {"flutter_bootstrap.js": "f307c9b26518e6b2b47d5d3da416ea81",
 "version.json": "b5eaae4fc120710a3c35125322173615",
 "index.html": "2677c99782b3eb75aae7c757748ccacb",
 "/": "2677c99782b3eb75aae7c757748ccacb",
-"main.dart.js": "fdb1b459d8d6f04d1b1cc8520b92fbeb",
+"main.dart.js": "71457a9e9a24df5d1ad1519ab7c5f07e",
 "flutter.js": "83d881c1dbb6d6bcd6b42e274605b69c",
 "aitube.svg": "26140ba0d153b213b122bc6ebcc17f6c",
 "favicon.png": "c8a183c516004e648a7bac7497c89b97",
@@ -26,7 +26,7 @@ const RESOURCES = {"flutter_bootstrap.js": "ca820311adf57370155f8379182a5d7d",
 "assets/fonts/MaterialIcons-Regular.otf": "06b86454c633cc9510ad85ddc0523a91",
 "assets/assets/config/README.md": "07a87720dd00dd1ca98c9d6884440e31",
 "assets/assets/config/custom.yaml": "e5c0b238b6f217f1215fbc813f093656",
-"assets/assets/config/aitube.yaml": "447b2def472f3181ce07560f54d374af",
+"assets/assets/config/aitube.yaml": "7df9de77da965c3bea94f2c6d33a4b5f",
 "assets/assets/config/default.yaml": "d1304586fd15839a754f53dda3dd8a44",
 "canvaskit/skwasm.js": "ea559890a088fe28b4ddf70e17e60052",
 "canvaskit/skwasm.js.symbols": "9fe690d47b904d72c7d020bd303adf16",

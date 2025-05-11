@@ -21,8 +21,7 @@ simulation:
 # because some of those values are limited by the backend config,
 # such as the resoltuion or number of frames
 video:
-  # default negative prompt to filter harmful content
-  default_negative_prompt: "pixelated, deformed, distorted, disfigured, blurry, text, watermark, low quality, gore, sex, blood, nudity, nude, porn, erotic"
+  default_negative_prompt: ""
 
   # transition time between each clip
   # the exit (older) clip will see its playback time reduced by this amount
