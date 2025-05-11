@@ -67,7 +67,7 @@ class _SearchBoxState extends State<SearchBox> {
           FocusScope.of(context).unfocus();
         },
         decoration: InputDecoration(
-          hintText: 'Imagine anything eg "F1 race with farming trucks"',
+          hintText: 'Explore the interdimensional TV! eg. "Elephants on Mars"',
           hintStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant),
           filled: true,
           fillColor: AiTubeColors.surface,

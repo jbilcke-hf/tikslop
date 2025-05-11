@@ -44837,7 +44837,7 @@ r.a.as6(0,q)
 r.a4(new A.au6(r))}},
 L(a){var s=this,r=null,q=s.a,p=q.c,o=q.e,n=A.eH(24)
 q=q.d?A.ko(r,r,B.Ag,r,r,q.r,r,r,r):A.ko(r,r,B.Ia,r,r,new A.au8(s),r,r,r)
-return A.jr(B.L,!0,r,A.aSX(p,A.MH(r,new A.hk(4,n,B.q),r,B.GZ,r,r,r,r,!0,r,r,r,r,r,r,B.bW,!0,r,r,r,r,r,r,r,r,r,r,r,r,r,B.fx,'Imagine anything eg "F1 race with farming trucks"',r,r,r,r,r,r,r,r,r,!0,!0,r,r,r,r,r,r,r,r,q,r,r,r,r),o,s.d,s.gada(),new A.au9(a),B.iy,B.AJ),B.t,B.z,0,r,r,r,r,r,B.cS)},
+return A.jr(B.L,!0,r,A.aSX(p,A.MH(r,new A.hk(4,n,B.q),r,B.GZ,r,r,r,r,!0,r,r,r,r,r,r,B.bW,!0,r,r,r,r,r,r,r,r,r,r,r,r,r,B.fx,'Explore the interdimensional TV! eg. "Elephants on Mars"',r,r,r,r,r,r,r,r,r,!0,!0,r,r,r,r,r,r,r,r,q,r,r,r,r),o,s.d,s.gada(),new A.au9(a),B.iy,B.AJ),B.t,B.z,0,r,r,r,r,r,B.cS)},
 l(){var s=this
 s.d.l()
 s.a.c.K(0,s.gR0())
