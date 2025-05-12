@@ -206,7 +206,7 @@ class UserSession:
                 query = data.get('query', '').strip()
                 attempt_count = data.get('attemptCount', 0)
 
-                logger.info(f"Processing search request for user {self.user_id}: query='{query}', attempt={attempt_count}")
+                # logger.info(f"Processing search request for user {self.user_id}, attempt={attempt_count}")
 
                 if not query:
                     logger.warning(f"Empty query received in request from user {self.user_id}: {data}")
@@ -224,7 +224,7 @@ class UserSession:
                         )
                         
                         if search_result:
-                            logger.info(f"Search successful for user {self.user_id}, query '{query}'")
+                            # logger.info(f"Search successful for user {self.user_id}, query '{query}'")
                             result = {
                                 'action': 'search',
                                 'requestId': request_id,
@@ -232,7 +232,7 @@ class UserSession:
                                 'result': search_result
                             }
                         else:
-                            logger.warning(f"No results found for user {self.user_id}, query '{query}'")
+                            # logger.warning(f"No results found for user {self.user_id}, query '{query}'")
                             result = {
                                 'action': 'search',
                                 'requestId': request_id,
@@ -240,7 +240,7 @@ class UserSession:
                                 'error': 'No results found'
                             }
                     except Exception as e:
-                        logger.error(f"Search error for user {self.user_id}, query '{query}' (attempt {attempt_count}): {str(e)}")
+                        logger.error(f"Search error for user {self.user_id}, (attempt {attempt_count}): {str(e)}")
                         result = {
                             'action': 'search',
                             'requestId': request_id,

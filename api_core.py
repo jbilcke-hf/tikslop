@@ -315,10 +315,10 @@ class VideoGenerationAPI:
             prompt = f"""# Instruction
 Your response MUST be a YAML object containing a title and description, consistent with what we can find on a video sharing platform.
 Format your YAML response with only those fields: "title" (a short string) and "description" (string caption of the scene). Do not add any other field.
-In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view. In the foreground a <AGE>yo <GENDER> <CHARACTERS> <ACTIONS>. In the background <DESCRIBE THE LOCATION, BACKGROUND CHARACTERS OR OBJECTS ETC>. The scene is lit by <LIGHTING> <WEATHER>". This is just an example! you MUST replace the <TAGS>!!.
+In the description field, describe in a very synthetic way the visuals of the first shot (first scene), eg "<STYLE>, medium close-up shot, high angle view. In the foreground a <OPTIONAL AGE> <OPTIONAL GENDER> <CHARACTERS> <ACTIONS>. In the background <DESCRIBE LOCATION, BACKGROUND CHARACTERS, OBJECTS ETC>. The scene is lit by <LIGHTING> <WEATHER>". This is just an example! you MUST replace the <TAGS>!!.
 Don't forget to replace <STYLE> etc, by the actual fields!!
 For the style, be creative, for instance you can use anything like a "documentary footage", "japanese animation", "movie scene", "tv series", "tv show", "security footage" etc.
-If the user ask for something specific eg an anime use "japanese animation, ", for a documentary about animals in nature use "documentary footage, " as a style etc.
+If the user ask for something specific eg "movie screencap", "movie scene", "documentary footage" "animation" as a style etc.
 Keep it minimalist but still descriptive, don't use bullets points, use simple words, go to the essential to describe style (cinematic, documentary footage, 3D rendering..), camera modes and angles, characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette.. etc). Write about 80 words, and use between 2 and 3 sentences.
 The most import part is to describe the actions and movements in the scene, so don't forget that!
 Don't describe sound, so ever say things like "atmospheric music playing in the background".
@@ -816,9 +816,9 @@ Your caption:"""
         elif orientation == 'LANDSCAPE' and height > width:
             # Swap height and width for landscape orientation
             height, width = width, height
-            logger.info(f"generate_video()  Orientation: {orientation}, swapped dimensions to width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
+            # logger.info(f"generate_video()  Orientation: {orientation}, swapped dimensions to width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
         else:
-            logger.info(f"generate_video()  Orientation: {orientation}, using original dimensions width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
+            # logger.info(f"generate_video()  Orientation: {orientation}, using original dimensions width={width}, height={height}, steps={num_inference_steps}, fps={frame_rate} | role: {user_role}")
             pass
         
         # Generate the video with standard settings
