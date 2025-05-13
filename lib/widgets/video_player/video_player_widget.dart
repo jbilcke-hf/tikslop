@@ -3,14 +3,14 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:io' show Platform;
-import 'package:aitube2/config/config.dart';
+import 'package:tikslop/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
-import 'package:aitube2/models/video_result.dart';
-import 'package:aitube2/models/video_orientation.dart';
-import 'package:aitube2/theme/colors.dart';
+import 'package:tikslop/models/video_result.dart';
+import 'package:tikslop/models/video_orientation.dart';
+import 'package:tikslop/theme/colors.dart';
 
 // Import components
 import 'playback_controller.dart';
@@ -557,7 +557,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
               ClipRRect(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
                 child: Container(
-                  color: AiTubeColors.surfaceVariant,
+                  color: TikSlopColors.surfaceVariant,
                   child: controller?.value.isInitialized ?? false
                       ? VideoPlayer(controller!)
                       : ui.buildPlaceholder(widget.initialThumbnailUrl),

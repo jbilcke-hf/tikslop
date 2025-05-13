@@ -1,12 +1,12 @@
 // lib/main.dart
-import 'package:aitube2/config/config.dart';
-import 'package:aitube2/models/video_result.dart';
-import 'package:aitube2/screens/video_screen.dart';
-import 'package:aitube2/services/settings_service.dart';
-import 'package:aitube2/services/websocket_api_service.dart';
-import 'package:aitube2/theme/colors.dart';
-import 'package:aitube2/widgets/maintenance_screen.dart';
-import 'package:aitube2/widgets/web_utils.dart';
+import 'package:tikslop/config/config.dart';
+import 'package:tikslop/models/video_result.dart';
+import 'package:tikslop/screens/video_screen.dart';
+import 'package:tikslop/services/settings_service.dart';
+import 'package:tikslop/services/websocket_api_service.dart';
+import 'package:tikslop/theme/colors.dart';
+import 'package:tikslop/widgets/maintenance_screen.dart';
+import 'package:tikslop/widgets/web_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
@@ -91,7 +91,7 @@ void main() async {
     wsService.statusStream.listen((status) {
       if (status == ConnectionStatus.maintenance) {
         // Force update to maintenance screen if server goes into maintenance mode later
-        runApp(AiTubeApp(home: const MaintenanceScreen(error: null)));
+        runApp(TikSlopApp(home: const MaintenanceScreen(error: null)));
       }
     });
     
@@ -107,13 +107,13 @@ void main() async {
     }
   }
 
-  runApp(AiTubeApp(home: homeWidget));
+  runApp(TikSlopApp(home: homeWidget));
 }
 
-class AiTubeApp extends StatelessWidget {
+class TikSlopApp extends StatelessWidget {
   final Widget home;
   
-  const AiTubeApp({super.key, required this.home});
+  const TikSlopApp({super.key, required this.home});
 
   @override
   Widget build(BuildContext context) {
@@ -121,56 +121,56 @@ class AiTubeApp extends StatelessWidget {
       title: Configuration.instance.uiProductName,
       theme: ThemeData.dark().copyWith(
         colorScheme: const ColorScheme.dark(
-          surface: AiTubeColors.surface,
-          surfaceContainerHighest: AiTubeColors.surfaceVariant,
-          primary: AiTubeColors.primary,
-          onSurface: AiTubeColors.onSurface,
-          onSurfaceVariant: AiTubeColors.onSurfaceVariant,
+          surface: TikSlopColors.surface,
+          surfaceContainerHighest: TikSlopColors.surfaceVariant,
+          primary: TikSlopColors.primary,
+          onSurface: TikSlopColors.onSurface,
+          onSurfaceVariant: TikSlopColors.onSurfaceVariant,
         ),
-        scaffoldBackgroundColor: AiTubeColors.background,
+        scaffoldBackgroundColor: TikSlopColors.background,
         cardTheme: CardThemeData(
-          color: AiTubeColors.surface,
+          color: TikSlopColors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: AiTubeColors.background,
+          backgroundColor: TikSlopColors.background,
           elevation: 0,
         ),
         textTheme: const TextTheme(
-          titleLarge: TextStyle(color: AiTubeColors.onBackground),
-          titleMedium: TextStyle(color: AiTubeColors.onBackground),
-          bodyLarge: TextStyle(color: AiTubeColors.onSurface),
-          bodyMedium: TextStyle(color: AiTubeColors.onSurfaceVariant),
+          titleLarge: TextStyle(color: TikSlopColors.onBackground),
+          titleMedium: TextStyle(color: TikSlopColors.onBackground),
+          bodyLarge: TextStyle(color: TikSlopColors.onSurface),
+          bodyMedium: TextStyle(color: TikSlopColors.onSurfaceVariant),
         ),
       ),
       darkTheme: ThemeData.dark().copyWith(
         colorScheme: const ColorScheme.dark(
-          surface: AiTubeColors.surface,
-          surfaceContainerHighest: AiTubeColors.surfaceVariant,
-          primary: AiTubeColors.primary,
-          onSurface: AiTubeColors.onSurface,
-          onSurfaceVariant: AiTubeColors.onSurfaceVariant,
+          surface: TikSlopColors.surface,
+          surfaceContainerHighest: TikSlopColors.surfaceVariant,
+          primary: TikSlopColors.primary,
+          onSurface: TikSlopColors.onSurface,
+          onSurfaceVariant: TikSlopColors.onSurfaceVariant,
         ),
-        scaffoldBackgroundColor: AiTubeColors.background,
+        scaffoldBackgroundColor: TikSlopColors.background,
         cardTheme: CardThemeData(
-          color: AiTubeColors.surface,
+          color: TikSlopColors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: AiTubeColors.background,
+          backgroundColor: TikSlopColors.background,
           elevation: 0,
         ),
         textTheme: const TextTheme(
-          titleLarge: TextStyle(color: AiTubeColors.onBackground),
-          titleMedium: TextStyle(color: AiTubeColors.onBackground),
-          bodyLarge: TextStyle(color: AiTubeColors.onSurface),
-          bodyMedium: TextStyle(color: AiTubeColors.onSurfaceVariant),
+          titleLarge: TextStyle(color: TikSlopColors.onBackground),
+          titleMedium: TextStyle(color: TikSlopColors.onBackground),
+          bodyLarge: TextStyle(color: TikSlopColors.onSurface),
+          bodyMedium: TextStyle(color: TikSlopColors.onSurfaceVariant),
         ),
       ),
       // Use custom route handling to support deep linking with URL parameters on web

@@ -1,6 +1,6 @@
 import os
 
-PRODUCT_NAME = os.environ.get('PRODUCT_NAME', 'AiTube')
+PRODUCT_NAME = os.environ.get('PRODUCT_NAME', 'TikSlop')
 PRODUCT_VERSION = "2.0.0"
 
 # you should use Mistral 7b instruct for good performance and accuracy balance
@@ -47,7 +47,7 @@ GUIDANCE_SCALE = 1.0
 
 THUMBNAIL_FRAMES = 65
 
-# anonymous users are people browing AiTube2 without being connected
+# anonymous users are people browing TikSlop without being connected
 # this category suffers from regular abuse so we need to enforce strict limitations
 CONFIG_FOR_ANONYMOUS_USERS = {
 

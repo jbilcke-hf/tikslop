@@ -156,7 +156,7 @@ class _ChatWidgetState extends State<ChatWidget> {
         child: Text(
           'No messages yet',
           style: TextStyle(
-            color: AiTubeColors.onSurfaceVariant,
+            color: TikSlopColors.onSurfaceVariant,
             fontSize: 14,
           ),
         ),
@@ -204,7 +204,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                     Text(
                       message.username,
                       style: const TextStyle(
-                        color: AiTubeColors.onBackground,
+                        color: TikSlopColors.onBackground,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -212,7 +212,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                     Text(
                       _formatTime(message.timestamp),
                       style: const TextStyle(
-                        color: AiTubeColors.onSurfaceVariant,
+                        color: TikSlopColors.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -221,7 +221,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                 const SizedBox(height: 4),
                 Text(
                   message.content,
-                  style: const TextStyle(color: AiTubeColors.onSurface),
+                  style: const TextStyle(color: TikSlopColors.onSurface),
                 ),
               ],
             ),
@@ -235,10 +235,10 @@ class _ChatWidgetState extends State<ChatWidget> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: const BoxDecoration(
-        color: AiTubeColors.transparent,
+        color: TikSlopColors.transparent,
         border: Border(
           top: BorderSide(
-            color: AiTubeColors.surfaceVariant,
+            color: TikSlopColors.surfaceVariant,
             width: 1,
           ),
         ),
@@ -248,7 +248,7 @@ class _ChatWidgetState extends State<ChatWidget> {
           Expanded(
             child: TextField(
               controller: _messageController,
-              style: const TextStyle(color: AiTubeColors.onSurface),
+              style: const TextStyle(color: TikSlopColors.onSurface),
               maxLength: 255,
               maxLines: 1,
               onChanged: (value) {
@@ -261,8 +261,8 @@ class _ChatWidgetState extends State<ChatWidget> {
                 }
               },
               decoration: InputDecoration(
-                hintText: 'Chat with this aituber..',
-                hintStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant, fontSize: 16),
+                hintText: 'Chat with this tikslopr..',
+                hintStyle: const TextStyle(color: TikSlopColors.onSurfaceVariant, fontSize: 16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(
@@ -280,7 +280,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(
-                    color: AiTubeColors.primary,
+                    color: TikSlopColors.primary,
                     width: 1,
                   ),
                 ),
@@ -303,7 +303,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.reply),
-            color: AiTubeColors.primary,
+            color: TikSlopColors.primary,
             onPressed: _isSending ? null : _sendMessage,
           ),
         ],
@@ -381,7 +381,7 @@ class _ChatWidgetState extends State<ChatWidget> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: const TextStyle(color: AiTubeColors.onBackground)),
+            Text(_error!, style: const TextStyle(color: TikSlopColors.onBackground)),
             const SizedBox(height: 8),
             ElevatedButton(
               onPressed: () {
@@ -401,10 +401,10 @@ class _ChatWidgetState extends State<ChatWidget> {
     return Container(
       width: widget.isCompact ? double.infinity : 320,
       decoration: BoxDecoration(
-        color: AiTubeColors.surface,
+        color: TikSlopColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AiTubeColors.surfaceVariant,
+          color: TikSlopColors.surfaceVariant,
           width: 1,
         ),
       ),
@@ -414,12 +414,12 @@ class _ChatWidgetState extends State<ChatWidget> {
             padding: EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(Icons.chat, color: AiTubeColors.onBackground),
+                Icon(Icons.chat, color: TikSlopColors.onBackground),
                 SizedBox(width: 8),
                 Text(
                   'Simulation log',
                   style: TextStyle(
-                    color: AiTubeColors.onBackground,
+                    color: TikSlopColors.onBackground,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),

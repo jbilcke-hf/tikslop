@@ -2,7 +2,7 @@
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:aitube2/config/config.dart';
+import 'package:tikslop/config/config.dart';
 import '../websocket_api_service.dart';
 import '../../models/video_result.dart';
 import 'clip_states.dart';

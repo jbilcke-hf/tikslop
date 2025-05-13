@@ -2,7 +2,7 @@
 // lib/services/chat_service.dart
 import 'dart:async';
 import 'dart:math';
-import 'package:aitube2/services/websocket_api_service.dart';
+import 'package:tikslop/services/websocket_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';

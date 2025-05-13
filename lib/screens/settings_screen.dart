@@ -51,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'API Configuration',
                     style: TextStyle(
-                      color: AiTubeColors.onBackground,
+                      color: TikSlopColors.onBackground,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -127,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'Video Generation',
                     style: TextStyle(
-                      color: AiTubeColors.onBackground,
+                      color: TikSlopColors.onBackground,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -171,7 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'Custom Video Model',
                     style: TextStyle(
-                      color: AiTubeColors.onBackground,
+                      color: TikSlopColors.onBackground,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -192,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Interested in using custom Hugging Face models? If you trained a public and distilled LoRA model based on LTX-Video 0.9.6 (remember, it has to be distilled), it can be integrated into AiTube2. Please open a thread in the Community forum and I\'ll see for a way to allow for custom models.',
+                    'Interested in using custom Hugging Face models? If you trained a public and distilled LoRA model based on LTX-Video 0.9.6 (remember, it has to be distilled), it can be integrated into TikSlop. Please open a thread in the Community forum and I\'ll see for a way to allow for custom models.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey,

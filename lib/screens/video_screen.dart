@@ -1,14 +1,14 @@
 // lib/screens/video_screen.dart
 import 'dart:async';
 
-import 'package:aitube2/screens/home_screen.dart';
-import 'package:aitube2/widgets/chat_widget.dart';
-import 'package:aitube2/widgets/search_box.dart';
-import 'package:aitube2/widgets/web_utils.dart';
+import 'package:tikslop/screens/home_screen.dart';
+import 'package:tikslop/widgets/chat_widget.dart';
+import 'package:tikslop/widgets/search_box.dart';
+import 'package:tikslop/widgets/web_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:universal_html/html.dart' if (dart.library.io) 'package:aitube2/services/html_stub.dart' as html;
+import 'package:universal_html/html.dart' if (dart.library.io) 'package:tikslop/services/html_stub.dart' as html;
 import '../config/config.dart';
 import '../models/video_result.dart';
 import '../services/websocket_api_service.dart';
@@ -114,7 +114,7 @@ class _VideoScreenState extends State<VideoScreen> {
               title: const Text(
                 'Connection Limit Reached',
                 style: TextStyle(
-                  color: AiTubeColors.onBackground,
+                  color: TikSlopColors.onBackground,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -127,12 +127,12 @@ class _VideoScreenState extends State<VideoScreen> {
                     _websocketService.anonLimitMessage.isNotEmpty
                       ? _websocketService.anonLimitMessage
                       : 'Anonymous users can enjoy 1 stream per IP address. If you are on a shared IP please enter your HF token, thank you!',
-                    style: const TextStyle(color: AiTubeColors.onSurface),
+                    style: const TextStyle(color: TikSlopColors.onSurface),
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'Enter your HuggingFace API token to continue:',
-                    style: TextStyle(color: AiTubeColors.onSurface),
+                    style: TextStyle(color: TikSlopColors.onSurface),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -140,11 +140,11 @@ class _VideoScreenState extends State<VideoScreen> {
                     obscureText: obscureText,
                     decoration: InputDecoration(
                       labelText: 'API Key',
-                      labelStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant),
+                      labelStyle: const TextStyle(color: TikSlopColors.onSurfaceVariant),
                       suffixIcon: IconButton(
                         icon: Icon(
                           obscureText ? Icons.visibility : Icons.visibility_off,
-                          color: AiTubeColors.onSurfaceVariant,
+                          color: TikSlopColors.onSurfaceVariant,
                         ),
                         onPressed: () => setState(() => obscureText = !obscureText),
                       ),
@@ -155,19 +155,19 @@ class _VideoScreenState extends State<VideoScreen> {
                   ),
                 ],
               ),
-              backgroundColor: AiTubeColors.surface,
+              backgroundColor: TikSlopColors.surface,
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
                   child: const Text(
                     'Cancel',
-                    style: TextStyle(color: AiTubeColors.onSurfaceVariant),
+                    style: TextStyle(color: TikSlopColors.onSurfaceVariant),
                   ),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(dialogContext, controller.text),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AiTubeColors.primary,
+                    backgroundColor: TikSlopColors.primary,
                   ),
                   child: const Text('Save'),
                 ),
@@ -203,7 +203,7 @@ class _VideoScreenState extends State<VideoScreen> {
           title: const Text(
             'Too Many Connections',
             style: TextStyle(
-              color: AiTubeColors.onBackground,
+              color: TikSlopColors.onBackground,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -214,16 +214,16 @@ class _VideoScreenState extends State<VideoScreen> {
             children: [
               Text(
                 _websocketService.deviceLimitMessage,
-                style: const TextStyle(color: AiTubeColors.onSurface),
+                style: const TextStyle(color: TikSlopColors.onSurface),
               ),
               const SizedBox(height: 16),
               const Text(
-                'Please close some of your other browser tabs running AiTube to continue.',
-                style: TextStyle(color: AiTubeColors.onSurface),
+                'Please close some of your other browser tabs running TikSlop to continue.',
+                style: TextStyle(color: TikSlopColors.onSurface),
               ),
             ],
           ),
-          backgroundColor: AiTubeColors.surface,
+          backgroundColor: TikSlopColors.surface,
           actions: [
             FilledButton(
               onPressed: () {
@@ -237,7 +237,7 @@ class _VideoScreenState extends State<VideoScreen> {
                 }
               },
               style: FilledButton.styleFrom(
-                backgroundColor: AiTubeColors.primary,
+                backgroundColor: TikSlopColors.primary,
               ),
               child: const Text('Try Again'),
             ),
@@ -265,7 +265,7 @@ class _VideoScreenState extends State<VideoScreen> {
   void _shareVideo() async {
 
     // For non-web platforms
-    final uri = Uri.parse("https://aitube.at");
+    final uri = Uri.parse("https://tikslop.at");
     final params = Map<String, String>.from(uri.queryParameters);
     
     // Ensure title and description are in the URL parameters
@@ -279,7 +279,7 @@ class _VideoScreenState extends State<VideoScreen> {
 
     try {
       // this is a text to share on social media
-      // final textToCopy = 'Messing around with #aitube2 👀 $shareUrl';
+      // final textToCopy = 'Messing around with #tikslop 👀 $shareUrl';
       
       // but for now let's just use the url
       final textToCopy = shareUrl;
@@ -372,8 +372,8 @@ class _VideoScreenState extends State<VideoScreen> {
               child: AppBar(
                 leading: IconButton(
                   icon: Navigator.canPop(context) 
-                    ? const Icon(Icons.arrow_back, color: AiTubeColors.onBackground)
-                    : const Icon(Icons.home, color: AiTubeColors.onBackground),
+                    ? const Icon(Icons.arrow_back, color: TikSlopColors.onBackground)
+                    : const Icon(Icons.home, color: TikSlopColors.onBackground),
                   onPressed: () {
                     // Restore the search parameter in URL when navigating back
                     if (kIsWeb) {
@@ -505,21 +505,21 @@ class _VideoScreenState extends State<VideoScreen> {
             child: Text(
               _videoData.title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AiTubeColors.onBackground,
+                color: TikSlopColors.onBackground,
                 fontWeight: FontWeight.bold,
                 fontSize: 18
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.share, color: AiTubeColors.primary),
+            icon: const Icon(Icons.share, color: TikSlopColors.primary),
             onPressed: _shareVideo,
             tooltip: 'Share this creation',
           ),
         ],
       ),
-      iconColor: AiTubeColors.primary,
-      collapsedIconColor: AiTubeColors.primary,
+      iconColor: TikSlopColors.primary,
+      collapsedIconColor: TikSlopColors.primary,
       backgroundColor: Colors.transparent,
       collapsedBackgroundColor: Colors.transparent,
       children: [
@@ -531,7 +531,7 @@ class _VideoScreenState extends State<VideoScreen> {
             Text(
               _videoData.description,
               style: const TextStyle(
-                color: AiTubeColors.onSurface,
+                color: TikSlopColors.onSurface,
                 height: 1.5,
               ),
             ),

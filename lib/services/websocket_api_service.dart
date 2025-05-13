@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:io' as io;
 // For web platform, conditionally import http instead of HttpClient
 import 'package:http/http.dart' as http;
-import 'package:aitube2/services/settings_service.dart';
+import 'package:tikslop/services/settings_service.dart';
 import 'package:synchronized/synchronized.dart';
 import 'dart:convert';
 // Conditionally import html for web platform with proper handling
 import 'html_stub.dart' if (dart.library.html) 'dart:html' as html;
-import 'package:aitube2/config/config.dart';
-import 'package:aitube2/models/chat_message.dart';
+import 'package:tikslop/config/config.dart';
+import 'package:tikslop/models/chat_message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -82,8 +82,8 @@ class WebSocketApiService {
       const isProduction = bool.fromEnvironment('PRODUCTION_MODE', defaultValue: false);
       
       if (isProduction) {
-        // Production default is aitube.at
-        const productionUrl = 'wss://aitube.at/ws';
+        // Production default is tikslop.at
+        const productionUrl = 'wss://tikslop.at/ws';
         debugPrint('WebSocketApiService: Using production WebSocket URL: $productionUrl');
         return productionUrl;
       } else {
@@ -219,7 +219,7 @@ class WebSocketApiService {
   String get anonLimitMessage => _anonLimitMessage;
   
   // Message to display when device limit is exceeded
-  String _deviceLimitMessage = 'Too many connections from this device. Please close other tabs running AiTube.';
+  String _deviceLimitMessage = 'Too many connections from this device. Please close other tabs running TikSlop.';
   String get deviceLimitMessage => _deviceLimitMessage;
   
   // Stream to notify listeners when anonymous limit status changes
@@ -231,8 +231,8 @@ class WebSocketApiService {
   Stream<bool> get deviceLimitStream => _deviceLimitController.stream;
   
   // Constants for device connection limits
-  static const String _connectionCountKey = 'aitube_connection_count';
-  static const String _connectionIdKey = 'aitube_connection_id';
+  static const String _connectionCountKey = 'tikslop_connection_count';
+  static const String _connectionIdKey = 'tikslop_connection_id';
   static const int _maxDeviceConnections = 3; // Maximum number of tabs/connections per device
   static const Duration _connectionHeartbeatInterval = Duration(seconds: 10);
   Timer? _connectionHeartbeatTimer;

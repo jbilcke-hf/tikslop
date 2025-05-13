@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 // Platform-specific imports handling
-import 'package:universal_html/html.dart' if (dart.library.io) 'package:aitube2/services/html_stub.dart' as html;
+import 'package:universal_html/html.dart' if (dart.library.io) 'package:tikslop/services/html_stub.dart' as html;
 
 /// Get URL parameters from the current URL (web only)
 Map<String, String> getUrlParameters() {

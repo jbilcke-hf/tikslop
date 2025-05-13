@@ -3,11 +3,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:aitube2/models/video_result.dart';
-import 'package:aitube2/services/clip_queue/video_clip.dart';
-import 'package:aitube2/services/clip_queue/clip_states.dart';
-import 'package:aitube2/services/websocket_api_service.dart';
-import 'package:aitube2/utils/seed.dart';
+import 'package:tikslop/models/video_result.dart';
+import 'package:tikslop/services/clip_queue/video_clip.dart';
+import 'package:tikslop/services/clip_queue/clip_states.dart';
+import 'package:tikslop/services/websocket_api_service.dart';
+import 'package:tikslop/utils/seed.dart';
 import 'package:uuid/uuid.dart';
 
 /// Manages a single video clip generation for thumbnail playback

@@ -4,8 +4,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import 'package:aitube2/config/config.dart';
-import 'package:aitube2/services/clip_queue/video_clip.dart';
+import 'package:tikslop/config/config.dart';
+import 'package:tikslop/services/clip_queue/video_clip.dart';
 
 /// Manages video playback logic for the video player
 class PlaybackController {

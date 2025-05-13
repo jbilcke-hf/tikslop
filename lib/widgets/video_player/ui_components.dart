@@ -1,9 +1,9 @@
 // lib/widgets/video_player/ui_components.dart
 
 import 'package:flutter/material.dart';
-import 'package:aitube2/theme/colors.dart';
-import 'package:aitube2/widgets/ai_content_disclaimer.dart';
-import 'package:aitube2/config/config.dart';
+import 'package:tikslop/theme/colors.dart';
+import 'package:tikslop/widgets/ai_content_disclaimer.dart';
+import 'package:tikslop/config/config.dart';
 
 /// Builds a placeholder widget for when video is not loaded
 Widget buildPlaceholder(String? initialThumbnailUrl) {
@@ -45,7 +45,7 @@ Widget buildErrorPlaceholder() {
     child: Icon(
       Icons.broken_image,
       size: 64,
-      color: AiTubeColors.onSurfaceVariant,
+      color: TikSlopColors.onSurfaceVariant,
     ),
   );
 }

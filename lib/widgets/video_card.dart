@@ -15,21 +15,21 @@ class VideoCard extends StatelessWidget {
   Widget _buildThumbnail() {
     if (video.thumbnailUrl.isEmpty) {
       return Container(
-        color: AiTubeColors.surfaceVariant,
+        color: TikSlopColors.surfaceVariant,
         child: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.movie_creation,
-                color: AiTubeColors.onSurfaceVariant,
+                color: TikSlopColors.onSurfaceVariant,
                 size: 32,
               ),
               SizedBox(height: 8),
               Text(
                 '(TODO: thumbnails)',
                 style: TextStyle(
-                  color: AiTubeColors.onSurfaceVariant,
+                  color: TikSlopColors.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
@@ -92,21 +92,21 @@ class VideoCard extends StatelessWidget {
 
   Widget _buildErrorThumbnail() {
     return Container(
-      color: AiTubeColors.surfaceVariant,
+      color: TikSlopColors.surfaceVariant,
       child: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.broken_image,
-              color: AiTubeColors.onSurfaceVariant,
+              color: TikSlopColors.onSurfaceVariant,
               size: 32,
             ),
             SizedBox(height: 8),
             Text(
               'Preview unavailable',
               style: TextStyle(
-                color: AiTubeColors.onSurfaceVariant,
+                color: TikSlopColors.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -151,7 +151,7 @@ class VideoCard extends StatelessWidget {
                         Text(
                           'LTX Video',
                           style: TextStyle(
-                            color: AiTubeColors.onBackground,
+                            color: TikSlopColors.onBackground,
                             fontSize: 12,
                           ),
                         ),
@@ -165,16 +165,16 @@ class VideoCard extends StatelessWidget {
           ),
           Container(
             padding: const EdgeInsets.all(12),
-            color: AiTubeColors.surface,
+            color: TikSlopColors.surface,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const CircleAvatar(
                   radius: 16,
-                  backgroundColor: AiTubeColors.surfaceVariant,
+                  backgroundColor: TikSlopColors.surfaceVariant,
                   child: Icon(
                     Icons.play_arrow,
-                    color: AiTubeColors.onSurfaceVariant,
+                    color: TikSlopColors.onSurfaceVariant,
                     size: 20,
                   ),
                 ),
@@ -187,7 +187,7 @@ class VideoCard extends StatelessWidget {
                       Text(
                         video.title,
                         style: const TextStyle(
-                          color: AiTubeColors.onBackground,
+                          color: TikSlopColors.onBackground,
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                         ),
@@ -200,7 +200,7 @@ class VideoCard extends StatelessWidget {
                         child: Text(
                           video.description,
                           style: const TextStyle(
-                            color: AiTubeColors.onSurfaceVariant,
+                            color: TikSlopColors.onSurfaceVariant,
                             fontSize: 12,
                           ),
                           maxLines: 3,

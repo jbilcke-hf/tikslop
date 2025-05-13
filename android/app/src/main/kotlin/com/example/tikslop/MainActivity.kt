@@ -1,4 +1,4 @@
-package com.example.aitube2
+package com.example.tikslop
 
 import io.flutter.embedding.android.FlutterActivity
 

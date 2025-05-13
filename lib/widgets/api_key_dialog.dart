@@ -19,7 +19,7 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
       title: const Text(
         'Enter HuggingFace API Key',
         style: TextStyle(
-          color: AiTubeColors.onBackground,
+          color: TikSlopColors.onBackground,
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
@@ -29,29 +29,29 @@ class _ApiKeyDialogState extends State<ApiKeyDialog> {
         obscureText: _obscureText,
         decoration: InputDecoration(
           labelText: 'API Key',
-          labelStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant),
+          labelStyle: const TextStyle(color: TikSlopColors.onSurfaceVariant),
           suffixIcon: IconButton(
             icon: Icon(
               _obscureText ? Icons.visibility : Icons.visibility_off,
-              color: AiTubeColors.onSurfaceVariant,
+              color: TikSlopColors.onSurfaceVariant,
             ),
             onPressed: () => setState(() => _obscureText = !_obscureText),
           ),
         ),
       ),
-      backgroundColor: AiTubeColors.surface,
+      backgroundColor: TikSlopColors.surface,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text(
             'Cancel',
-            style: TextStyle(color: AiTubeColors.onSurfaceVariant),
+            style: TextStyle(color: TikSlopColors.onSurfaceVariant),
           ),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, _controller.text),
           style: FilledButton.styleFrom(
-            backgroundColor: AiTubeColors.primary,
+            backgroundColor: TikSlopColors.primary,
           ),
           child: const Text('Save'),
         ),

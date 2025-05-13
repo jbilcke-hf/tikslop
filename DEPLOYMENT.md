@@ -1,7 +1,7 @@
 
-## Deploying aitube2 to https://aitube.at
+## Deploying tikslop to https://tikslop.at
 
-Note: this document is meant for aitube administrators only, not the general public.
+Note: this document is meant for tikslop administrators only, not the general public.
 
 Aitube is not an app/tool but a website, it is not designed to be cloned (technically you can, but since this is not a goal it is not documented).
 
@@ -29,7 +29,7 @@ See paragraph "Running the gateway scheduler"
 
 ### Deployment to production
 
-To deploy the aitube2 api to production:
+To deploy the tikslop api to production:
 
     $ flutter build web
     $ git add .
@@ -38,13 +38,13 @@ To deploy the aitube2 api to production:
 
 and upload the assets to:
 
-    https://huggingface.co/spaces/jbilcke-hf/aitube2/tree/main/public
+    https://huggingface.co/spaces/jbilcke-hf/tikslop/tree/main/public
 
 #### Running a rendering node
 
-Current aitube uses `jbilcke-hf/LTX-Video-0-9-6-HFIE` as a rendering node.
+Current tikslop uses `jbilcke-hf/LTX-Video-0-9-6-HFIE` as a rendering node.
 
-aitube uses a round-robin schedule implemented on the gateway.
+tikslop uses a round-robin schedule implemented on the gateway.
 This helps ensuring a smooth attribution of requests.
 
 What works well is to use the target number of users in parallel (eg. 3) and use 50% more capability to make sure we can handle the load, so in this case about 5 servers.
@@ -62,7 +62,7 @@ curl https://api.endpoints.huggingface.cloud/v2/endpoint/<YOUR_ACCOUNT_NAME> 	-X
 # (if you haven't done it already for this shell session)
 source .python_venv/bin/activate
     
-PRODUCT_NAME="AiTube" \
+PRODUCT_NAME="TikSlop" \
     MAX_NODES="3" \
     MAINTENANCE_MODE=false \
     HF_TOKEN="<USE YOUR OWN HF TOKEN>" \
@@ -82,10 +82,10 @@ PRODUCT_NAME="AiTube" \
 
 ```bash
 # For local development with default configuration
-flutter run --dart-define=CONFIG_PATH=assets/config/aitube.yaml -d chrome
+flutter run --dart-define=CONFIG_PATH=assets/config/tikslop.yaml -d chrome
 
 # For production build to be deployed on a server
-flutter build web --dart-define=CONFIG_PATH=assets/config/aitube.yaml
+flutter build web --dart-define=CONFIG_PATH=assets/config/tikslop.yaml
 ```
 
 ### WebSocket Connection
@@ -98,22 +98,22 @@ The application automatically determines the WebSocket URL:
    - No configuration needed for deployment
 
 2. **Native Platforms**:
-   - Production: Automatically uses `wss://aitube.at/ws` when built with production flag
+   - Production: Automatically uses `wss://tikslop.at/ws` when built with production flag
    - Development: Uses `ws://localhost:8080/ws` by default
    - Custom: Can override with `API_WS_URL` environment variable (highest priority)
 
 #### Production Native Build
 
-For production builds (connecting to aitube.at):
+For production builds (connecting to tikslop.at):
 ```bash
-flutter build apk --dart-define=CONFIG_PATH=assets/config/aitube.yaml --dart-define=PRODUCTION_MODE=true
+flutter build apk --dart-define=CONFIG_PATH=assets/config/tikslop.yaml --dart-define=PRODUCTION_MODE=true
 ```
 
 #### Custom API Server
 
 For connecting to a different server:
 ```bash
-flutter build apk --dart-define=CONFIG_PATH=assets/config/aitube.yaml --dart-define=API_WS_URL=ws://custom-api.example.com/ws
+flutter build apk --dart-define=CONFIG_PATH=assets/config/tikslop.yaml --dart-define=API_WS_URL=ws://custom-api.example.com/ws
 ```
 
 Note: The `API_WS_URL` parameter takes precedence over the production setting.

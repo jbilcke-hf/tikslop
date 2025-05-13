@@ -4,11 +4,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:video_player/video_player.dart';
-import 'package:aitube2/models/video_result.dart';
-import 'package:aitube2/theme/colors.dart';
-import 'package:aitube2/widgets/video_player/nano_clip_manager.dart';
-import 'package:aitube2/widgets/video_player/lifecycle_manager.dart';
-import 'package:aitube2/widgets/ai_content_disclaimer.dart';
+import 'package:tikslop/models/video_result.dart';
+import 'package:tikslop/theme/colors.dart';
+import 'package:tikslop/widgets/video_player/nano_clip_manager.dart';
+import 'package:tikslop/widgets/video_player/lifecycle_manager.dart';
+import 'package:tikslop/widgets/ai_content_disclaimer.dart';
 
 // Conditionally import dart:html for web platform
 import '../web_utils.dart' if (dart.library.html) 'dart:html' as html;
@@ -247,7 +247,7 @@ class _NanoVideoPlayerState extends State<NanoVideoPlayer> with WidgetsBindingOb
           children: [
             // Base layer: Video or placeholder
             Container(
-              color: AiTubeColors.surfaceVariant,
+              color: TikSlopColors.surfaceVariant,
               child: _controller?.value.isInitialized == true
                 ? AspectRatio(
                     aspectRatio: _controller!.value.aspectRatio,

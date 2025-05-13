@@ -3,10 +3,10 @@ Put secrets in here, used only during development
 eg
 
 ```
-class AiTubeSecrets {
+class TikSlopSecrets {
   final String huggingfaceToken;
 
-  AiTubeSecrets({
+  TikSlopSecrets({
     this.huggingfaceToken = '',
   })
 }

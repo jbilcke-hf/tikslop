@@ -59,7 +59,7 @@ class _SearchBoxState extends State<SearchBox> {
       child: TextFormField(
         controller: widget.controller,
         focusNode: _focusNode,
-        style: const TextStyle(color: AiTubeColors.onBackground),
+        style: const TextStyle(color: TikSlopColors.onBackground),
         enabled: widget.enabled,
         textInputAction: TextInputAction.search,
         onFieldSubmitted: _handleSubmitted,
@@ -68,9 +68,9 @@ class _SearchBoxState extends State<SearchBox> {
         },
         decoration: InputDecoration(
           hintText: 'Explore the interdimensional TV! eg. "Elephants on Mars"',
-          hintStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant),
+          hintStyle: const TextStyle(color: TikSlopColors.onSurfaceVariant),
           filled: true,
-          fillColor: AiTubeColors.surface,
+          fillColor: TikSlopColors.surface,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(24),
             borderSide: BorderSide.none,
@@ -91,7 +91,7 @@ class _SearchBoxState extends State<SearchBox> {
               : IconButton(
                   icon: const Icon(
                     Icons.search,
-                    color: AiTubeColors.onSurfaceVariant,
+                    color: TikSlopColors.onSurfaceVariant,
                   ),
                   onPressed: () => _handleSubmitted(widget.controller.text),
                 ),

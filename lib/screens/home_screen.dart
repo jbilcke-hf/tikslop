@@ -1,18 +1,18 @@
 // lib/screens/home_screen.dart
 import 'dart:async';
-import 'package:aitube2/config/config.dart';
-import 'package:aitube2/widgets/web_utils.dart';
+import 'package:tikslop/config/config.dart';
+import 'package:tikslop/widgets/web_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:aitube2/screens/video_screen.dart';
-import 'package:aitube2/screens/settings_screen.dart';
-import 'package:aitube2/models/video_result.dart';
-import 'package:aitube2/services/websocket_api_service.dart';
-import 'package:aitube2/services/settings_service.dart';
-import 'package:aitube2/widgets/video_card.dart';
-import 'package:aitube2/widgets/search_box.dart';
-import 'package:aitube2/theme/colors.dart';
+import 'package:tikslop/screens/video_screen.dart';
+import 'package:tikslop/screens/settings_screen.dart';
+import 'package:tikslop/models/video_result.dart';
+import 'package:tikslop/services/websocket_api_service.dart';
+import 'package:tikslop/services/settings_service.dart';
+import 'package:tikslop/widgets/video_card.dart';
+import 'package:tikslop/widgets/search_box.dart';
+import 'package:tikslop/theme/colors.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? initialSearchQuery;
@@ -148,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text(
                 'Connection Limit Reached',
                 style: TextStyle(
-                  color: AiTubeColors.onBackground,
+                  color: TikSlopColors.onBackground,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -161,12 +161,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     _websocketService.anonLimitMessage.isNotEmpty
                       ? _websocketService.anonLimitMessage
                       : 'Anonymous users can enjoy 1 stream per IP address. If you are on a shared IP please enter your HF token, thank you!',
-                    style: const TextStyle(color: AiTubeColors.onSurface),
+                    style: const TextStyle(color: TikSlopColors.onSurface),
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'Enter your HuggingFace API token to continue:',
-                    style: TextStyle(color: AiTubeColors.onSurface),
+                    style: TextStyle(color: TikSlopColors.onSurface),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -174,11 +174,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     obscureText: obscureText,
                     decoration: InputDecoration(
                       labelText: 'API Key',
-                      labelStyle: const TextStyle(color: AiTubeColors.onSurfaceVariant),
+                      labelStyle: const TextStyle(color: TikSlopColors.onSurfaceVariant),
                       suffixIcon: IconButton(
                         icon: Icon(
                           obscureText ? Icons.visibility : Icons.visibility_off,
-                          color: AiTubeColors.onSurfaceVariant,
+                          color: TikSlopColors.onSurfaceVariant,
                         ),
                         onPressed: () => setState(() => obscureText = !obscureText),
                       ),
@@ -189,19 +189,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              backgroundColor: AiTubeColors.surface,
+              backgroundColor: TikSlopColors.surface,
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
                   child: const Text(
                     'Cancel',
-                    style: TextStyle(color: AiTubeColors.onSurfaceVariant),
+                    style: TextStyle(color: TikSlopColors.onSurfaceVariant),
                   ),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(dialogContext, controller.text),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AiTubeColors.primary,
+                    backgroundColor: TikSlopColors.primary,
                   ),
                   child: const Text('Save'),
                 ),
@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: const Text(
             'Too Many Connections',
             style: TextStyle(
-              color: AiTubeColors.onBackground,
+              color: TikSlopColors.onBackground,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -248,16 +248,16 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 _websocketService.deviceLimitMessage,
-                style: const TextStyle(color: AiTubeColors.onSurface),
+                style: const TextStyle(color: TikSlopColors.onSurface),
               ),
               const SizedBox(height: 16),
               const Text(
-                'Please close some of your other browser tabs running AiTube to continue.',
-                style: TextStyle(color: AiTubeColors.onSurface),
+                'Please close some of your other browser tabs running TikSlop to continue.',
+                style: TextStyle(color: TikSlopColors.onSurface),
               ),
             ],
           ),
-          backgroundColor: AiTubeColors.surface,
+          backgroundColor: TikSlopColors.surface,
           actions: [
             FilledButton(
               onPressed: () {
@@ -271,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
               style: FilledButton.styleFrom(
-                backgroundColor: AiTubeColors.primary,
+                backgroundColor: TikSlopColors.primary,
               ),
               child: const Text('Try Again'),
             ),
@@ -411,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(Configuration.instance.uiProductName),
-        backgroundColor: AiTubeColors.background,
+        backgroundColor: TikSlopColors.background,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -452,7 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? 'Hallucinating search results using AI...'
                           : 'Results are generated on demand, videos rendered on the fly.',
                       style: const TextStyle(
-                        color: AiTubeColors.onSurfaceVariant,
+                        color: TikSlopColors.onSurfaceVariant,
                         fontSize: 20
                       ),
                       textAlign: TextAlign.center,

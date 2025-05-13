@@ -1,4 +1,4 @@
 /// SECRETS - KEEP THIS OUT OF GIT
-class AiTubeSecrets {
+class TikSlopSecrets {
   static const huggingfaceToken = '<HIDDEN FOR CONFIDENTIALITY>';
 }

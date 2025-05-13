@@ -1,7 +1,7 @@
 // lib/theme/Colors.dart
 import 'package:flutter/material.dart';
 
-class AiTubeColors {
+class TikSlopColors {
   static const transparent = Color(0x00000000);
   static const background = Color(0xFF171717);
   static const surface = Color(0xFF272727);

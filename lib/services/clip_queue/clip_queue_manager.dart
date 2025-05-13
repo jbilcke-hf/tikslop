@@ -2,7 +2,7 @@
 
 import 'dart:async';
 import 'dart:math';
-import 'package:aitube2/config/config.dart';
+import 'package:tikslop/config/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
 import '../../models/video_result.dart';

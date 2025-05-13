@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:aitube2/config/config.dart';
+import 'package:tikslop/config/config.dart';
 
 class SettingsService {
   static const String _promptPrefixKey = 'video_prompt_prefix';

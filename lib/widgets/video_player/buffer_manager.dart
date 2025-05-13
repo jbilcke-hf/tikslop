@@ -2,12 +2,12 @@
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:aitube2/config/config.dart';
-import 'package:aitube2/services/clip_queue/video_clip.dart';
-import 'package:aitube2/services/clip_queue/clip_queue_manager.dart';
+import 'package:tikslop/config/config.dart';
+import 'package:tikslop/services/clip_queue/video_clip.dart';
+import 'package:tikslop/services/clip_queue/clip_queue_manager.dart';
 import 'package:video_player/video_player.dart';
-import 'package:aitube2/models/video_result.dart';
-import 'package:aitube2/models/video_orientation.dart';
+import 'package:tikslop/models/video_result.dart';
+import 'package:tikslop/models/video_orientation.dart';
 
 /// Manages buffering and clip preloading for video player
 class BufferManager {

@@ -1,6 +1,6 @@
 // lib/widgets/maintenance_screen.dart
 import 'package:flutter/material.dart';
-import 'package:aitube2/theme/colors.dart';
+import 'package:tikslop/theme/colors.dart';
 
 class MaintenanceScreen extends StatelessWidget {
   final Exception? error;
@@ -25,7 +25,7 @@ class MaintenanceScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                '#aitube2 is currently in maintenance',
+                '#tikslop is currently in maintenance',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.grey,
