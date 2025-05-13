@@ -1,0 +1,1 @@
+Tikslop is a free and open-source project, so the "ads" are used to promote Hugging Face projects, people or spaces.

@@ -12,6 +12,7 @@ import 'package:tikslop/services/websocket_api_service.dart';
 import 'package:tikslop/services/settings_service.dart';
 import 'package:tikslop/widgets/video_card.dart';
 import 'package:tikslop/widgets/search_box.dart';
+import 'package:tikslop/widgets/ad_banner.dart';
 import 'package:tikslop/theme/colors.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -446,17 +447,22 @@ class _HomeScreenState extends State<HomeScreen> {
           // Results Grid
           Expanded(
             child: _results.isEmpty
-                ? Center(
-                    child: Text(
-                      _isSearching
-                          ? 'Hallucinating search results using AI...'
-                          : 'Results are generated on demand, videos rendered on the fly.',
-                      style: const TextStyle(
-                        color: TikSlopColors.onSurfaceVariant,
-                        fontSize: 20
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _isSearching
+                            ? 'Hallucinating search results using AI...'
+                            : 'Results are generated on demand, videos rendered on the fly.',
+                        style: const TextStyle(
+                          color: TikSlopColors.onSurfaceVariant,
+                          fontSize: 20
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
+                      if (_isSearching) const SizedBox(height: 16),
+                      if (_isSearching) const AdBanner(showAd: true),
+                    ],
                   )
                   : MasonryGridView.count(
                   padding: const EdgeInsets.all(16),

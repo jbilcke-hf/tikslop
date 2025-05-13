@@ -164,4 +164,23 @@ class Configuration {
 
   Duration get actualClipPlaybackDuration => 
       actualClipDuration - transitionBufferDuration;
+      
+  // Advertising settings
+  bool get enableAds => 
+      _config['advertising']?['enable_ads'] ?? false;
+      
+  List<Map<String, String>> get adBanners {
+    final adsList = _config['advertising']?['ad_banners'] as List<dynamic>?;
+    if (adsList == null) return [];
+    
+    return adsList.map<Map<String, String>>((ad) {
+      if (ad is Map) {
+        return {
+          'image': ad['image'].toString(),
+          'link': ad['link'].toString(),
+        };
+      }
+      return {};
+    }).toList();
+  }
 }

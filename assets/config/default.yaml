@@ -12,6 +12,14 @@ ui:
   # start playback as soon as we have 1 video over 4 (25%)
   minimum_buffer_percent_to_start_playback: 25
 
+advertising:
+  enable_ads: false
+  ad_banners:
+    - image: assets/ads/lerobot.gif
+      link: https://huggingface.co/lerobot
+    - image: assets/ads/smolagents.gif
+      link: https://huggingface.co/docs/smolagents/index
+
 simulation:
   # how often the description should evolve (in seconds)
   # setting to 0 disables description evolution
