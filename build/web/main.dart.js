@@ -88431,7 +88431,7 @@ case 2:return A.w(o.at(-1),r)}})
 return A.y($async$xP,r)},
 yP(){var s=0,r=A.z(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h,g
 var $async$yP=A.A(function(a,b){if(a===1){p.push(b)
-s=q}while(true)switch(s){case 0:j=A.dM("https://tikslop.at",0,null)
+s=q}while(true)switch(s){case 0:j=A.dM("https://tikslop.com",0,null)
 i=t.N
 h=A.a9I(j.gwa(),i,i)
 i=o.r

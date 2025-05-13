@@ -265,7 +265,7 @@ class _VideoScreenState extends State<VideoScreen> {
   void _shareVideo() async {
 
     // For non-web platforms
-    final uri = Uri.parse("https://tikslop.at");
+    final uri = Uri.parse("https://tikslop.com");
     final params = Map<String, String>.from(uri.queryParameters);
     
     // Ensure title and description are in the URL parameters

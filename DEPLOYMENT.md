@@ -1,5 +1,5 @@
 
-## Deploying tikslop to https://tikslop.at
+## Deploying tikslop to https://tikslop.com
 
 Note: this document is meant for tikslop administrators only, not the general public.
 
@@ -98,13 +98,13 @@ The application automatically determines the WebSocket URL:
    - No configuration needed for deployment
 
 2. **Native Platforms**:
-   - Production: Automatically uses `wss://tikslop.at/ws` when built with production flag
+   - Production: Automatically uses `wss://tikslop.com/ws` when built with production flag
    - Development: Uses `ws://localhost:8080/ws` by default
    - Custom: Can override with `API_WS_URL` environment variable (highest priority)
 
 #### Production Native Build
 
-For production builds (connecting to tikslop.at):
+For production builds (connecting to tikslop.com):
 ```bash
 flutter build apk --dart-define=CONFIG_PATH=assets/config/tikslop.yaml --dart-define=PRODUCTION_MODE=true
 ```

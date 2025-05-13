@@ -82,8 +82,8 @@ class WebSocketApiService {
       const isProduction = bool.fromEnvironment('PRODUCTION_MODE', defaultValue: false);
       
       if (isProduction) {
-        // Production default is tikslop.at
-        const productionUrl = 'wss://tikslop.at/ws';
+        // Production default is tikslop.com
+        const productionUrl = 'wss://tikslop.com/ws';
         debugPrint('WebSocketApiService: Using production WebSocket URL: $productionUrl');
         return productionUrl;
       } else {

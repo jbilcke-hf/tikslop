@@ -1,14 +1,14 @@
 ---
-title: "#tikslop"
+title: "TikSlop"
 emoji: 🍿
 colorFrom: red
 colorTo: red
 sdk: docker
 app_file: api.py
 pinned: true
-short_description: The Latent Video Platform
+short_description: The 100% Latent Video App
 models:
-  - mistralai/Mistral-7B-Instruct-v0.3
+  - microsoft/Phi-3-mini-128k-instruct
   - Lightricks/LTX-Video
 app_port: 8080
 disable_embedding: false
@@ -19,14 +19,14 @@ hf_oauth_scopes:
 ---
 
 
-# #tikslop
+# TikSlop
 
 ## Configuration
 
 ### WebSocket Connection
 - **Web Platform**: Automatically connects to the host serving the page (adapts to both HTTP/HTTPS)
 - **Native Platforms**: 
-  - Production: Uses `wss://tikslop.at/ws` when built with `--dart-define=PRODUCTION_MODE=true`
+  - Production: Uses `wss://tikslop.com/ws` when built with `--dart-define=PRODUCTION_MODE=true`
   - Development: Uses `ws://localhost:8080/ws` by default
   - Custom: Set `API_WS_URL` during build with `--dart-define=API_WS_URL=ws://your-server:port/ws` (highest priority)
 
@@ -47,7 +47,7 @@ This allows for new ways of consuming AI generated content, such as collaborativ
 
 # Where can I use it?
 
-#tikslop is not ready yet: this is an experimental side project and the [platform](https://tikslop.at), code and documentation will be in development for most of 2025.
+#tikslop is not ready yet: this is an experimental side project and the [platform](https://tikslop.com), code and documentation will be in development for most of 2025.
 
 # Why can't I use it?
 
