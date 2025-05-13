@@ -3,7 +3,7 @@
 
 Note: this document is meant for tikslop administrators only, not the general public.
 
-Aitube is not an app/tool but a website, it is not designed to be cloned (technically you can, but since this is not a goal it is not documented).
+TikSlop is not an app/tool but a website, it is not designed to be cloned (technically you can, but since this is not a goal it is not documented).
 
 ### Setup the domain
 
@@ -66,7 +66,7 @@ PRODUCT_NAME="TikSlop" \
     MAX_NODES="3" \
     MAINTENANCE_MODE=false \
     HF_TOKEN="<USE YOUR OWN HF TOKEN>" \
-    SECRET_TOKEN="<USE YOUR OWN AITUBE SECRET>" \
+    SECRET_TOKEN="<USE YOUR OWN TIKSLOP SECRET>" \
     VIDEO_ROUND_ROBIN_SERVER_1="https:/<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     VIDEO_ROUND_ROBIN_SERVER_2="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     VIDEO_ROUND_ROBIN_SERVER_3="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
