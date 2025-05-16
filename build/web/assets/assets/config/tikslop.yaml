@@ -1,6 +1,6 @@
 ui:
   product_name: "#tikslop"
-  showChatInVideoView: false
+  showChatInVideoView: true
 
 render_queue:
   # how many clips should be stored in advance
@@ -21,9 +21,12 @@ advertising:
       link: https://huggingface.co/docs/smolagents/index
 
 simulation:
+  # whether to enable simulation loop to evolve descriptions over time
+  enable_sim_loop: true
+  
   # how often the description should evolve (in seconds)
   # setting to 0 disables description evolution
-  sim_loop_frequency_in_sec: 10
+  sim_loop_frequency_in_sec: 8
 
 # it's OK to use high values here,
 # because some of those values are limited by the backend config,

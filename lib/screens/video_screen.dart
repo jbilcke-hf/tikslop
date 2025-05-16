@@ -1,5 +1,6 @@
 // lib/screens/video_screen.dart
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:tikslop/screens/home_screen.dart';
 import 'package:tikslop/widgets/chat_widget.dart';
@@ -39,6 +40,9 @@ class _VideoScreenState extends State<VideoScreen> {
   // Subscription for limit statuses
   StreamSubscription? _anonLimitSubscription;
   StreamSubscription? _deviceLimitSubscription;
+  
+  // Reference to access video player's buffer manager for simulation updates
+  StreamSubscription? _videoUpdateSubscription;
 
   @override
   void initState() {
@@ -484,6 +488,19 @@ class _VideoScreenState extends State<VideoScreen> {
               video: _videoData,
               initialThumbnailUrl: _videoData.thumbnailUrl,
               autoPlay: true,
+              onVideoUpdated: (updatedVideo) {
+                debugPrint('VIDEO_SCREEN: Received updated video data');
+                if (updatedVideo.evolvedDescription.isNotEmpty) {
+                  debugPrint('VIDEO_SCREEN: Evolved description (${updatedVideo.evolvedDescription.length} chars)');
+                  debugPrint('VIDEO_SCREEN: First 100 chars: ${updatedVideo.evolvedDescription.substring(0, math.min(100, updatedVideo.evolvedDescription.length))}...');
+                } else {
+                  debugPrint('VIDEO_SCREEN: No evolved description received');
+                }
+                
+                setState(() {
+                  _videoData = updatedVideo;
+                });
+              },
             ),
             const SizedBox(height: 16),
 
@@ -496,6 +513,10 @@ class _VideoScreenState extends State<VideoScreen> {
   }
   
   Widget _buildCollapsibleInfoSection() {
+    // Get settings service to check if debug info should be shown
+    final settingsService = SettingsService();
+    final showDebugInfo = settingsService.showSceneDebugInfo;
+    
     return ExpansionTile(
       initiallyExpanded: false,
       tilePadding: EdgeInsets.zero,
@@ -526,16 +547,85 @@ class _VideoScreenState extends State<VideoScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Description Section
-            const SizedBox(height: 8),
-            Text(
-              _videoData.description,
-              style: const TextStyle(
-                color: TikSlopColors.onSurface,
-                height: 1.5,
+            // Regular Description Section
+            if (!showDebugInfo) ...[
+              const SizedBox(height: 8),
+              Text(
+                _videoData.description,
+                style: const TextStyle(
+                  color: TikSlopColors.onSurface,
+                  height: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
+            ],
+            
+            // Debug Information (when enabled)
+            if (showDebugInfo) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Initial Description:',
+                style: TextStyle(
+                  color: TikSlopColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _videoData.description,
+                style: const TextStyle(
+                  color: TikSlopColors.onSurface,
+                  height: 1.5,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Current Description (Evolved Description) Section
+              const Text(
+                'Current Description:',
+                style: TextStyle(
+                  color: TikSlopColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _videoData.evolvedDescription.isNotEmpty
+                    ? _videoData.evolvedDescription
+                    : _videoData.description, // If evolved description is empty, show initial
+                style: const TextStyle(
+                  color: TikSlopColors.onSurface,
+                  height: 1.5,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Condensed History (Last Description) Section
+              const Text(
+                'Last Description:',
+                style: TextStyle(
+                  color: TikSlopColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _videoData.condensedHistory.isNotEmpty
+                    ? _videoData.condensedHistory
+                    : "No history available yet", // Show message if no history
+                style: const TextStyle(
+                  color: TikSlopColors.onSurface,
+                  height: 1.5,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
           ],
         ),
       ],

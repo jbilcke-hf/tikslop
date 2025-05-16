@@ -100,13 +100,13 @@ class _AdBannerState extends State<AdBanner> {
             onTap: () => _launchURL(_currentAd!['link'] ?? ''),
             child: Image.asset(
               _currentAd!['image'] ?? '',
-              height: 64,
+              height: 80,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 // If image fails to load, show a placeholder
                 print('Error loading ad image: $error');
                 return Container(
-                  height: 64,
+                  height: 80,
                   color: Colors.grey.withOpacity(0.1),
                   child: const Center(child: Text('Ad')),
                 );

@@ -15,6 +15,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _negativePromptController = TextEditingController();
   final _hfApiKeyController = TextEditingController();
   final _settingsService = SettingsService();
+  bool _showSceneDebugInfo = false;
+  bool _enableSimulation = true;
 
   @override
   void initState() {
@@ -22,6 +24,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _promptController.text = _settingsService.videoPromptPrefix;
     _negativePromptController.text = _settingsService.negativeVideoPrompt;
     _hfApiKeyController.text = _settingsService.huggingfaceApiKey;
+    _showSceneDebugInfo = _settingsService.showSceneDebugInfo;
+    _enableSimulation = _settingsService.enableSimulation;
   }
 
   @override
@@ -154,6 +158,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     onChanged: (value) {
                       _settingsService.setNegativeVideoPrompt(value);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Display Options Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Display Options',
+                    style: TextStyle(
+                      color: TikSlopColors.onBackground,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text('Show scene debug information'),
+                    subtitle: const Text('Display initial, current, and last description in video view'),
+                    value: _showSceneDebugInfo,
+                    onChanged: (value) {
+                      setState(() {
+                        _showSceneDebugInfo = value;
+                      });
+                      _settingsService.setShowSceneDebugInfo(value);
+                    },
+                  ),
+                  SwitchListTile(
+                    title: const Text('Enable simulation'),
+                    subtitle: const Text('Allow video descriptions to evolve over time'),
+                    value: _enableSimulation,
+                    onChanged: (value) {
+                      setState(() {
+                        _enableSimulation = value;
+                      });
+                      _settingsService.setEnableSimulation(value);
                     },
                   ),
                 ],

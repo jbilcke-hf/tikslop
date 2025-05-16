@@ -1246,6 +1246,8 @@ class WebSocketApiService {
       };
     }
 
+    debugPrint('WebSocketApiService: Sending simulation request for video $videoId (evolution #$evolutionCount)');
+    
     try {
       final response = await _sendRequest(
         WebSocketRequest(
@@ -1264,12 +1266,18 @@ class WebSocketApiService {
       );
 
       if (!response['success']) {
+        debugPrint('WebSocketApiService: Simulation API returned error: ${response['error']}');
         throw Exception(response['error'] ?? 'Simulation failed');
       }
 
+      final evolvedDescription = response['evolved_description'] as String? ?? currentDescription;
+      final newHistory = response['condensed_history'] as String? ?? condensedHistory;
+      
+      debugPrint('WebSocketApiService: Simulation successful, received ${evolvedDescription.length} chars for evolved description');
+      
       return {
-        'evolved_description': response['evolved_description'] as String? ?? currentDescription,
-        'condensed_history': response['condensed_history'] as String? ?? condensedHistory
+        'evolved_description': evolvedDescription,
+        'condensed_history': newHistory
       };
     } catch (e) {
       debugPrint('WebSocketApiService: Error simulating video: $e');

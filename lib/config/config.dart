@@ -129,6 +129,9 @@ class Configuration {
       _config['video']['default_negative_prompt'] ?? 'captions, subtitles, logo, text, watermark, low quality, worst quality, gore, sex, blood, nudity, nude, porn, erotic';
       
   // Simulation settings
+  bool get enableSimLoop =>
+      _config['simulation']?['enable_sim_loop'] ?? true;
+      
   int get simLoopFrequencyInSec =>
       _config['simulation']?['sim_loop_frequency_in_sec'] ?? 0;
 

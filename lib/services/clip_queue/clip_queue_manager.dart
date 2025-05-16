@@ -1,7 +1,7 @@
 // lib/services/clip_queue/clip_queue_manager.dart
 
 import 'dart:async';
-import 'dart:math';
+import 'dart:math' show max, min;
 import 'package:tikslop/config/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
@@ -10,6 +10,7 @@ import '../../models/video_orientation.dart';
 import '../../models/chat_message.dart';
 import '../websocket_api_service.dart';
 import '../chat_service.dart';
+import '../settings_service.dart';
 import '../../utils/seed.dart';
 import 'clip_states.dart';
 import 'video_clip.dart';
@@ -65,6 +66,12 @@ class ClipQueueManager {
   
   /// Recent chat messages to include in description evolution
   final List<ChatMessage> _recentChatMessages = [];
+  
+  /// Stream controller for video updates (evolved descriptions)
+  final StreamController<VideoResult> _videoUpdateController = StreamController<VideoResult>.broadcast();
+  
+  /// Stream of video updates for subscribers
+  Stream<VideoResult> get videoUpdateStream => _videoUpdateController.stream;
 
   /// Constructor
   ClipQueueManager({
@@ -213,11 +220,24 @@ class ClipQueueManager {
     // Cancel any existing timer
     _descriptionEvolutionTimer?.cancel();
     
-    // Only start if simulation frequency is greater than 0
+    // Check if simulation is enabled globally in config and from user settings
+    final settingsService = SettingsService();
+    final isSimulationEnabled = Configuration.instance.enableSimLoop && settingsService.enableSimulation;
+    
+    // Only start if simulation is enabled and frequency is greater than 0
+    if (!isSimulationEnabled) {
+      debugPrint('SIMULATION: Disabled (enable_sim_loop is false)');
+      ClipQueueConstants.logEvent('Simulation disabled (enable_sim_loop is false)');
+      return;
+    }
+    
     if (Configuration.instance.simLoopFrequencyInSec <= 0) {
+      debugPrint('SIMULATION: Disabled (frequency is 0)');
       ClipQueueConstants.logEvent('Simulation disabled (frequency is 0)');
       return;
     }
+    
+    debugPrint('SIMULATION: Starting simulation timer with settings: enableSimLoop=${Configuration.instance.enableSimLoop}, userSetting=${settingsService.enableSimulation}, frequency=${Configuration.instance.simLoopFrequencyInSec}s');
     
     // Adaptive check interval - less frequent checks to reduce overhead
     final checkInterval = max(3, Configuration.instance.simLoopFrequencyInSec ~/ 3);
@@ -228,30 +248,41 @@ class ClipQueueManager {
     _descriptionEvolutionTimer = Timer.periodic(
       Duration(seconds: checkInterval),
       (timer) async {
-        if (_isDisposed) return;
+        debugPrint('SIMULATION: Timer check triggered');
+        if (_isDisposed) {
+          debugPrint('SIMULATION: Skipping because manager is disposed');
+          return;
+        }
         
         // Skip if simulation is paused (due to video playback being paused)
         if (_isSimulationPaused) {
+          debugPrint('SIMULATION: Skipping because it is paused');
           ClipQueueConstants.logEvent('Skipping simulation because it is paused');
           return;
         }
         
-        // Check if we're currently generating a video - if so, delay simulation
+        // We previously delayed simulation if clips were being generated,
+        // but since clip generation is constant, we'll now run them in parallel
         final isGenerating = _activeGenerations.isNotEmpty;
         if (isGenerating) {
-          ClipQueueConstants.logEvent('Delaying simulation due to active generations');
-          return;
+          debugPrint('SIMULATION: Continuing with simulation despite active generations');
+          ClipQueueConstants.logEvent('Running simulation in parallel with active generations');
+          // We no longer return early here
         }
         
         // Calculate time since last simulation
         final now = DateTime.now();
         final duration = now.difference(_lastDescriptionEvolutionTime);
+        debugPrint('SIMULATION: Time since last simulation: ${duration.inSeconds}s (frequency: ${Configuration.instance.simLoopFrequencyInSec}s)');
         
         // If we've waited long enough, simulate the video
         if (duration.inSeconds >= Configuration.instance.simLoopFrequencyInSec) {
+          debugPrint('SIMULATION: Triggering simulation after ${duration.inSeconds} seconds');
           ClipQueueConstants.logEvent('Triggering simulation after ${duration.inSeconds} seconds');
           await _evolveDescription();
           _lastDescriptionEvolutionTime = now;
+        } else {
+          debugPrint('SIMULATION: Not enough time elapsed since last simulation');
         }
       },
     );
@@ -260,13 +291,16 @@ class ClipQueueManager {
   
   /// Simulate the video by evolving the description using the LLM
   Future<void> _evolveDescription() async {
+    debugPrint('SIMULATION: Starting description evolution');
     if (!_websocketService.isConnected) {
+      debugPrint('SIMULATION: Cannot simulate video - websocket not connected');
       ClipQueueConstants.logEvent('Cannot simulate video: websocket not connected');
       return;
     }
     
     int retryCount = 0;
     const maxRetries = 2;
+    debugPrint('SIMULATION: Current video state: title="${video.title}", evolvedDescription length=${video.evolvedDescription.length}, original description length=${video.description.length}');
     
     // Function to get chat message string
     String getChatMessagesString() {
@@ -297,13 +331,25 @@ class ClipQueueManager {
         );
         
         // Update the video with the evolved description
+        final newEvolvedDescription = result['evolved_description'] as String;
+        final newCondensedHistory = result['condensed_history'] as String;
+        
+        debugPrint('SIMULATION: Received evolved description (${newEvolvedDescription.length} chars)');
+        debugPrint('SIMULATION: First 100 chars: ${newEvolvedDescription.substring(0, min(100, newEvolvedDescription.length))}...');
+        
         video = video.copyWith(
-          evolvedDescription: result['evolved_description'],
-          condensedHistory: result['condensed_history'],
+          evolvedDescription: newEvolvedDescription,
+          condensedHistory: newCondensedHistory,
         );
         
         _evolutionCounter++;
+        debugPrint('SIMULATION: Video simulated (iteration $_evolutionCounter)');
         ClipQueueConstants.logEvent('Video simulated (iteration $_evolutionCounter)');
+        
+        // Emit the updated video to the stream for subscribers
+        debugPrint('SIMULATION: Emitting updated video to stream');
+        _videoUpdateController.add(video);
+        
         onQueueUpdated?.call();
         
         // Success, exit retry loop
@@ -657,6 +703,9 @@ class ClipQueueManager {
     if (videoId.isNotEmpty) {
       _websocketService.cancelRequestsForVideo(videoId);
     }
+
+    // Close stream controller
+    await _videoUpdateController.close();
 
     // Clear all collections
     _clipBuffer.clear();

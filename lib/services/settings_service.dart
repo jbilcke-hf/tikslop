@@ -7,6 +7,8 @@ class SettingsService {
   static const String _promptPrefixKey = 'video_prompt_prefix';
   static const String _hfApiKeyKey = 'huggingface_api_key';
   static const String _negativePromptKey = 'negative_video_prompt';
+  static const String _showSceneDebugInfoKey = 'show_scene_debug_info';
+  static const String _enableSimulationKey = 'enable_simulation';
   static final SettingsService _instance = SettingsService._internal();
   
   factory SettingsService() => _instance;
@@ -39,6 +41,20 @@ class SettingsService {
 
   Future<void> setHuggingfaceApiKey(String apiKey) async {
     await _prefs.setString(_hfApiKeyKey, apiKey);
+    _settingsController.add(null);
+  }
+  
+  bool get showSceneDebugInfo => _prefs.getBool(_showSceneDebugInfoKey) ?? false;
+  
+  Future<void> setShowSceneDebugInfo(bool value) async {
+    await _prefs.setBool(_showSceneDebugInfoKey, value);
+    _settingsController.add(null);
+  }
+  
+  bool get enableSimulation => _prefs.getBool(_enableSimulationKey) ?? Configuration.instance.enableSimLoop;
+  
+  Future<void> setEnableSimulation(bool value) async {
+    await _prefs.setBool(_enableSimulationKey, value);
     _settingsController.add(null);
   }
 

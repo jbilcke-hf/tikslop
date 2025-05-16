@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:math' show min;
 import 'dart:io' show Platform;
 import 'package:tikslop/config/config.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,9 @@ class VideoPlayerWidget extends StatefulWidget {
   
   /// Callback when video is loaded
   final VoidCallback? onVideoLoaded;
+  
+  /// Callback when video data is updated (for simulation updates)
+  final Function(VideoResult updatedVideo)? onVideoUpdated;
 
   /// Constructor
   const VideoPlayerWidget({
@@ -52,6 +56,7 @@ class VideoPlayerWidget extends StatefulWidget {
     this.autoPlay = true,
     this.borderRadius = 12,
     this.onVideoLoaded,
+    this.onVideoUpdated,
   });
 
   @override
@@ -70,6 +75,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
   
   /// Whether playback was happening before going to background
   bool _wasPlayingBeforeBackground = false;
+  
+  /// Subscription to video update stream
+  StreamSubscription? _videoUpdateSubscription;
   
   /// Current orientation
   VideoOrientation _currentOrientation = VideoOrientation.LANDSCAPE;
@@ -205,6 +213,29 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
       
       // Update orientation after initialization
       await _bufferManager.updateOrientation(_currentOrientation);
+      
+      // Subscribe to video updates
+      _videoUpdateSubscription = _bufferManager.queueManager.videoUpdateStream.listen((updatedVideo) {
+        if (!_isDisposed && mounted) {
+          // Calling setState to refresh UI with updated video data
+          setState(() {
+            // Since VideoResult is immutable, we need to use the updated copy
+            // that comes from the stream, not create a new one
+            // The parent widget should receive this via the onVideoUpdated callback
+            if (widget.onVideoUpdated != null) {
+              debugPrint('PLAYER: Received video update, evolvedDescription length: ${updatedVideo.evolvedDescription.length}');
+              
+              if (updatedVideo.evolvedDescription.isNotEmpty) {
+                debugPrint('PLAYER: First 100 chars: ${updatedVideo.evolvedDescription.substring(0, min(100, updatedVideo.evolvedDescription.length))}...');
+              }
+              
+              widget.onVideoUpdated!(updatedVideo);
+            } else {
+              debugPrint('PLAYER: No video update callback registered');
+            }
+          });
+        }
+      });
     }
     
     if (!_isDisposed && mounted) {
@@ -419,6 +450,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
     
     // Unregister the observer
     WidgetsBinding.instance.removeObserver(this);
+    
+    // Cancel the video update subscription
+    _videoUpdateSubscription?.cancel();
     
     // Dispose controllers and timers
     _playbackController.dispose();
