@@ -543,8 +543,8 @@ Now, you must write down the new scene description (don't write a long story! wr
                 lambda: self.inference_client.text_generation(
                     prompt,
                     model=TEXT_MODEL,
-                    max_new_tokens=280,
-                    temperature=0.68
+                    max_new_tokens=240,
+                    temperature=0.60
                 )
             )
 
