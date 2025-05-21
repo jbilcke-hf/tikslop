@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import '../theme/colors.dart';
 import '../models/video_result.dart';
 import './video_player/index.dart';

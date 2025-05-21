@@ -30,7 +30,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
   final _websocketService = WebSocketApiService();
-  List<VideoResult> _results = [];
+  final List<VideoResult> _results = [];
   bool _isSearching = false;
   String? _currentSearchQuery;
   StreamSubscription? _searchSubscription;

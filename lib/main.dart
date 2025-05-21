@@ -91,7 +91,7 @@ void main() async {
     wsService.statusStream.listen((status) {
       if (status == ConnectionStatus.maintenance) {
         // Force update to maintenance screen if server goes into maintenance mode later
-        runApp(TikSlopApp(home: const MaintenanceScreen(error: null)));
+        runApp(const TikSlopApp(home: MaintenanceScreen(error: null)));
       }
     });
     

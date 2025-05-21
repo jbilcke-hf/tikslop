@@ -5,7 +5,7 @@ void main(List<String> args) async {
   runApp(const SinglePlayerMultipleVideoWidget());
 }
 class SinglePlayerMultipleVideoWidget extends StatefulWidget {
-  const SinglePlayerMultipleVideoWidget({Key? key}) : super(key: key);
+  const SinglePlayerMultipleVideoWidget({super.key});
 
   @override
   State<SinglePlayerMultipleVideoWidget> createState() =>

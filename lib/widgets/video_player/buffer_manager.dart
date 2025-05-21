@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:tikslop/config/config.dart';
-import 'package:tikslop/services/clip_queue/video_clip.dart';
 import 'package:tikslop/services/clip_queue/clip_queue_manager.dart';
 import 'package:video_player/video_player.dart';
 import 'package:tikslop/models/video_result.dart';

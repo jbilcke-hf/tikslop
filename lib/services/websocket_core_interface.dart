@@ -2,6 +2,8 @@
 
 /// This file provides a subset of WebSocket functionality needed for the nano player
 /// It's a simplified version that avoids exposing the entire WebSocketApiService
+library;
+
 
 /// WebSocketRequest model
 class WebSocketRequest {

@@ -302,11 +302,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
       VideoPlayerController? newController;
       
       if (_playbackController.nextController != null) {
-        debugPrint('Using preloaded controller for clip ${clip.seed}');
+        // debugPrint('Using preloaded controller for clip ${clip.seed}');
         newController = _playbackController.nextController;
         _playbackController.nextController = null;
       } else {
-        debugPrint('Creating new controller for clip ${clip.seed}');
+        // debugPrint('Creating new controller for clip ${clip.seed}');
         newController = VideoPlayerController.networkUrl(
           Uri.parse(clip.base64Data!),
         );
@@ -338,7 +338,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
 
       if (widget.autoPlay) {
         await newController.play();
-        debugPrint('Started playback of clip ${clip.seed}');
+        // debugPrint('Started playback of clip ${clip.seed}');
         _playbackController.startPlaybackTimer();
       }
 
@@ -444,10 +444,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
     _isDisposed = true;
     
     // Ensure simulation is paused when widget is disposed
-    if (_bufferManager.queueManager != null) {
-      _bufferManager.queueManager.setSimulationPaused(true);
-    }
-    
+    _bufferManager.queueManager.setSimulationPaused(true);
+      
     // Unregister the observer
     WidgetsBinding.instance.removeObserver(this);
     

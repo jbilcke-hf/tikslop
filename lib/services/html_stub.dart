@@ -1,5 +1,6 @@
 /// Stub implementation for dart:html when not on web platform
 /// This file is imported when dart.library.html is not available
+library;
 
 class Window {
   final Document document = Document();

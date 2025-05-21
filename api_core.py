@@ -473,7 +473,7 @@ A video can be anything from a tutorial, webcam, trailer, movie, live stream etc
             # Determine if this is the first simulation
             is_first_simulation = evolution_count == 0 or not condensed_history
             
-            logger.info(f"simulate(): is_first_simulation={is_first_simulation}")
+            #logger.info(f"simulate(): is_first_simulation={is_first_simulation}")
                 
             # Create an appropriate prompt based on whether this is the first simulation
             chat_section = ""
@@ -492,15 +492,21 @@ Original description:
 {chat_section}
 
 Instructions:
-1. Imagine the next logical scene or development that would follow this description.
-2. Create a compelling new description (200-300 words) that builds on the original but introduces new elements, developments, or perspectives.
-3. Maintain the original style, tone, and setting.
-4. If viewers have shared messages, consider their input and incorporate relevant suggestions or reactions into your narrative evolution.
-5. Also create a brief "scene history" (50-75 words) that summarizes what has happened so far.
+1. Imagine the next logical scene or development that would follow the current description.
+2. Consider the video context and recent events
+3. Create a natural progression from previous clips
+4. Take into account user suggestions (chat messages) into the scene
+5. IMPORTANT: viewers have shared messages, consider their input in priority to guide your story, and incorporate relevant suggestions or reactions into your narrative evolution.
+6. Keep visual consistency with previous clips (in most cases you should repeat the same exact description of the location, characters etc but only change a few elements. If this is a webcam scenario, don't touch the camera orientation or focus)
+7. Return ONLY the caption text, no additional formatting or explanation
+8. Write in English, about 200 words.
+9. Keep the visual style consistant, but content as well (repeat the style, character, locations, appearance etc..from the previous description, when it makes sense).
+10. Your caption must describe visual elements of the scene in details, including: camera angle and focus, people's appearance, age, look, costumes, clothes, the location visual characteristics and geometry, lighting, action, objects, weather, textures, lighting.
+11. Please write in the same style as the original description, by keeping things brief etc.
 
-Return your response in this format:
-EVOLVED_DESCRIPTION: [your new evolved description here]
-CONDENSED_HISTORY: [your scene history summary]"""
+Remember to obey to what users said in the chat history!!
+
+Now, you must write down the new scene description (don't write a long story! write a synthetic description!):"""
             else:
                 prompt = f"""You are tasked with continuing to evolve the narrative for a video titled: "{original_title}"
 
@@ -516,14 +522,20 @@ Current description (most recent scene):
 
 Instructions:
 1. Imagine the next logical scene or development that would follow the current description.
-2. Create a compelling new description (200-300 words) that builds on the narrative but introduces new elements, developments, or perspectives.
-3. Maintain consistency with the previous scenes while advancing the story.
-4. If viewers have shared messages, consider their input and incorporate relevant suggestions or reactions into your narrative evolution.
-5. Also update the condensed history (50-75 words) to include this new development.
+2. Consider the video context and recent events
+3. Create a natural progression from previous clips
+4. Take into account user suggestions (chat messages) into the scene
+5. IMPORTANT: if viewers have shared messages, consider their input in priority to guide your story, and incorporate relevant suggestions or reactions into your narrative evolution.
+6. Keep visual consistency with previous clips (in most cases you should repeat the same exact description of the location, characters etc but only change a few elements. If this is a webcam scenario, don't touch the camera orientation or focus)
+7. Return ONLY the caption text, no additional formatting or explanation
+8. Write in English, about 200 words.
+9. Keep the visual style consistant, but content as well (repeat the style, character, locations, appearance etc..from the previous description, when it makes sense).
+10. Your caption must describe visual elements of the scene in details, including: camera angle and focus, people's appearance, age, look, costumes, clothes, the location visual characteristics and geometry, lighting, action, objects, weather, textures, lighting.
+11. Please write in the same style as the original description, by keeping things brief etc.
 
-Return your response in this format:
-EVOLVED_DESCRIPTION: [your new evolved description here]
-CONDENSED_HISTORY: [your updated scene history summary]"""
+Remember to obey to what users said in the chat history!!
+
+Now, you must write down the new scene description (don't write a long story! write a synthetic description!):"""
 
             # Generate the evolved description
             response = await asyncio.get_event_loop().run_in_executor(
@@ -531,45 +543,32 @@ CONDENSED_HISTORY: [your updated scene history summary]"""
                 lambda: self.inference_client.text_generation(
                     prompt,
                     model=TEXT_MODEL,
-                    max_new_tokens=200,
-                    temperature=0.7
+                    max_new_tokens=280,
+                    temperature=0.68
                 )
             )
+
+            # print("RAW RESPONSE: ", response)
             
-            # Extract the evolved description and condensed history from the response
-            evolved_description = ""
-            new_condensed_history = ""
+            # Just use the whole response as the evolved description
+            evolved_description = response.strip()
             
-            # Parse the response
-            if "EVOLVED_DESCRIPTION:" in response and "CONDENSED_HISTORY:" in response:
-                parts = response.split("CONDENSED_HISTORY:")
-                if len(parts) >= 2:
-                    desc_part = parts[0].strip()
-                    if "EVOLVED_DESCRIPTION:" in desc_part:
-                        evolved_description = desc_part.split("EVOLVED_DESCRIPTION:", 1)[1].strip()
-                    new_condensed_history = parts[1].strip()
-            
-            # If parsing failed, use some fallbacks
+            # If response is empty, use fallback
             if not evolved_description:
                 evolved_description = current_description
-                logger.warning(f"Failed to parse evolved description, using current description as fallback")
+                logger.warning(f"Empty response, using current description as fallback")
             
-            if not new_condensed_history and condensed_history:
-                new_condensed_history = condensed_history
-                logger.warning(f"Failed to parse condensed history, using current history as fallback")
-            elif not new_condensed_history:
-                new_condensed_history = f"The video begins with {original_title}: {original_description[:100]}..."
-            
+            # Pass the condensed history through unchanged
             return {
                 "evolved_description": evolved_description,
-                "condensed_history": new_condensed_history
+                "condensed_history": condensed_history
             }
             
         except Exception as e:
             logger.error(f"Error simulating video: {str(e)}")
             return {
                 "evolved_description": current_description,
-                "condensed_history": condensed_history or f"The video shows {original_title}."
+                "condensed_history": condensed_history
             }
 
 

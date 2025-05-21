@@ -1,6 +1,5 @@
 // lib/widgets/maintenance_screen.dart
 import 'package:flutter/material.dart';
-import 'package:tikslop/theme/colors.dart';
 
 class MaintenanceScreen extends StatelessWidget {
   final Exception? error;

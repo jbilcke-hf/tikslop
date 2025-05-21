@@ -104,8 +104,8 @@ class ClipQueueManager {
   void _addChatMessage(ChatMessage message) {
     if (message.videoId == videoId) {
       _recentChatMessages.add(message);
-      // Keep only the 10 most recent messages
-      if (_recentChatMessages.length > 10) {
+      // Keep only the 5 most recent messages
+      if (_recentChatMessages.length > 5) {
         _recentChatMessages.removeAt(0);
       }
       ClipQueueConstants.logEvent('Added chat message: ${message.content.substring(0, min(20, message.content.length))}...');
@@ -172,7 +172,7 @@ class ClipQueueManager {
         if (_isDisposed) return;
         
         final newClip = VideoClip(
-          prompt: "${video.title}\n${video.description}",
+          prompt: "${video.title}\n${video.evolvedDescription.isEmpty ? video.description : video.evolvedDescription}",
           seed: video.useFixedSeed && video.seed > 0 ? video.seed : generateSeed(),
           orientation: _currentOrientation,
         );
@@ -248,7 +248,7 @@ class ClipQueueManager {
     _descriptionEvolutionTimer = Timer.periodic(
       Duration(seconds: checkInterval),
       (timer) async {
-        debugPrint('SIMULATION: Timer check triggered');
+        // debugPrint('SIMULATION: Timer check triggered');
         if (_isDisposed) {
           debugPrint('SIMULATION: Skipping because manager is disposed');
           return;
@@ -256,7 +256,7 @@ class ClipQueueManager {
         
         // Skip if simulation is paused (due to video playback being paused)
         if (_isSimulationPaused) {
-          debugPrint('SIMULATION: Skipping because it is paused');
+          // debugPrint('SIMULATION: Skipping because it is paused');
           ClipQueueConstants.logEvent('Skipping simulation because it is paused');
           return;
         }
@@ -265,7 +265,7 @@ class ClipQueueManager {
         // but since clip generation is constant, we'll now run them in parallel
         final isGenerating = _activeGenerations.isNotEmpty;
         if (isGenerating) {
-          debugPrint('SIMULATION: Continuing with simulation despite active generations');
+          // debugPrint('SIMULATION: Continuing with simulation despite active generations');
           ClipQueueConstants.logEvent('Running simulation in parallel with active generations');
           // We no longer return early here
         }
@@ -273,7 +273,7 @@ class ClipQueueManager {
         // Calculate time since last simulation
         final now = DateTime.now();
         final duration = now.difference(_lastDescriptionEvolutionTime);
-        debugPrint('SIMULATION: Time since last simulation: ${duration.inSeconds}s (frequency: ${Configuration.instance.simLoopFrequencyInSec}s)');
+        // debugPrint('SIMULATION: Time since last simulation: ${duration.inSeconds}s (frequency: ${Configuration.instance.simLoopFrequencyInSec}s)');
         
         // If we've waited long enough, simulate the video
         if (duration.inSeconds >= Configuration.instance.simLoopFrequencyInSec) {
@@ -282,7 +282,7 @@ class ClipQueueManager {
           await _evolveDescription();
           _lastDescriptionEvolutionTime = now;
         } else {
-          debugPrint('SIMULATION: Not enough time elapsed since last simulation');
+          // debugPrint('SIMULATION: Not enough time elapsed since last simulation');
         }
       },
     );
@@ -315,8 +315,10 @@ class ClipQueueManager {
       try {
         // Format recent chat messages as a string for the simulation prompt
         String chatMessagesString = getChatMessagesString();
+        
         if (chatMessagesString.isNotEmpty) {
           ClipQueueConstants.logEvent('Including ${_recentChatMessages.length} chat messages in simulation');
+          debugPrint('SIMULATION: Including chat messages: $chatMessagesString');
         }
         
         // Use the WebSocketService to simulate the video
@@ -334,8 +336,8 @@ class ClipQueueManager {
         final newEvolvedDescription = result['evolved_description'] as String;
         final newCondensedHistory = result['condensed_history'] as String;
         
-        debugPrint('SIMULATION: Received evolved description (${newEvolvedDescription.length} chars)');
-        debugPrint('SIMULATION: First 100 chars: ${newEvolvedDescription.substring(0, min(100, newEvolvedDescription.length))}...');
+        // debugPrint('SIMULATION: Received evolved description (${newEvolvedDescription.length} chars)');
+        // debugPrint('SIMULATION: First 100 chars: ${newEvolvedDescription.substring(0, min(100, newEvolvedDescription.length))}...');
         
         video = video.copyWith(
           evolvedDescription: newEvolvedDescription,
@@ -343,11 +345,11 @@ class ClipQueueManager {
         );
         
         _evolutionCounter++;
-        debugPrint('SIMULATION: Video simulated (iteration $_evolutionCounter)');
-        ClipQueueConstants.logEvent('Video simulated (iteration $_evolutionCounter)');
+        // debugPrint('SIMULATION: Video simulated (iteration $_evolutionCounter)');
+        // ClipQueueConstants.logEvent('Video simulated (iteration $_evolutionCounter)');
         
         // Emit the updated video to the stream for subscribers
-        debugPrint('SIMULATION: Emitting updated video to stream');
+        // debugPrint('SIMULATION: Emitting updated video to stream');
         _videoUpdateController.add(video);
         
         onQueueUpdated?.call();
@@ -368,7 +370,7 @@ class ClipQueueManager {
           
           // If we've been successful before but failed now, we can continue using the last evolved description
           if (_evolutionCounter > 0) {
-            ClipQueueConstants.logEvent('Continuing with previous description');
+            // ClipQueueConstants.logEvent('Continuing with previous description');
           }
         }
       }
@@ -407,16 +409,8 @@ class ClipQueueManager {
 
     // First ensure we have the correct buffer size
     while (_clipBuffer.length < Configuration.instance.renderQueueBufferSize) {
-      // Determine which description to use for the prompt
-      String descriptionToUse = video.description;
-      
-      // If we have an evolved description, use that instead
-      if (video.evolvedDescription.isNotEmpty) {
-        descriptionToUse = video.evolvedDescription;
-      }
-      
       final newClip = VideoClip(
-        prompt: "${video.title}\n${descriptionToUse}",
+        prompt: "${video.title}\n${video.evolvedDescription.isEmpty ? video.description : video.evolvedDescription}",
         seed: video.useFixedSeed && video.seed > 0 ? video.seed : generateSeed(),
         orientation: _currentOrientation,
       );
@@ -435,8 +429,9 @@ class ClipQueueManager {
     for (final clip in failedClips) {
       _clipBuffer.remove(clip);
       final newClip = VideoClip(
-        prompt: "${video.title}\n${video.description}",
+        prompt: "${video.title}\n${video.evolvedDescription.isEmpty ? video.description : video.evolvedDescription}",
         seed: video.useFixedSeed && video.seed > 0 ? video.seed : generateSeed(),
+        orientation: _currentOrientation, // Use the current orientation here too
       );
       _clipBuffer.add(newClip);
     }
@@ -538,18 +533,9 @@ class ClipQueueManager {
       _clipBuffer.remove(clip);
       _clipHistory.add(clip);
       
-      // Determine which description to use for the prompt
-      String descriptionToUse = video.description;
-      
-      // If we have an evolved description, use that instead
-      if (video.evolvedDescription.isNotEmpty) {
-        descriptionToUse = video.evolvedDescription;
-        ClipQueueConstants.logEvent('Using evolved description for new clip (evolution #$_evolutionCounter)');
-      }
-      
       // Add a new pending clip with current orientation
       final newClip = VideoClip(
-        prompt: "${video.title}\n${descriptionToUse}",
+        prompt: "${video.title}\n${video.evolvedDescription.isEmpty ? video.description : video.evolvedDescription}",
         seed: video.useFixedSeed && video.seed > 0 ? video.seed : generateSeed(),
         orientation: _currentOrientation,
       );

@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import os
-import pathlib
+from pathlib import Path
 import time
 import uuid
 from aiohttp import web, WSMsgType
@@ -233,7 +233,7 @@ async def init_app() -> web.Application:
     
     # Set up static file serving
     # Define the path to the public directory
-    public_path = pathlib.Path(__file__).parent / 'build' / 'web'
+    public_path = Path(__file__).parent / 'build' / 'web'
     if not public_path.exists():
         public_path.mkdir(parents=True, exist_ok=True)
     

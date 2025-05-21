@@ -20,6 +20,10 @@ class ChatService {
   final _chatController = StreamController<ChatMessage>.broadcast();
   Stream<ChatMessage> get chatStream => _chatController.stream;
   
+  // Store recent messages for each room
+  final Map<String, List<ChatMessage>> _recentMessages = {};
+  static const int _maxRecentMessages = 5;
+  
   final WebSocketApiService _websocketService = WebSocketApiService();
   String? _userId;
   String? _username;
@@ -145,8 +149,42 @@ class ChatService {
     // Only add messages if they're for the current room
     if (message.videoId == _currentRoomId) {
       _chatController.add(message);
+      
+      // Store this message in the recent messages for this room
+      if (!_recentMessages.containsKey(message.videoId)) {
+        _recentMessages[message.videoId] = [];
+      }
+      
+      _recentMessages[message.videoId]!.add(message);
+      
+      // Keep only most recent messages
+      if (_recentMessages[message.videoId]!.length > _maxRecentMessages) {
+        _recentMessages[message.videoId]!.removeAt(0);
+      }
+      
       debugPrint('Received chat message: ${message.id} from ${message.username}');
     }
+  }
+  
+  /// Get recent messages for a video room
+  Future<List<ChatMessage>> getRecentMessages(String videoId) async {
+    // Initialize if needed
+    if (!_isInitialized) {
+      await initialize();
+    }
+    
+    // If not in the requested room, try to join it
+    if (_currentRoomId != videoId) {
+      try {
+        await joinRoom(videoId);
+      } catch (e) {
+        debugPrint('Error joining room to get messages: $e');
+        return [];
+      }
+    }
+    
+    // Return the stored messages or an empty list
+    return _recentMessages[videoId] ?? [];
   }
 
   // This method is only for application shutdown

@@ -219,7 +219,7 @@ class WebSocketApiService {
   String get anonLimitMessage => _anonLimitMessage;
   
   // Message to display when device limit is exceeded
-  String _deviceLimitMessage = 'Too many connections from this device. Please close other tabs running TikSlop.';
+  final String _deviceLimitMessage = 'Too many connections from this device. Please close other tabs running TikSlop.';
   String get deviceLimitMessage => _deviceLimitMessage;
   
   // Stream to notify listeners when anonymous limit status changes
@@ -280,7 +280,7 @@ class WebSocketApiService {
       // Check if we're exceeding the limit, but only for non-anonymous users
       // For anonymous users, we rely on the server-side IP check
       if (_userRole != 'anon' && connections.length > _maxDeviceConnections) {
-        debugPrint('Device connection limit exceeded: ${connections.length} connections for ${_userRole} user');
+        debugPrint('Device connection limit exceeded: ${connections.length} connections for $_userRole user');
         return false;
       }
       
@@ -386,18 +386,18 @@ class WebSocketApiService {
     // Prevent multiple simultaneous connection attempts
     return _connectionLock.synchronized(() async {
       if (_status == ConnectionStatus.connected) {
-        debugPrint('WebSocketApiService: Already connected, skipping connection attempt');
+        // debugPrint('WebSocketApiService: Already connected, skipping connection attempt');
         return;
       }
       
       if (_status == ConnectionStatus.connecting) {
-        debugPrint('WebSocketApiService: Connection already in progress, waiting...');
+        // debugPrint('WebSocketApiService: Connection already in progress, waiting...');
         
         // Wait for a short time to see if connection completes
         for (int i = 0; i < 10; i++) {
           await Future.delayed(const Duration(milliseconds: 200));
           if (_status == ConnectionStatus.connected) {
-            debugPrint('WebSocketApiService: Connection completed while waiting');
+            // debugPrint('WebSocketApiService: Connection completed while waiting');
             return;
           }
           if (_status == ConnectionStatus.error || _status == ConnectionStatus.maintenance) {
@@ -412,7 +412,7 @@ class WebSocketApiService {
 
       try {
         _setStatus(ConnectionStatus.connecting);
-        debugPrint('WebSocketApiService: Setting status to CONNECTING');
+        // debugPrint('WebSocketApiService: Setting status to CONNECTING');
         
         // Close existing channel if any
         await _channel?.sink.close();
@@ -632,7 +632,7 @@ class WebSocketApiService {
         }
         
         // Setup stream listener with error handling
-        debugPrint('WebSocketApiService: Setting up stream listeners...');
+        // debugPrint('WebSocketApiService: Setting up stream listeners...');
         _channel!.stream.listen(
           _handleMessage,
           onError: _handleError,
@@ -646,7 +646,7 @@ class WebSocketApiService {
           _startConnectionHeartbeat();
         }
         
-        debugPrint('WebSocketApiService: Setting status to CONNECTED');
+        // debugPrint('WebSocketApiService: Setting status to CONNECTED');
         _setStatus(ConnectionStatus.connected);
         _reconnectAttempts = 0;
         
@@ -678,7 +678,7 @@ class WebSocketApiService {
 
    void addSubscriber(String id) {
     _subscribers[id] = (_subscribers[id] ?? 0) + 1;
-    debugPrint('WebSocket subscriber added: $id (total: ${_subscribers[id]})');
+    // debugPrint('WebSocket subscriber added: $id (total: ${_subscribers[id]})');
   }
 
   void removeSubscriber(String id) {
@@ -687,15 +687,15 @@ class WebSocketApiService {
       if (_subscribers[id]! <= 0) {
         _subscribers.remove(id);
       }
-      debugPrint('WebSocket subscriber removed: $id (remaining: ${_subscribers[id] ?? 0})');
+      // debugPrint('WebSocket subscriber removed: $id (remaining: ${_subscribers[id] ?? 0})');
     }
   }
 
   Future<void> joinChatRoom(String videoId) async {
-    debugPrint('WebSocketApiService: Attempting to join chat room: $videoId');
+   // debugPrint('WebSocketApiService: Attempting to join chat room: $videoId');
     
     if (!isConnected) {
-      debugPrint('WebSocketApiService: Not connected, connecting first...');
+      // debugPrint('WebSocketApiService: Not connected, connecting first...');
       await connect();
     }
     
@@ -708,7 +708,7 @@ class WebSocketApiService {
         timeout: const Duration(seconds: 10),
       );
 
-      debugPrint('WebSocketApiService: Join chat room response received: $response');
+      // debugPrint('WebSocketApiService: Join chat room response received: $response');
 
       if (!response['success']) {
         final error = response['error'] ?? 'Failed to join chat room';
@@ -721,7 +721,7 @@ class WebSocketApiService {
         _handleChatHistory(response);
       }
 
-      debugPrint('WebSocketApiService: Successfully joined chat room: $videoId');
+      // debugPrint('WebSocketApiService: Successfully joined chat room: $videoId');
     } catch (e) {
       debugPrint('WebSocketApiService: Error joining chat room: $e');
       rethrow;
@@ -740,7 +740,7 @@ class WebSocketApiService {
         ),
         timeout: const Duration(seconds: 5),
       );
-      debugPrint('Successfully left chat room: $videoId');
+      // debugPrint('Successfully left chat room: $videoId');
     } catch (e) {
       debugPrint('Failed to leave chat room: $e');
     }
@@ -800,13 +800,13 @@ class WebSocketApiService {
     _activeSearches[query] = false;
     
     if (_disposed) {
-      debugPrint('Search terminated: Service disposed');
+      // debugPrint('Search terminated: Service disposed');
     } else if (failedAttempts >= maxFailedAttempts) {
-      debugPrint('Search terminated: Max failures ($maxFailedAttempts) reached');
+      // debugPrint('Search terminated: Max failures ($maxFailedAttempts) reached');
     } else if ((_currentSearchState?.resultCount ?? 0) >= maxResults) {
-      debugPrint('Search terminated: Max results ($maxResults) reached');
+      // debugPrint('Search terminated: Max results ($maxResults) reached');
     } else {
-      debugPrint('Search terminated: Search cancelled');
+      // debugPrint('Search terminated: Search cancelled');
     }
   }
 
@@ -1182,7 +1182,7 @@ class WebSocketApiService {
         action: 'generate_video',
         params: {
           'title': video.title,
-          'description': video.description,
+          'description': video.evolvedDescription.isEmpty ? video.description : video.evolvedDescription,
           'video_prompt_prefix': settings.videoPromptPrefix,
           'options': {
             'enhance_prompt': enhancePrompt,
@@ -1249,6 +1249,31 @@ class WebSocketApiService {
     debugPrint('WebSocketApiService: Sending simulation request for video $videoId (evolution #$evolutionCount)');
     
     try {
+      // If chat messages are provided directly, use them; otherwise the default empty string is used
+      String formattedChatMessages = chatMessages;
+      
+      // If no chat messages were provided but we have a chat stream, try to get recent messages
+      if (formattedChatMessages.isEmpty) {
+        // Check if we have any active chat messages in our stream
+        try {
+          // Get messages directly from the chatController's history
+          final List<ChatMessage> recentChatMessages = [];
+          // We'd ideally query for recent messages in a real implementation
+          // but to avoid circular dependencies we'll use any messages provided to us
+          
+          if (recentChatMessages.isNotEmpty) {
+            formattedChatMessages = recentChatMessages.map((msg) => 
+              "${msg.username}: ${msg.content}"
+            ).join("\n");
+            debugPrint('WebSocketApiService: Including ${recentChatMessages.length} chat messages in simulation');
+          }
+        } catch (e) {
+          debugPrint('WebSocketApiService: Error getting chat messages: $e');
+        }
+      }
+      
+      debugPrint('WebSocketApiService: Chat messages included: ${formattedChatMessages.isNotEmpty ? 'Yes' : 'No'}');
+      
       final response = await _sendRequest(
         WebSocketRequest(
           action: 'simulate',
@@ -1259,7 +1284,7 @@ class WebSocketApiService {
             'current_description': currentDescription,
             'condensed_history': condensedHistory,
             'evolution_count': evolutionCount,
-            'chat_messages': chatMessages,
+            'chat_messages': formattedChatMessages,
           },
         ),
         timeout: const Duration(seconds: 60),

@@ -9,7 +9,6 @@ import 'package:tikslop/widgets/web_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:universal_html/html.dart' if (dart.library.io) 'package:tikslop/services/html_stub.dart' as html;
 import '../config/config.dart';
 import '../models/video_result.dart';
 import '../services/websocket_api_service.dart';

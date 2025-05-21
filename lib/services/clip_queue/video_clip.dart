@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'package:uuid/uuid.dart';
-import 'package:flutter/foundation.dart';
 import 'clip_states.dart';
 import '../../models/video_orientation.dart';
 

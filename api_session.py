@@ -286,7 +286,7 @@ class UserSession:
                 evolution_count = data.get('evolution_count', 0)
                 chat_messages = data.get('chat_messages', '')
                 
-                logger.info(f"Processing video simulation for user {self.user_id}, video_id={video_id}, evolution_count={evolution_count}")
+                # logger.info(f"Processing video simulation for user {self.user_id}, video_id={video_id}, evolution_count={evolution_count}")
                 
                 # Validate required parameters
                 if not original_title or not original_description or not current_description:
