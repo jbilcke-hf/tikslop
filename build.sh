@@ -2,6 +2,12 @@
 # Script to build Flutter web app with cache busting
 
 echo "🔨 Building Flutter web app..."
+# we cannot use " --no-wasm-dry-run"
+# the reason is because we use "dart:html":
+#
+#   Error: Dart library 'dart:html' is not available on this platform.
+#   import 'dart:html' as html;
+#         ^
 flutter build web --release
 
 # for debugging, use:

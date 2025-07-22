@@ -12,7 +12,6 @@ import 'package:tikslop/models/chat_message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:http/http.dart' as http;
 import '../models/search_state.dart';
 import '../models/video_result.dart';
 import '../models/video_orientation.dart';

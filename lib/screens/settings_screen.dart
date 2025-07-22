@@ -154,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ? 'Enter HF API key to unlock providers' 
                           : 'Select your preferred LLM provider',
                     ),
-                    value: _selectedLlmProvider,
+                    initialValue: _selectedLlmProvider,
                     onChanged: _hfApiKeyController.text.isEmpty ? null : (String? newValue) {
                       if (newValue != null) {
                         // Prevent selecting non-builtin providers without HF API key
@@ -219,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ? 'Using default built-in model' 
                           : 'Select the model to use',
                     ),
-                    value: _selectedLlmModel,
+                    initialValue: _selectedLlmModel,
                     onChanged: _hfApiKeyController.text.isEmpty ? null : (String? newValue) {
                       if (newValue != null) {
                         setState(() {
@@ -323,8 +323,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   SwitchListTile(
-                    title: const Text('Enable simulation'),
-                    subtitle: const Text('Allow video descriptions to evolve over time'),
+                    title: const Text('Enable world simulator engine'),
+                    subtitle: const Text('Allow video descriptions to evolve over time using a LLM (this consumes tokens, your Hugging Face account will be billed)'),
                     value: _enableSimulation,
                     onChanged: (value) {
                       setState(() {
@@ -358,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Video Generation Model',
                     ),
-                    value: 'ltx-video-2b-0.9.8',
+                    initialValue: 'ltx-video-2b-0.9.8',
                     onChanged: null, // Disabled
                     items: const [
                       DropdownMenuItem(
