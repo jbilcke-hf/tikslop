@@ -750,7 +750,7 @@ Your caption:"""
             
             start_time = time.time()
             # Rest of thumbnail generation logic same as regular video but with optimized settings
-            result = await self._generate_video_content(
+            result = await self._generate_video_content_with_inference_endpoints(
                 prompt=prompt,
                 negative_prompt=options.get('negative_prompt', NEGATIVE_PROMPT),
                 width=width,
@@ -821,7 +821,9 @@ Your caption:"""
             pass
         
         # Generate the video with standard settings
-        return await self._generate_video_content(
+        # historically we used _generate_video_content_with_inference_endpoints,
+        # which offers better performance and relability, but costs were spinning out of control
+        return await self._generate_video_content_with_inference_endpoints(
             prompt=prompt,
             negative_prompt=options.get('negative_prompt', NEGATIVE_PROMPT),
             width=width,
@@ -834,7 +836,7 @@ Your caption:"""
             user_role=user_role
         )
         
-    async def _generate_video_content(self, prompt: str, negative_prompt: str, width: int, 
+    async def _generate_video_content_with_inference_endpoints(self, prompt: str, negative_prompt: str, width: int, 
                                      height: int, num_frames: int, num_inference_steps: int, 
                                      frame_rate: int, seed: int, options: dict, user_role: UserRole) -> str:
         """
@@ -952,7 +954,39 @@ Your caption:"""
                 if not isinstance(e, asyncio.TimeoutError):  # Already handled above
                     await self._mark_endpoint_error(endpoint)
                 return ""
-                
+              
+    async def _generate_video_content_with_gradio(self, prompt: str, negative_prompt: str, width: int, 
+                                     height: int, num_frames: int, num_inference_steps: int, 
+                                     frame_rate: int, seed: int, options: dict, user_role: UserRole) -> str:
+        """
+        Internal method to generate video content with specific parameters.
+        Used by both regular video generation and thumbnail generation.
+        This version use our generic gradio space.
+        """
+        is_thumbnail = options.get('thumbnail', False)
+        request_id = options.get('request_id', str(uuid.uuid4())[:8])  # Get or generate request ID
+        video_id = options.get('video_id', 'unknown')
+        
+        # logger.info(f"[{request_id}] Generating {'thumbnail' if is_thumbnail else 'video'} for video {video_id} with seed {seed}")
+
+        # Define the synchronous function
+        def _sync_gradio_call():
+            client = Client("jbilcke-hf/fast-rendering-node", hf_token=HF_TOKEN)
+            
+            return client.predict(
+                prompt=prompt,
+                seed=seed,
+                fps=8, # frame_rate, # attention, right now tilslop asks for 25 FPS
+                width=640, # width, # attention, right now tikslop asks for 1152
+                height=320, # height, # attention, righ tnow tikslop asks for 640
+                duration=3, # num_frames // frame_rate
+            )
+        
+        # Run in a thread using asyncio.to_thread (Python 3.9+)
+        video_data_uri = await asyncio.to_thread(_sync_gradio_call)
+        
+        return video_data_uri
+            
     async def _mark_endpoint_error(self, endpoint: Endpoint, is_timeout: bool = False):
         """Mark an endpoint as being in error state with exponential backoff"""
         async with self.endpoint_manager.lock:

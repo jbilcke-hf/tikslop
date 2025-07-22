@@ -1,7 +1,7 @@
 
-## Deploying tikslop to https://tikslop.com
+## Deploying TikSlop to https://tikslop.com
 
-Note: this document is meant for tikslop administrators only, not the general public.
+Note: this document is meant for TikSlop administrators only, not the general public.
 
 TikSlop is not an app/tool but a website, it is not designed to be cloned (technically you can, but since this is not a goal it is not documented).
 
@@ -29,7 +29,7 @@ See paragraph "Running the gateway scheduler"
 
 ### Deployment to production
 
-To deploy the tikslop api to production:
+To deploy the TikSlop api to production:
 
     $ flutter build web
     $ git add .
@@ -42,17 +42,17 @@ and upload the assets to:
 
 #### Running a rendering node
 
-Current tikslop uses `jbilcke-hf/LTX-Video-0-9-6-HFIE` as a rendering node.
+Currently TikSlop uses [jbilcke-hf/LTX-Video-2b-0-9-8-distilled-HFIE](https://huggingface.co/jbilcke-hf/LTX-Video-2b-0-9-8-distilled-HFIE) as a rendering node.
 
-tikslop uses a round-robin schedule implemented on the gateway.
+TikSlop uses a round-robin schedule implemented on the gateway.
 This helps ensuring a smooth attribution of requests.
 
-What works well is to use the target number of users in parallel (eg. 3) and use 50% more capability to make sure we can handle the load, so in this case about 5 servers.
+What works well is to use the target number of users in parallel (eg. 3) and use 50% more capability to make sure we can handle the load, so in this case about 5 or 6 servers.
 
 ```bash
 # note: you need to replace <YOUR_ACCOUNT_NAME>, <ROUND_ROBIN_INDEX> and <YOUR_HF_TOKEN>
 
-curl https://api.endpoints.huggingface.cloud/v2/endpoint/<YOUR_ACCOUNT_NAME> 	-X POST 	-d '{"cacheHttpResponses":false,"compute":{"accelerator":"gpu","instanceSize":"x1","instanceType":"nvidia-l40s","scaling":{"maxReplica":1,"measure":{"hardwareUsage":80},"minReplica":0,"scaleToZeroTimeout":120,"metric":"hardwareUsage"}},"model":{"env":{},"framework":"custom","image":{"huggingface":{}},"repository":"jbilcke-hf/LTX-Video-0-9-6-HFIE","secrets":{},"task":"custom","fromCatalog":false},"name":"ltx-video-0-9-6-round-robin-<ROUND_ROBIN_INDEX>","provider":{"region":"us-east-1","vendor":"aws"},"tags":[""],"type":"protected"}' 	-H "Content-Type: application/json" 	-H "Authorization: Bearer <YOUR_HF_TOKEN>"
+curl https://api.endpoints.huggingface.cloud/v2/endpoint/<YOUR_ACCOUNT_NAME> 	-X POST 	-d '{"cacheHttpResponses":false,"compute":{"accelerator":"gpu","instanceSize":"x1","instanceType":"nvidia-l40s","scaling":{"maxReplica":1,"measure":{"hardwareUsage":80},"minReplica":0,"scaleToZeroTimeout":120,"metric":"hardwareUsage"}},"model":{"env":{},"framework":"custom","image":{"huggingface":{}},"repository":"jbilcke-hf/LTX-Video-2b-0-9-8-distilled-HFIE","secrets":{},"task":"custom","fromCatalog":false},"name":"ltx-video-2b-0-9-8-node-<ROUND_ROBIN_INDEX>","provider":{"region":"us-east-1","vendor":"aws"},"tags":[""],"type":"protected"}' 	-H "Content-Type: application/json" 	-H "Authorization: Bearer <YOUR_HF_TOKEN>"
 ```
 
 #### Running the gateway scheduler

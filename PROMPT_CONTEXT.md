@@ -9,6 +9,6 @@ There is a simulator integrated, which evolves a description (video prompt) over
 Users can be anonymous, but if they connect using a Hugging Face API key, they get some extra perks.
 
 TASK:
-<fill your demand here>
+
 
 Note: For the task to be validated, running the shell command "flutter build web" must succeeed.
