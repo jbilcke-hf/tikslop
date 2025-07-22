@@ -4,5 +4,6 @@
       "Bash(flutter build:*)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": false
 }

@@ -12,6 +12,9 @@ render_queue:
   # start playback as soon as we have 1 video over 3 (25%)
   minimum_buffer_percent_to_start_playback: 5
 
+# the purpose of those "ads" is to make the user patient during LLM inference.
+# Later this system could be used for real advertising to make it self-sufficient,
+# prevent TikSlop from being canceled by making it free and self-funded
 advertising:
   enable_ads: true
   ad_banners:
@@ -22,7 +25,7 @@ advertising:
 
 simulation:
   # whether to enable simulation loop to evolve descriptions over time
-  enable_sim_loop: true
+  enable_sim_loop: false
   
   # how often the description should evolve (in seconds)
   # setting to 0 disables description evolution

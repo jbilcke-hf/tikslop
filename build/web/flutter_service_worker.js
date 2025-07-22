@@ -3,12 +3,12 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"flutter_bootstrap.js": "38d3a331cc172bd3186b3f74954526d9",
+const RESOURCES = {"flutter_bootstrap.js": "4d796cc647be99d9fe8247a46a38c499",
 "version.json": "68350cac7987de2728345c72918dd067",
 "tikslop.png": "570e1db759046e2d224fef729983634e",
 "index.html": "3a7029b3672560e7938aab6fa4d30a46",
 "/": "3a7029b3672560e7938aab6fa4d30a46",
-"main.dart.js": "e9f71e0147e099d3820f7b7eb292ee48",
+"main.dart.js": "845632734923e772c5c0b347097b56fb",
 "tikslop.svg": "26140ba0d153b213b122bc6ebcc17f6c",
 "flutter.js": "2a09505589bbbd07ac54b434883c2f03",
 "favicon.png": "c8a183c516004e648a7bac7497c89b97",
@@ -31,7 +31,7 @@ const RESOURCES = {"flutter_bootstrap.js": "38d3a331cc172bd3186b3f74954526d9",
 "assets/assets/config/README.md": "07a87720dd00dd1ca98c9d6884440e31",
 "assets/assets/config/custom.yaml": "52bd30aa4d8b980626a5eb02d0871c01",
 "assets/assets/config/default.yaml": "9ca1d05d06721c2b6f6382a1ba40af48",
-"assets/assets/config/tikslop.yaml": "45d535b24df6e81ce983bf4f550c9be7",
+"assets/assets/config/tikslop.yaml": "827c4e5a1b1de9d04f9e259ad321dfd0",
 "canvaskit/skwasm.js": "4087d5eaf9b62d309478803602d8e131",
 "canvaskit/skwasm_heavy.js": "dddba7cbf636e5e28af8de827a6e5b49",
 "canvaskit/skwasm.js.symbols": "ffc07b382ae1e2cf61303ec4391ea4ad",

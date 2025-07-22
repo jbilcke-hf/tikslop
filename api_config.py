@@ -35,6 +35,10 @@ VIDEO_ROUND_ROBIN_ENDPOINT_URLS = filtered_urls[:MAX_NODES]
 
 HF_TOKEN = os.environ.get('HF_TOKEN')
 
+# Control whether to allow fallback to server's HF API key for LLM calls
+# (Video generation will always use the server's HF token)
+ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS = os.environ.get('ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS', 'false').lower() in ('true', 'yes', '1', 't')
+
 # use the same secret token as you used to secure your BASE_SPACE_NAME spaces
 SECRET_TOKEN = os.environ.get('SECRET_TOKEN')
 

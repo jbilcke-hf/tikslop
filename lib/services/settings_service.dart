@@ -9,6 +9,9 @@ class SettingsService {
   static const String _negativePromptKey = 'negative_video_prompt';
   static const String _showSceneDebugInfoKey = 'show_scene_debug_info';
   static const String _enableSimulationKey = 'enable_simulation';
+  static const String _llmProviderKey = 'llm_provider';
+  static const String _llmModelKey = 'llm_model';
+  static const String _llmApiKeyKey = 'llm_api_key';
   static final SettingsService _instance = SettingsService._internal();
   
   factory SettingsService() => _instance;
@@ -55,6 +58,27 @@ class SettingsService {
   
   Future<void> setEnableSimulation(bool value) async {
     await _prefs.setBool(_enableSimulationKey, value);
+    _settingsController.add(null);
+  }
+
+  String get llmProvider => _prefs.getString(_llmProviderKey) ?? 'openai';
+  
+  Future<void> setLlmProvider(String provider) async {
+    await _prefs.setString(_llmProviderKey, provider);
+    _settingsController.add(null);
+  }
+
+  String get llmModel => _prefs.getString(_llmModelKey) ?? 'gpt-4';
+  
+  Future<void> setLlmModel(String model) async {
+    await _prefs.setString(_llmModelKey, model);
+    _settingsController.add(null);
+  }
+
+  String get llmApiKey => _prefs.getString(_llmApiKeyKey) ?? '';
+  
+  Future<void> setLlmApiKey(String apiKey) async {
+    await _prefs.setString(_llmApiKeyKey, apiKey);
     _settingsController.add(null);
   }
 

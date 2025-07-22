@@ -205,6 +205,7 @@ class UserSession:
                 request_id = data.get('requestId')
                 query = data.get('query', '').strip()
                 attempt_count = data.get('attemptCount', 0)
+                llm_config = data.get('llm_config')
 
                 # logger.info(f"Processing search request for user {self.user_id}, attempt={attempt_count}")
 
@@ -220,7 +221,8 @@ class UserSession:
                     try:
                         search_result = await self.shared_api.search_video(
                             query,
-                            attempt_count=attempt_count
+                            attempt_count=attempt_count,
+                            llm_config=llm_config
                         )
                         
                         if search_result:
@@ -285,6 +287,7 @@ class UserSession:
                 condensed_history = data.get('condensed_history', '')
                 evolution_count = data.get('evolution_count', 0)
                 chat_messages = data.get('chat_messages', '')
+                llm_config = data.get('llm_config')
                 
                 # logger.info(f"Processing video simulation for user {self.user_id}, video_id={video_id}, evolution_count={evolution_count}")
                 
@@ -305,7 +308,8 @@ class UserSession:
                             current_description=current_description,
                             condensed_history=condensed_history,
                             evolution_count=evolution_count,
-                            chat_messages=chat_messages
+                            chat_messages=chat_messages,
+                            llm_config=llm_config
                         )
                         
                         result = {
@@ -379,14 +383,16 @@ class UserSession:
                 })
             
             elif action == 'generate_caption':
-                title = data.get('params', {}).get('title')
-                description = data.get('params', {}).get('description')
+                params = data.get('params', {})
+                title = params.get('title')
+                description = params.get('description')
+                llm_config = params.get('llm_config')
                 
                 if not title or not description:
                     await self.ws.send_json(error_response('Missing title or description'))
                     return
                     
-                caption = await self.shared_api.generate_caption(title, description)
+                caption = await self.shared_api.generate_caption(title, description, llm_config=llm_config)
                 await self.ws.send_json({
                     'action': action,
                     'requestId': request_id,

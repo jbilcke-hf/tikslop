@@ -760,6 +760,13 @@ class WebSocketApiService {
     _currentSearchState = SearchState(query: query);
     int failedAttempts = 0;
 
+    // Get LLM settings once for the whole search session
+    final settings = SettingsService();
+    final llmProvider = settings.llmProvider;
+    final llmModel = settings.llmModel;
+    final llmApiKey = settings.llmApiKey;
+    final hfApiKey = settings.huggingfaceApiKey;
+
     while (_activeSearches[query] == true && 
           !_disposed && 
           failedAttempts < maxFailedAttempts && 
@@ -771,6 +778,12 @@ class WebSocketApiService {
             params: {
               'query': query,
               'attemptCount': failedAttempts,
+              'llm_config': {
+                'provider': llmProvider,
+                'model': llmModel,
+                'api_key': llmApiKey,
+                'hf_token': hfApiKey,
+              },
             },
           ),
           timeout: const Duration(seconds: 30),
@@ -1142,10 +1155,24 @@ class WebSocketApiService {
     }
 
     try {
+      // Get LLM settings
+      final settings = SettingsService();
+      final llmProvider = settings.llmProvider;
+      final llmModel = settings.llmModel;
+      final llmApiKey = settings.llmApiKey;
+      final hfApiKey = settings.huggingfaceApiKey;
+      
       final response = await _sendRequest(
         WebSocketRequest(
           action: 'search',
-          params: {'query': query},
+          params: {
+            'query': query,
+            'llm_config': {
+              'provider': llmProvider,
+              'model': llmModel,
+              'api_key': llmApiKey,
+            },
+          },
         ),
         timeout: const Duration(seconds: 30),
       );
@@ -1209,12 +1236,24 @@ class WebSocketApiService {
   }
 
   Future<String> generateCaption(String title, String description) async {
+    // Get LLM settings
+    final settings = SettingsService();
+    final llmProvider = settings.llmProvider;
+    final llmModel = settings.llmModel;
+    final llmApiKey = settings.llmApiKey;
+    final hfApiKey = settings.huggingfaceApiKey;
+    
     final response = await _sendRequest(
       WebSocketRequest(
         action: 'generate_caption',
         params: {
           'title': title,
           'description': description,
+          'llm_config': {
+            'provider': llmProvider,
+            'model': llmModel,
+            'api_key': llmApiKey,
+          },
         },
       ),
       timeout: const Duration(seconds: 45),
@@ -1274,6 +1313,13 @@ class WebSocketApiService {
       
       debugPrint('WebSocketApiService: Chat messages included: ${formattedChatMessages.isNotEmpty ? 'Yes' : 'No'}');
       
+      // Get LLM settings
+      final settings = SettingsService();
+      final llmProvider = settings.llmProvider;
+      final llmModel = settings.llmModel;
+      final llmApiKey = settings.llmApiKey;
+      final hfApiKey = settings.huggingfaceApiKey;
+      
       final response = await _sendRequest(
         WebSocketRequest(
           action: 'simulate',
@@ -1285,6 +1331,11 @@ class WebSocketApiService {
             'condensed_history': condensedHistory,
             'evolution_count': evolutionCount,
             'chat_messages': formattedChatMessages,
+            'llm_config': {
+              'provider': llmProvider,
+              'model': llmModel,
+              'api_key': llmApiKey,
+            },
           },
         ),
         timeout: const Duration(seconds: 60),

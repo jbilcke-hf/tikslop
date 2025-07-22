@@ -215,6 +215,155 @@ class VideoGenerationAPI:
         self.user_role_cache: Dict[str, Dict[str, Any]] = {}
         # Cache expiration time (10 minutes)
         self.cache_expiration = 600
+        
+    def _get_inference_client(self, llm_config: Optional[dict] = None) -> InferenceClient:
+        """
+        Get an InferenceClient configured with the provided LLM settings.
+        
+        Priority order for API keys:
+        1. Provider-specific API key (if provided)
+        2. User's HF token (if provided)
+        3. Server's HF token (only if ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS is true)
+        4. Raise exception if no valid key is available
+        """
+        if not llm_config:
+            return self.inference_client
+            
+        provider = llm_config.get('provider', '').lower()
+        model = llm_config.get('model', '')
+        api_key = llm_config.get('api_key', '')  # Provider-specific API key
+        hf_token = llm_config.get('hf_token', '')  # User's HF token
+        
+        # If no provider or model specified, use default
+        if not provider or not model:
+            return self.inference_client
+            
+        try:
+            # Map frontend provider names to HF InferenceClient provider names
+            provider_mapping = {
+                'openai': 'openai',
+                'anthropic': 'anthropic',
+                'google': 'google',
+                'cohere': 'cohere',
+                'together': 'together',
+                'huggingface': None,  # Use HF directly without provider
+                'builtin': None  # Use server's default model
+            }
+            
+            hf_provider = provider_mapping.get(provider)
+            
+            # Handle built-in provider first (uses server's HF token and default model)
+            if provider == 'builtin':
+                if ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS and HF_TOKEN:
+                    # Use server's default model from HF_TEXT_MODEL
+                    return InferenceClient(
+                        model=TEXT_MODEL if TEXT_MODEL else model,
+                        token=HF_TOKEN
+                    )
+                else:
+                    raise ValueError("Built-in provider is not available. Server is not configured to allow fallback to server API key.")
+            
+            # Priority 1: Use provider-specific API key if available
+            if api_key and hf_provider:
+                return InferenceClient(
+                    provider=hf_provider,
+                    model=model,
+                    api_key=api_key
+                )
+            elif api_key and provider == 'huggingface':
+                # For HuggingFace provider with an API key (treat it as HF token)
+                return InferenceClient(
+                    model=model,
+                    token=api_key
+                )
+            
+            # Priority 2: Use user's HF token if available
+            if hf_token:
+                return InferenceClient(
+                    model=model,
+                    token=hf_token
+                )
+            
+            # Priority 3: Use server's HF token only if explicitly allowed
+            if ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS and HF_TOKEN:
+                logger.warning(f"Using server's HF token for {provider} model {model} - no user API key provided")
+                return InferenceClient(
+                    model=model,
+                    token=HF_TOKEN
+                )
+            
+            # No valid API key available
+            if provider == 'huggingface':
+                raise ValueError("No API key provided. Please provide your Hugging Face API key.")
+            else:
+                raise ValueError(f"No API key provided for {provider}. Please provide either a {provider} API key or your Hugging Face API key.")
+                
+        except ValueError:
+            # Re-raise ValueError for missing API keys
+            raise
+        except Exception as e:
+            logger.error(f"Error creating InferenceClient with config {llm_config}: {e}")
+            # For other errors, fallback to default client only if server token is allowed
+            if ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS:
+                return self.inference_client
+            else:
+                raise
+                
+        except Exception as e:
+            logger.error(f"Error creating InferenceClient with config {llm_config}: {e}")
+            # Fallback to default client
+            return self.inference_client
+    
+    async def _generate_text(self, prompt: str, llm_config: Optional[dict] = None, 
+                           max_new_tokens: int = 200, temperature: float = 0.7,
+                           model_override: Optional[str] = None) -> str:
+        """
+        Helper method to generate text using the appropriate client and configuration.
+        
+        Args:
+            prompt: The prompt to generate text from
+            llm_config: Optional LLM configuration dict
+            max_new_tokens: Maximum number of new tokens to generate
+            temperature: Temperature for generation
+            model_override: Optional model to use instead of the one in llm_config
+            
+        Returns:
+            Generated text string
+        """
+        # Get the appropriate client
+        client = self._get_inference_client(llm_config)
+        
+        # For third-party providers, we don't need to specify model in text_generation
+        # as it's already configured in the client
+        if llm_config and llm_config.get('provider') != 'huggingface':
+            response = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: client.text_generation(
+                    prompt,
+                    max_new_tokens=max_new_tokens,
+                    temperature=temperature
+                )
+            )
+        else:
+            # For HuggingFace models, we need to specify the model
+            if model_override:
+                model_to_use = model_override
+            elif llm_config:
+                model_to_use = llm_config.get('model', TEXT_MODEL)
+            else:
+                model_to_use = TEXT_MODEL
+                
+            response = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: client.text_generation(
+                    prompt,
+                    model=model_to_use,
+                    max_new_tokens=max_new_tokens,
+                    temperature=temperature
+                )
+            )
+        
+        return response
 
 
     def _add_event(self, video_id: str, event: Dict[str, Any]):
@@ -302,7 +451,7 @@ class VideoGenerationAPI:
                     raise Exception(f"Failed to download video: HTTP {response.status}")
                 return await response.read()
 
-    async def search_video(self, query: str, attempt_count: int = 0) -> Optional[dict]:
+    async def search_video(self, query: str, attempt_count: int = 0, llm_config: Optional[dict] = None) -> Optional[dict]:
         """Generate a single search result using HF text generation"""
         # Maximum number of attempts to generate a description without placeholder tags
         max_attempts = 2
@@ -337,14 +486,11 @@ Describe the first scene/shot for: "{query}".
 title: \""""
 
             try:
-                response = await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: self.inference_client.text_generation(
-                        prompt,
-                        model=TEXT_MODEL,
-                        max_new_tokens=200,
-                        temperature=temperature
-                    )
+                response = await self._generate_text(
+                    prompt,
+                    llm_config=llm_config,
+                    max_new_tokens=200,
+                    temperature=temperature
                 )
 
                 response_text = re.sub(r'^\s*\.\s*\n', '', f"title: \"{response.strip()}")
@@ -419,7 +565,7 @@ title: \""""
     # generate_video_thumbnail for all thumbnails, which generates a video clip
     # instead of a static image
 
-    async def generate_caption(self, title: str, description: str) -> str:
+    async def generate_caption(self, title: str, description: str, llm_config: Optional[dict] = None) -> str:
         """Generate detailed caption using HF text generation"""
         try:
             prompt = f"""Generate a detailed story for a video named: "{title}"
@@ -428,14 +574,11 @@ Instructions: Write the story summary, including the plot, action, what should h
 Make it around 200-300 words long.
 A video can be anything from a tutorial, webcam, trailer, movie, live stream etc."""
 
-            response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.inference_client.text_generation(
-                    prompt,
-                    model=TEXT_MODEL,
-                    max_new_tokens=180,
-                    temperature=0.7
-                )
+            response = await self._generate_text(
+                prompt,
+                llm_config=llm_config,
+                max_new_tokens=180,
+                temperature=0.7
             )
      
             if "Caption: " in response:
@@ -454,7 +597,7 @@ A video can be anything from a tutorial, webcam, trailer, movie, live stream etc
             
     async def simulate(self, original_title: str, original_description: str, 
                          current_description: str, condensed_history: str, 
-                         evolution_count: int = 0, chat_messages: str = '') -> dict:
+                         evolution_count: int = 0, chat_messages: str = '', llm_config: Optional[dict] = None) -> dict:
         """
         Simulate a video by evolving its description to create a dynamic narrative.
         
@@ -537,15 +680,12 @@ Remember to obey to what users said in the chat history!!
 
 Now, you must write down the new scene description (don't write a long story! write a synthetic description!):"""
 
-            # Generate the evolved description
-            response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.inference_client.text_generation(
-                    prompt,
-                    model=TEXT_MODEL,
-                    max_new_tokens=240,
-                    temperature=0.60
-                )
+            # Generate the evolved description using the helper method
+            response = await self._generate_text(
+                prompt,
+                llm_config=llm_config,
+                max_new_tokens=240,
+                temperature=0.60
             )
 
             # print("RAW RESPONSE: ", response)
