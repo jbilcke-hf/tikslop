@@ -74,9 +74,9 @@ models:
     display_name: Qwen3 235B A22B
     num_of_parameters: 235B
 
-  - model_id: deepseek-ai/DeepSeek-V3-0324
-    display_name: DeepSeek V3
-    num_of_parameters: 685B
+  #- model_id: deepseek-ai/DeepSeek-V3-0324
+  #  display_name: DeepSeek V3
+  #  num_of_parameters: 685B
 
   - model_id: moonshotai/Kimi-K2-Instruct
     display_name: Kimi K2

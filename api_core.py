@@ -319,6 +319,7 @@ class VideoGenerationAPI:
                            model_override: Optional[str] = None) -> str:
         """
         Helper method to generate text using the appropriate client and configuration.
+        Tries chat_completion first (modern standard), falls back to text_generation.
         
         Args:
             prompt: The prompt to generate text from
@@ -333,37 +334,83 @@ class VideoGenerationAPI:
         # Get the appropriate client
         client = self._get_inference_client(llm_config)
         
-        # For third-party providers, we don't need to specify model in text_generation
-        # as it's already configured in the client
-        if llm_config and llm_config.get('provider') != 'huggingface':
-            response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: client.text_generation(
-                    prompt,
-                    max_new_tokens=max_new_tokens,
-                    temperature=temperature
-                )
-            )
+        # Determine the model to use
+        if model_override:
+            model_to_use = model_override
+        elif llm_config:
+            model_to_use = llm_config.get('model', TEXT_MODEL)
         else:
-            # For HuggingFace models, we need to specify the model
-            if model_override:
-                model_to_use = model_override
-            elif llm_config:
-                model_to_use = llm_config.get('model', TEXT_MODEL)
-            else:
-                model_to_use = TEXT_MODEL
-                
-            response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: client.text_generation(
-                    prompt,
-                    model=model_to_use,
-                    max_new_tokens=max_new_tokens,
-                    temperature=temperature
-                )
-            )
+            model_to_use = TEXT_MODEL
         
-        return response
+        # Try chat_completion first (modern standard, more widely supported)
+        try:
+            messages = [{"role": "user", "content": prompt}]
+            
+            if llm_config and llm_config.get('provider') != 'huggingface':
+                # For third-party providers
+                completion = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: client.chat.completions.create(
+                        messages=messages,
+                        max_tokens=max_new_tokens,
+                        temperature=temperature
+                    )
+                )
+            else:
+                # For HuggingFace models, specify the model
+                completion = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: client.chat.completions.create(
+                        model=model_to_use,
+                        messages=messages,
+                        max_tokens=max_new_tokens,
+                        temperature=temperature
+                    )
+                )
+            
+            # Extract the generated text from the chat completion response
+            return completion.choices[0].message.content
+            
+        except Exception as e:
+            error_message = str(e).lower()
+            # Check if the error is related to task compatibility or API not supported
+            if ("not supported for task" in error_message or 
+                "conversational" in error_message or
+                "chat" in error_message):
+                logger.info(f"chat_completion not supported, falling back to text_generation: {e}")
+                
+                # Fall back to text_generation API
+                try:
+                    if llm_config and llm_config.get('provider') != 'huggingface':
+                        # For third-party providers
+                        response = await asyncio.get_event_loop().run_in_executor(
+                            None,
+                            lambda: client.text_generation(
+                                prompt,
+                                max_new_tokens=max_new_tokens,
+                                temperature=temperature
+                            )
+                        )
+                    else:
+                        # For HuggingFace models, specify the model
+                        response = await asyncio.get_event_loop().run_in_executor(
+                            None,
+                            lambda: client.text_generation(
+                                prompt,
+                                model=model_to_use,
+                                max_new_tokens=max_new_tokens,
+                                temperature=temperature
+                            )
+                        )
+                    return response
+                    
+                except Exception as text_error:
+                    logger.error(f"Both chat_completion and text_generation failed: {text_error}")
+                    raise text_error
+            else:
+                # Re-raise the original error if it's not a task compatibility issue
+                logger.error(f"chat_completion failed with non-compatibility error: {e}")
+                raise e
 
 
     def _add_event(self, video_id: str, event: Dict[str, Any]):
@@ -486,16 +533,35 @@ Describe the first scene/shot for: "{query}".
 title: \""""
 
             try:
-                response = await self._generate_text(
+                raw_yaml_str = await self._generate_text(
                     prompt,
                     llm_config=llm_config,
                     max_new_tokens=200,
                     temperature=temperature
                 )
 
-                response_text = re.sub(r'^\s*\.\s*\n', '', f"title: \"{response.strip()}")
-                sanitized_yaml = sanitize_yaml_response(response_text)
+                raw_yaml_str = raw_yaml_str.strip()
+        
+                #logger.info(f"search_video(): raw_yaml_str = {raw_yaml_str}")
+
+                if raw_yaml_str.startswith("```yaml"):
+                    # Remove the "```yaml" at the beginning and closing ```
+                    raw_yaml_str = raw_yaml_str[7:]  # Remove "```yaml" (7 characters)
+                    if raw_yaml_str.endswith("```"):
+                        raw_yaml_str = raw_yaml_str[:-3]  # Remove closing ```
+                    raw_yaml_str = raw_yaml_str.strip()
+                elif raw_yaml_str.startswith("```"):
+                    # Remove the "```" at the beginning and closing ```
+                    raw_yaml_str = raw_yaml_str[3:]  # Remove opening ```
+                    if raw_yaml_str.endswith("```"):
+                        raw_yaml_str = raw_yaml_str[:-3]  # Remove closing ```
+                    raw_yaml_str = raw_yaml_str.strip()
+                else:
+                    raw_yaml_str = re.sub(r'^\s*\.\s*\n', '', f"title: \"{raw_yaml_str}")
                 
+                sanitized_yaml = sanitize_yaml_response(raw_yaml_str)
+                #logger.info(f"search_video(): sanitized_yaml = {sanitized_yaml}")
+
                 try:
                     result = yaml.safe_load(sanitized_yaml)
                 except yaml.YAMLError as e:
