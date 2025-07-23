@@ -90,14 +90,14 @@ class CuratedModel {
   /// Default models in case asset loading fails
   static const List<CuratedModel> _defaultModels = [
     CuratedModel(
-      modelId: 'meta-llama/Llama-3.2-3B-Instruct',
-      displayName: 'Llama 3.2 3B Instruct',
-      numOfParameters: '3B',
+      modelId: ' Qwen/Qwen3-0.6B',
+      displayName: ' Qwen/Qwen 0.6B',
+      numOfParameters: '0.6B',
     ),
     CuratedModel(
-      modelId: 'HuggingFaceTB/SmolLM3-3B',
-      displayName: 'SmolLM3 3B',
-      numOfParameters: '3B',
+      modelId: 'Unbabel/Tower-Plus-2B',
+      displayName: 'Tower-Plus-2B',
+      numOfParameters: '2B',
     ),
   ];
 
