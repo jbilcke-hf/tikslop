@@ -241,14 +241,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       // Reinitialize the websocket connection when the API key changes
                       final websocket = WebSocketApiService();
                       try {
-                        // First dispose the current connection
-                        await websocket.dispose();
-                        
-                        // Then create a new connection with the new API key
-                        await websocket.connect();
-                        
-                        // Finally, initialize the connection completely
-                        await websocket.initialize();
+                        // Force reconnection with the new API key
+                        await websocket.reconnect();
                         
                         // Show success message
                         if (context.mounted) {
@@ -693,6 +687,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       });
                       _settingsService.setEnableSimulation(value);
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  // Clear device connections button
+                  ListTile(
+                    title: const Text('Clear Device Connections'),
+                    subtitle: const Text('Clear all cached device connections (useful if you see "Too many connections" error)'),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        // Clear all device connections
+                        WebSocketApiService.clearAllDeviceConnections();
+                        
+                        // Show confirmation message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Device connections cleared. Please reload the page.'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      },
+                      child: const Text('Clear All'),
+                    ),
                   ),
                 ],
               ),

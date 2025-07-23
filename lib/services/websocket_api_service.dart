@@ -144,6 +144,35 @@ class WebSocketApiService {
     
     try {
       debugPrint('WebSocketApiService: Initializing and connecting...');
+      
+      // Add page unload handler for web platform
+      if (kIsWeb) {
+        try {
+          // Add beforeunload listener to clean up connection
+          html.window.onBeforeUnload.listen((_) {
+            debugPrint('WebSocketApiService: Page unloading, cleaning up connection...');
+            _unregisterDeviceConnection();
+          });
+          
+          // Also add pagehide listener as a fallback
+          html.window.addEventListener('pagehide', (event) {
+            debugPrint('WebSocketApiService: Page hiding, cleaning up connection...');
+            _unregisterDeviceConnection();
+          });
+          
+          // And visibilitychange for when the page is being closed
+          html.document.addEventListener('visibilitychange', (event) {
+            if (html.document.hidden == true) {
+              debugPrint('WebSocketApiService: Page becoming hidden, updating heartbeat...');
+              // Update heartbeat when page becomes hidden to keep connection alive
+              _updateConnectionHeartbeat();
+            }
+          });
+        } catch (e) {
+          debugPrint('Error setting up page unload handlers: $e');
+        }
+      }
+      
       await connect();
       
       // Only continue if we're properly connected
@@ -242,9 +271,34 @@ class WebSocketApiService {
     if (!kIsWeb) return true; // Only apply on web platform
     
     try {
-      // Generate a unique ID for this connection instance
+      // Try to reuse existing connection ID from localStorage if valid
       if (_connectionId == null) {
-        _connectionId = const Uuid().v4();
+        final storedId = html.window.localStorage[_connectionIdKey];
+        if (storedId != null && storedId.isNotEmpty) {
+          // Check if this connection ID is still active
+          final countJson = html.window.localStorage[_connectionCountKey];
+          if (countJson != null && countJson.isNotEmpty) {
+            try {
+              final connections = json.decode(countJson) as Map<String, dynamic>;
+              final now = DateTime.now().millisecondsSinceEpoch;
+              final connectionTimestamp = connections[storedId];
+              
+              // Reuse the ID if it's still recent (within 15 seconds)
+              if (connectionTimestamp is int && now - connectionTimestamp < 15000) {
+                _connectionId = storedId;
+                debugPrint('Reusing existing connection ID: $_connectionId');
+              }
+            } catch (e) {
+              debugPrint('Error checking stored connection: $e');
+            }
+          }
+        }
+        
+        // Generate new ID if we couldn't reuse one
+        if (_connectionId == null) {
+          _connectionId = const Uuid().v4();
+          debugPrint('Generated new connection ID: $_connectionId');
+        }
         
         // Store connection ID in localStorage
         html.window.localStorage[_connectionIdKey] = _connectionId!;
@@ -263,12 +317,17 @@ class WebSocketApiService {
         }
       }
       
-      // Clean up stale connections (older than 30 seconds)
+      // Clean up stale connections (older than 20 seconds - more aggressive)
       final now = DateTime.now().millisecondsSinceEpoch;
+      final beforeCleanup = connections.length;
       connections.removeWhere((key, value) {
         if (value is! int) return true;
-        return now - value > 30000; // 30 seconds timeout
+        return now - value > 20000; // 20 seconds timeout (more aggressive)
       });
+      
+      if (beforeCleanup != connections.length) {
+        debugPrint('Cleaned up ${beforeCleanup - connections.length} stale connections');
+      }
       
       // Add/update this connection
       connections[_connectionId!] = now;
@@ -280,6 +339,7 @@ class WebSocketApiService {
       // For anonymous users, we rely on the server-side IP check
       if (_userRole != 'anon' && connections.length > _maxDeviceConnections) {
         debugPrint('Device connection limit exceeded: ${connections.length} connections for $_userRole user');
+        debugPrint('Active connections: ${connections.keys.toList()}');
         return false;
       }
       
@@ -343,11 +403,27 @@ class WebSocketApiService {
       // Store back to localStorage
       html.window.localStorage[_connectionCountKey] = json.encode(connections);
       
+      // Also remove the stored connection ID
+      html.window.localStorage.remove(_connectionIdKey);
+      
       // Stop the heartbeat timer
       _connectionHeartbeatTimer?.cancel();
       _connectionHeartbeatTimer = null;
     } catch (e) {
       debugPrint('Error unregistering device connection: $e');
+    }
+  }
+  
+  // Public method to clear all device connections (useful for debugging)
+  static void clearAllDeviceConnections() {
+    if (!kIsWeb) return;
+    
+    try {
+      html.window.localStorage.remove(_connectionCountKey);
+      html.window.localStorage.remove(_connectionIdKey);
+      debugPrint('WebSocketApiService: Cleared all device connections from localStorage');
+    } catch (e) {
+      debugPrint('Error clearing device connections: $e');
     }
   }
   
@@ -359,6 +435,36 @@ class WebSocketApiService {
     _connectionHeartbeatTimer = Timer.periodic(_connectionHeartbeatInterval, (timer) {
       _updateConnectionHeartbeat();
     });
+  }
+
+  /// Reconnect to the WebSocket server, closing any existing connection first
+  Future<void> reconnect() async {
+    if (_disposed) {
+      throw Exception('WebSocketApiService has been disposed');
+    }
+
+    debugPrint('WebSocketApiService: Forcing reconnection...');
+    
+    // Unregister the current connection
+    _unregisterDeviceConnection();
+    
+    // Close existing connection if any
+    if (_channel != null) {
+      try {
+        await _channel!.sink.close();
+      } catch (e) {
+        debugPrint('WebSocketApiService: Error closing existing channel: $e');
+      }
+      _channel = null;
+    }
+    
+    // Reset connection state and ID
+    _setStatus(ConnectionStatus.disconnected);
+    _reconnectAttempts = 0;
+    _connectionId = null;  // Clear connection ID to force a new one
+    
+    // Connect again
+    await connect();
   }
 
   Future<void> connect() async {
