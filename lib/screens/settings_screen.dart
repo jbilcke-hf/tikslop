@@ -188,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'LLM Configuration',
+                    'LLM (used for search and story generation)',
                     style: TextStyle(
                       color: TikSlopColors.onBackground,
                       fontSize: 20,
@@ -283,8 +283,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ? 'Enter HF API key to select models' 
                               : _isCheckingAvailability
                                   ? 'Checking model availability...'
-                                  : 'Select a curated model optimized for #tikslop',
-                      helperMaxLines: 2,
+                                  : 'Tikslop works best with a fast model (recommended: Gemma 2 9B)',
                       suffixIcon: _isCheckingAvailability || _isLoadingModels
                           ? const SizedBox(
                               width: 16,
@@ -498,7 +497,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ? 'Enter HF API key to unlock providers' 
                             : _isCheckingAvailability
                                 ? 'Checking model availability...'
-                                : 'Select from available providers for this model',
+                                : 'Tikslop works best with a fast provider (eg. Groq)',
                         helperMaxLines: 2,
                       ),
                       value: _selectedLlmProvider == 'built-in' ? null : _selectedLlmProvider,
@@ -598,7 +597,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Video Generation',
+                    'Infinite video generator',
                     style: TextStyle(
                       color: TikSlopColors.onBackground,
                       fontSize: 20,
@@ -629,6 +628,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _settingsService.setNegativeVideoPrompt(value);
                     },
                   ),
+
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Video Generation Model (cannot be changed yet)',
+                    ),
+                    initialValue: 'ltx-video-2b-0.9.8',
+                    onChanged: null, // Disabled
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'ltx-video-2b-0.9.8',
+                        child: Text('LTX-Video 2B 0.9.8 (distilled)'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Interested in using custom Hugging Face models? If you already have trained a LoRA model based on LTX-Video 2B 0.9.8 (distilled), please open a thread in the Community forum and I\'ll see for a way to allow for custom models.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -642,7 +664,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Display Options',
+                    'Developer Tools (beta)',
                     style: TextStyle(
                       color: TikSlopColors.onBackground,
                       fontSize: 20,
@@ -671,48 +693,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       });
                       _settingsService.setEnableSimulation(value);
                     },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Custom Video Model Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Custom Video Model',
-                    style: TextStyle(
-                      color: TikSlopColors.onBackground,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'Video Generation Model',
-                    ),
-                    initialValue: 'ltx-video-2b-0.9.8',
-                    onChanged: null, // Disabled
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'ltx-video-2b-0.9.8',
-                        child: Text('LTX-Video 2B 0.9.8 (distilled)'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Interested in using custom Hugging Face models? If you already have trained a LoRA model based on LTX-Video 2B 0.9.8 (distilled), please open a thread in the Community forum and I\'ll see for a way to allow for custom models.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
                   ),
                 ],
               ),

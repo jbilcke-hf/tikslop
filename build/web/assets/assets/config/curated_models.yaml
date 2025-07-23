@@ -45,42 +45,48 @@ models:
   #  display_name: Qwen3 4B
   #  num_of_parameters: 4B
   
-  - model_id: deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
-    display_name: DeepSeek R1 Qwen3 8B (0528)
-    num_of_parameters: 8B
+  # this LLM pattern format is not supported by Tikslop yet
+  #- model_id: deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+  #  display_name: DeepSeek R1 Qwen3 8B (0528)
+  #  num_of_parameters: 8B
 
+  # decent performance when using Groq
   - model_id: google/gemma-2-9b-it
     display_name: Gemma 2 9B
     num_of_parameters: 9B
   
-  - model_id: meta-llama/Llama-3.3-70B-Instruct
-    display_name: Llama 3.3 70B
-    num_of_parameters: 70B
-
   - model_id: meta-llama/Llama-4-Scout-17B-16E-Instruct
     display_name: Llama 4 Scout 17B
     num_of_parameters: 17B
+  
+  - model_id: meta-llama/Llama-3.3-70B-Instruct
+    display_name: Llama 3.3 70B
+    num_of_parameters: 70B
 
   # no providers found - bug?
   #- model_id: mistralai/Mistral-Small-3.2-24B-Instruct-2506
   #  display_name: Mistral Small 3.2 24B
   #  num_of_parameters: 24B
 
-  - model_id: Qwen/Qwen3-32B
-    display_name: Qwen3 32B
-    num_of_parameters: 32B
+  # too big/slow?
+  #- model_id: Qwen/Qwen3-32B
+  #  display_name: Qwen3 32B
+  #  num_of_parameters: 32B
   
-  - model_id: Qwen/Qwen3-235B-A22B-Instruct-2507
-    display_name: Qwen3 235B A22B
-    num_of_parameters: 235B
+  # too big/slow?
+  #- model_id: Qwen/Qwen3-235B-A22B-Instruct-2507
+  #  display_name: Qwen3 235B A22B
+  #  num_of_parameters: 235B
 
+  # this LLM pattern format is not supported by Tikslop yet
   #- model_id: deepseek-ai/DeepSeek-V3-0324
   #  display_name: DeepSeek V3
   #  num_of_parameters: 685B
 
-  - model_id: moonshotai/Kimi-K2-Instruct
-    display_name: Kimi K2
-    num_of_parameters: 1000B
+  # too big/slow?
+  #- model_id: moonshotai/Kimi-K2-Instruct
+  #  display_name: Kimi K2
+  #  num_of_parameters: 1000B
   
 # Gemma 3n models are not available on the Inference Providers yet
 #- model_id: google/gemma-3n-E2B-it

@@ -3,12 +3,12 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"flutter_bootstrap.js": "f833cb89d68c8ddba5bc70cec281205c",
+const RESOURCES = {"flutter_bootstrap.js": "b98de8eaf32c5bc183c9879c24e42172",
 "version.json": "68350cac7987de2728345c72918dd067",
 "tikslop.png": "570e1db759046e2d224fef729983634e",
 "index.html": "3a7029b3672560e7938aab6fa4d30a46",
 "/": "3a7029b3672560e7938aab6fa4d30a46",
-"main.dart.js": "e97ab1118ef80fcb0e3cbe51e5eae8ec",
+"main.dart.js": "a897b61edcb30264f6ad2d89a6931afc",
 "tikslop.svg": "26140ba0d153b213b122bc6ebcc17f6c",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
 "favicon.png": "c8a183c516004e648a7bac7497c89b97",
@@ -28,7 +28,7 @@ const RESOURCES = {"flutter_bootstrap.js": "f833cb89d68c8ddba5bc70cec281205c",
 "assets/assets/ads/smolagents.gif": "45338af5a4d440b707d02f364be8195c",
 "assets/assets/ads/README.md": "1959fb6b85a966348396f2f0f9c3f32a",
 "assets/assets/ads/lerobot.gif": "0f90b2fc4d15eefb5572363724d6d925",
-"assets/assets/config/curated_models.yaml": "94e54843953b4f90c454cd8e5a3176fb",
+"assets/assets/config/curated_models.yaml": "d196fd3efc99169e1855088153af48c8",
 "assets/assets/config/README.md": "07a87720dd00dd1ca98c9d6884440e31",
 "assets/assets/config/custom.yaml": "52bd30aa4d8b980626a5eb02d0871c01",
 "assets/assets/config/default.yaml": "9ca1d05d06721c2b6f6382a1ba40af48",
