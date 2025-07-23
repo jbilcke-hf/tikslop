@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
 import '../services/websocket_api_service.dart';
+import '../services/model_availability_service.dart';
+import '../models/llm_provider.dart';
+import '../models/curated_model.dart';
 import '../theme/colors.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -15,11 +18,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _negativePromptController = TextEditingController();
   final _hfApiKeyController = TextEditingController();
   final _llmApiKeyController = TextEditingController();
+  final _modelNameController = TextEditingController();
   final _settingsService = SettingsService();
+  final _availabilityService = ModelAvailabilityService();
   bool _showSceneDebugInfo = false;
   bool _enableSimulation = true;
-  String _selectedLlmProvider = 'openai';
-  String _selectedLlmModel = 'gpt-4';
+  String _selectedLlmProvider = 'built-in';
+  String _selectedLlmModel = 'meta-llama/Llama-3.2-3B-Instruct';
+  LLMProvider? _currentProvider;
+  List<LLMProvider> _availableProviders = LLMProvider.supportedProviders.where((p) => p.id != 'built-in').toList();
+  List<CuratedModel> _curatedModels = [];
+  CuratedModel? _selectedCuratedModel;
+  bool _isCheckingAvailability = false;
+  bool _isLoadingModels = true;
+  bool _isBuiltInModelSelected = true;
 
   @override
   void initState() {
@@ -31,16 +43,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _showSceneDebugInfo = _settingsService.showSceneDebugInfo;
     _enableSimulation = _settingsService.enableSimulation;
     
-    // Auto-select built-in provider if no HF API key
+    // Auto-select built-in model if no HF API key
     if (_settingsService.huggingfaceApiKey.isEmpty) {
-      _selectedLlmProvider = 'builtin';
-      _selectedLlmModel = 'default';
+      _selectedLlmProvider = 'built-in';
+      _selectedLlmModel = 'built-in';
+      _isBuiltInModelSelected = true;
       // Save the auto-selected values
-      _settingsService.setLlmProvider('builtin');
-      _settingsService.setLlmModel('default');
+      _settingsService.setLlmProvider('built-in');
+      _settingsService.setLlmModel('built-in');
     } else {
       _selectedLlmProvider = _settingsService.llmProvider;
       _selectedLlmModel = _settingsService.llmModel;
+      _isBuiltInModelSelected = _selectedLlmModel == 'built-in';
+    }
+    _currentProvider = _isBuiltInModelSelected ? null : LLMProvider.getById(_selectedLlmProvider);
+    _modelNameController.text = _selectedLlmModel;
+    
+    // Load curated models
+    _loadCuratedModels();
+    
+    // Check model availability on startup
+    if (!_isBuiltInModelSelected) {
+      _checkModelAvailability();
     }
   }
 
@@ -50,7 +74,101 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _negativePromptController.dispose();
     _hfApiKeyController.dispose();
     _llmApiKeyController.dispose();
+    _modelNameController.dispose();
     super.dispose();
+  }
+  
+  Future<void> _loadCuratedModels() async {
+    try {
+      final models = await CuratedModel.loadFromAssets();
+      setState(() {
+        _curatedModels = models;
+        _isLoadingModels = false;
+        
+        // Find the currently selected model in the curated list
+        if (!_isBuiltInModelSelected) {
+          try {
+            _selectedCuratedModel = _curatedModels.firstWhere(
+              (model) => model.modelId == _selectedLlmModel,
+            );
+          } catch (e) {
+            // If current model not found in curated list, use first available
+            _selectedCuratedModel = _curatedModels.isNotEmpty ? _curatedModels.first : null;
+          }
+        } else {
+          _selectedCuratedModel = null;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingModels = false;
+      });
+    }
+  }
+  
+  Future<void> _checkModelAvailability() async {
+    if (!mounted || _selectedLlmModel.isEmpty) return;
+
+    setState(() {
+      _isCheckingAvailability = true;
+    });
+
+    try {
+      final availability = await _availabilityService.getModelAvailability(
+        _selectedLlmModel,
+      );
+      if (availability != null && mounted) {
+        final compatibleProviders = _availabilityService.getCompatibleProviders(
+          _selectedLlmModel,
+        );
+
+        // Update provider availability
+        final updatedProviders = LLMProvider.supportedProviders.map((provider) {
+          if (provider.id == 'built-in') {
+            return provider; // Built-in is always available
+          }
+          final isCompatible = compatibleProviders.contains(provider.id);
+          return provider.copyWith(isAvailable: isCompatible);
+        }).toList();
+
+        setState(() {
+          _availableProviders = updatedProviders;
+          _isCheckingAvailability = false;
+        });
+
+        // Auto-switch provider if current one is not compatible
+        if (!compatibleProviders.contains(_selectedLlmProvider) && !_isBuiltInModelSelected) {
+          if (compatibleProviders.isNotEmpty) {
+            // Switch to first compatible provider
+            setState(() {
+              _selectedLlmProvider = compatibleProviders.first;
+              _currentProvider = LLMProvider.getById(_selectedLlmProvider);
+            });
+            await _settingsService.setLlmProvider(_selectedLlmProvider);
+          } else {
+            // No compatible providers, switch to built-in model
+            setState(() {
+              _selectedLlmProvider = 'built-in';
+              _selectedLlmModel = 'built-in';
+              _isBuiltInModelSelected = true;
+              _selectedCuratedModel = null;
+              _currentProvider = null;
+            });
+            await _settingsService.setLlmProvider('built-in');
+            await _settingsService.setLlmModel('built-in');
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isCheckingAvailability = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to check model availability: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -82,7 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: _hfApiKeyController,
                     decoration: const InputDecoration(
                       labelText: 'Hugging Face API Key',
-                      helperText: 'Your HF token for API access and higher-resolution rendering',
+                      helperText: 'Providing a HF API key allows you to select faster or better LLMs (billed to your account)',
                       helperMaxLines: 2,
                     ),
                     obscureText: true,
@@ -90,16 +208,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       await _settingsService.setHuggingfaceApiKey(value);
                       
                       // Auto-select built-in provider if API key is removed
-                      if (value.isEmpty && _selectedLlmProvider != 'builtin') {
+                      if (value.isEmpty && !_isBuiltInModelSelected) {
                         setState(() {
-                          _selectedLlmProvider = 'builtin';
-                          _selectedLlmModel = 'default';
+                          _selectedLlmProvider = 'built-in';
+                          _selectedLlmModel = 'built-in';
+                          _isBuiltInModelSelected = true;
+                          _currentProvider = null;
+                          _selectedCuratedModel = null;
+                          _modelNameController.text = _selectedLlmModel;
                         });
-                        await _settingsService.setLlmProvider('builtin');
-                        await _settingsService.setLlmModel('default');
+                        await _settingsService.setLlmProvider('built-in');
+                        await _settingsService.setLlmModel('built-in');
                       } else if (value.isNotEmpty) {
                         // Trigger rebuild to enable/disable fields
                         setState(() {});
+                        // Check model availability when HF key is provided
+                        if (!_isBuiltInModelSelected) {
+                          _checkModelAvailability();
+                        }
                       }
                       
                       // Show a snackbar to indicate the API key was saved
@@ -147,105 +273,318 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // Model selection dropdown
                   DropdownButtonFormField<String>(
                     decoration: InputDecoration(
-                      labelText: 'LLM Provider',
-                      helperText: _hfApiKeyController.text.isEmpty 
-                          ? 'Enter HF API key to unlock providers' 
-                          : 'Select your preferred LLM provider',
+                      labelText: 'Model',
+                      helperText: _isBuiltInModelSelected
+                          ? 'The built-in model is free, but shared among users and may be out of capacity sometimes'
+                          : _hfApiKeyController.text.isEmpty 
+                              ? 'Enter HF API key to select models' 
+                              : _isCheckingAvailability
+                                  ? 'Checking model availability...'
+                                  : 'Select a curated model optimized for #tikslop',
+                      helperMaxLines: 2,
+                      suffixIcon: _isCheckingAvailability || _isLoadingModels
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : null,
                     ),
-                    initialValue: _selectedLlmProvider,
-                    onChanged: _hfApiKeyController.text.isEmpty ? null : (String? newValue) {
-                      if (newValue != null) {
-                        // Prevent selecting non-builtin providers without HF API key
-                        if (_hfApiKeyController.text.isEmpty && newValue != 'builtin') {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please provide a Hugging Face API key to use external providers'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                          return;
-                        }
+                    value: _isBuiltInModelSelected ? 'built-in' : _selectedCuratedModel?.modelId,
+                    onChanged: (String? newValue) async {
+                      if (newValue == 'built-in') {
                         setState(() {
-                          _selectedLlmProvider = newValue;
-                          // Reset model when provider changes
-                          if (newValue == 'builtin') {
-                            _selectedLlmModel = 'default';
-                          } else {
-                            _selectedLlmModel = _getModelsForProvider(newValue).first.value!;
+                          _isBuiltInModelSelected = true;
+                          _selectedLlmModel = 'built-in';
+                          _selectedLlmProvider = 'built-in';
+                          _selectedCuratedModel = null;
+                          _currentProvider = null;
+                        });
+                        await _settingsService.setLlmModel('built-in');
+                        await _settingsService.setLlmProvider('built-in');
+                      } else if (newValue != null) {
+                        final newModel = _curatedModels.firstWhere(
+                          (model) => model.modelId == newValue,
+                        );
+                        setState(() {
+                          _isBuiltInModelSelected = false;
+                          _selectedCuratedModel = newModel;
+                          _selectedLlmModel = newModel.modelId;
+                          // Reset to first available provider if we had built-in selected
+                          if (_selectedLlmProvider == 'built-in') {
+                            _selectedLlmProvider = _availableProviders.isNotEmpty ? _availableProviders.first.id : 'hf-inference';
+                            _currentProvider = LLMProvider.getById(_selectedLlmProvider);
                           }
                         });
-                        _settingsService.setLlmProvider(newValue);
-                        _settingsService.setLlmModel(_selectedLlmModel);
+                        await _settingsService.setLlmModel(newModel.modelId);
+                        if (_selectedLlmProvider != 'built-in') {
+                          await _settingsService.setLlmProvider(_selectedLlmProvider);
+                        }
+                        // Check availability after model change
+                        _checkModelAvailability();
                       }
                     },
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'builtin',
-                        child: Text('Built-in (free, slow)'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'openai',
-                        child: Text('OpenAI'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'anthropic',
-                        child: Text('Anthropic'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'google',
-                        child: Text('Google'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'cohere',
-                        child: Text('Cohere'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'together',
-                        child: Text('Together AI'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'huggingface',
-                        child: Text('Hugging Face'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'LLM Model',
-                      helperText: _hfApiKeyController.text.isEmpty 
-                          ? 'Using default built-in model' 
-                          : 'Select the model to use',
-                    ),
-                    initialValue: _selectedLlmModel,
-                    onChanged: _hfApiKeyController.text.isEmpty ? null : (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedLlmModel = newValue;
-                        });
-                        _settingsService.setLlmModel(newValue);
-                      }
+                    selectedItemBuilder: (BuildContext context) {
+                      final allItems = <String>['built-in', ..._curatedModels.map((m) => m.modelId)];
+                      return allItems.map((itemValue) {
+                        if (itemValue == 'built-in') {
+                          return const Row(
+                            children: [
+                              Text('🏠'),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Built-in (default, free)',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          final model = _curatedModels.firstWhere((m) => m.modelId == itemValue);
+                          return Row(
+                            children: [
+                              Text(model.speedEmoji),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  model.displayName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                      }).toList();
                     },
-                    items: _getModelsForProvider(_selectedLlmProvider),
+                    items: _hfApiKeyController.text.isNotEmpty
+                        ? [
+                            // Scenario 1: HF API key provided - show all models including built-in
+                            const DropdownMenuItem<String>(
+                              value: 'built-in',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text('🏠'),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Built-in (default, free)',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 24),
+                                    child: Text(
+                                      'Slow and unreliable',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ..._curatedModels.map((model) {
+                              return DropdownMenuItem<String>(
+                                value: model.modelId,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(model.speedEmoji),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            model.displayName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 24),
+                                      child: Text(
+                                        '${model.numOfParameters} • ${model.speedCategory}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ]
+                        : [
+                            // Scenario 2: No HF API key - only show built-in and disabled message
+                            const DropdownMenuItem<String>(
+                              value: 'built-in',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text('🏠'),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Built-in (default, free)',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 24),
+                                    child: Text(
+                                      'Slow and unreliable',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              enabled: false,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8.0),
+                                child: Text(
+                                  'To use other models you need a HF API key',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _llmApiKeyController,
-                    decoration: InputDecoration(
-                      labelText: _getLlmApiKeyLabel(),
-                      helperText: _hfApiKeyController.text.isEmpty 
-                          ? 'Enter HF API key above to enable provider options' 
-                          : 'Optional - will use your HF API key if not provided',
-                      helperMaxLines: 2,
+                  if (!_isBuiltInModelSelected) ...[                  
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: 'LLM Provider',
+                        helperText: _hfApiKeyController.text.isEmpty 
+                            ? 'Enter HF API key to unlock providers' 
+                            : _isCheckingAvailability
+                                ? 'Checking model availability...'
+                                : 'Select from available providers for this model',
+                        helperMaxLines: 2,
+                      ),
+                      value: _selectedLlmProvider == 'built-in' ? null : _selectedLlmProvider,
+                      onChanged: _hfApiKeyController.text.isEmpty ? null : (String? newValue) {
+                        if (newValue != null) {
+                          // Check if provider is available for this model
+                          final provider = _availableProviders.firstWhere(
+                            (p) => p.id == newValue,
+                            orElse: () => _availableProviders.first,
+                          );
+                          
+                          if (!provider.isAvailable) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${provider.name} does not support this model'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
+                          
+                          setState(() {
+                            _selectedLlmProvider = newValue;
+                            _currentProvider = provider;
+                          });
+                          _settingsService.setLlmProvider(newValue);
+                        }
+                      },
+                      items: _availableProviders.map((provider) {
+                        final isAvailable = provider.isAvailable;
+                        return DropdownMenuItem(
+                          value: provider.id,
+                          enabled: isAvailable,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  provider.name,
+                                  style: TextStyle(
+                                    color: isAvailable ? null : Colors.grey,
+                                  ),
+                                ),
+                              ),
+                              if (!isAvailable)
+                                const Icon(
+                                  Icons.lock,
+                                  size: 16,
+                                  color: Colors.grey,
+                                ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    obscureText: true,
-                    enabled: _hfApiKeyController.text.isNotEmpty,
-                    onChanged: (value) async {
-                      await _settingsService.setLlmApiKey(value);
-                    },
-                  ),
+                  ],
+                  /*
+                  The Hugging Face Inference Providers allow the user to either use their HF API key,
+                  which will bill them automatically on the HF account, or pass a provider-specific
+                  API key, which will bill them on their provider account.
+
+                  This is a nice feature, but for now let's just use the transparent/automatic billing.
+
+                  So I've disabled this whole section:
+                  
+                  if (!_isBuiltInModelSelected) ...[                  
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _llmApiKeyController,
+                      decoration: InputDecoration(
+                        labelText: _currentProvider?.apiKeyLabel ?? 'API Key',
+                        helperText: _hfApiKeyController.text.isEmpty 
+                            ? 'Enter HF API key above to enable provider options' 
+                            : _currentProvider?.supportsHuggingFaceKey == true
+                                ? 'Your HF API key will be automatically used for this provider'
+                                : 'Optional - provider-specific API key',
+                        helperMaxLines: 2,
+                      ),
+                      obscureText: true,
+                      enabled: _hfApiKeyController.text.isNotEmpty && 
+                               _currentProvider?.supportsHuggingFaceKey == false,
+                      onChanged: (value) async {
+                        await _settingsService.setLlmApiKey(value);
+                      },
+                    ),
+                  ],
+                  */
                 ],
               ),
             ),
@@ -384,74 +723,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  List<DropdownMenuItem<String>> _getModelsForProvider(String provider) {
-    switch (provider) {
-      case 'builtin':
-        return const [
-          DropdownMenuItem(value: 'default', child: Text('Default Model')),
-        ];
-      case 'openai':
-        return const [
-          DropdownMenuItem(value: 'gpt-4', child: Text('GPT-4')),
-          DropdownMenuItem(value: 'gpt-4-turbo', child: Text('GPT-4 Turbo')),
-          DropdownMenuItem(value: 'gpt-3.5-turbo', child: Text('GPT-3.5 Turbo')),
-        ];
-      case 'anthropic':
-        return const [
-          DropdownMenuItem(value: 'claude-3-opus', child: Text('Claude 3 Opus')),
-          DropdownMenuItem(value: 'claude-3-sonnet', child: Text('Claude 3 Sonnet')),
-          DropdownMenuItem(value: 'claude-3-haiku', child: Text('Claude 3 Haiku')),
-        ];
-      case 'google':
-        return const [
-          DropdownMenuItem(value: 'gemini-1.5-pro', child: Text('Gemini 1.5 Pro')),
-          DropdownMenuItem(value: 'gemini-1.5-flash', child: Text('Gemini 1.5 Flash')),
-          DropdownMenuItem(value: 'gemini-pro', child: Text('Gemini Pro')),
-        ];
-      case 'cohere':
-        return const [
-          DropdownMenuItem(value: 'command-r-plus', child: Text('Command R Plus')),
-          DropdownMenuItem(value: 'command-r', child: Text('Command R')),
-          DropdownMenuItem(value: 'command', child: Text('Command')),
-        ];
-      case 'together':
-        return const [
-          DropdownMenuItem(value: 'meta-llama/Llama-3.2-3B-Instruct', child: Text('Llama 3.2 3B')),
-          DropdownMenuItem(value: 'mistralai/Mixtral-8x7B-Instruct-v0.1', child: Text('Mixtral 8x7B')),
-          DropdownMenuItem(value: 'deepseek-ai/deepseek-coder', child: Text('DeepSeek Coder')),
-        ];
-      case 'huggingface':
-        return const [
-          DropdownMenuItem(value: 'HuggingFaceTB/SmolLM3-3B', child: Text('SmolLM3 3B')),
-          DropdownMenuItem(value: 'meta-llama/Llama-3.2-3B-Instruct', child: Text('Llama 3.2 3B')),
-          DropdownMenuItem(value: 'microsoft/Phi-3-mini-4k-instruct', child: Text('Phi-3 Mini')),
-        ];
-      default:
-        return const [
-          DropdownMenuItem(value: 'default', child: Text('Default Model')),
-        ];
-    }
-  }
-
-  String _getLlmApiKeyLabel() {
-    switch (_selectedLlmProvider) {
-      case 'builtin':
-        return 'API Key (Not required for built-in)';
-      case 'openai':
-        return 'OpenAI API Key';
-      case 'anthropic':
-        return 'Anthropic API Key';
-      case 'google':
-        return 'Google AI API Key';
-      case 'cohere':
-        return 'Cohere API Key';
-      case 'together':
-        return 'Together AI API Key';
-      case 'huggingface':
-        return 'Hugging Face API Key';
-      default:
-        return 'API Key';
-    }
-  }
 
 }

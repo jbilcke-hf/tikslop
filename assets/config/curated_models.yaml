@@ -1,0 +1,25 @@
+# Curated list of models known to work well with #tikslop
+models:
+  - model_id: deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+    display_name: DeepSeek R1 Qwen3 8B (0528)
+    num_of_parameters: 8B
+  
+  - model_id: mistralai/Mistral-Small-3.2-24B-Instruct-2506
+    display_name: Mistral Small 3.2 24B (Instruct, 2506)
+    num_of_parameters: 24B
+  
+  - model_id: HuggingFaceTB/SmolLM3-3B
+    display_name: SmolLM3 3B
+    num_of_parameters: 3B
+  
+  - model_id: Qwen/Qwen3-0.6B
+    display_name: Qwen3 0.6B
+    num_of_parameters: 0.6B
+  
+  - model_id: google/gemma-3n-E2B-it
+    display_name: Gemma 3n E2B IT (Instruct)
+    num_of_parameters: 2B
+  
+  - model_id: google/gemma-3n-E4B-it
+    display_name: Gemma 3n E4B IT (Instruct)
+    num_of_parameters: 4B

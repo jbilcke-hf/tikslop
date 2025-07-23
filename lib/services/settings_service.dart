@@ -61,14 +61,14 @@ class SettingsService {
     _settingsController.add(null);
   }
 
-  String get llmProvider => _prefs.getString(_llmProviderKey) ?? 'openai';
+  String get llmProvider => _prefs.getString(_llmProviderKey) ?? 'built-in';
   
   Future<void> setLlmProvider(String provider) async {
     await _prefs.setString(_llmProviderKey, provider);
     _settingsController.add(null);
   }
 
-  String get llmModel => _prefs.getString(_llmModelKey) ?? 'gpt-4';
+  String get llmModel => _prefs.getString(_llmModelKey) ?? 'meta-llama/Llama-3.2-3B-Instruct';
   
   Future<void> setLlmModel(String model) async {
     await _prefs.setString(_llmModelKey, model);

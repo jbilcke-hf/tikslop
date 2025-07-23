@@ -1,0 +1,79 @@
+# Curated list of models known to work well with #tikslop
+models:
+
+  #- model_id: HuggingFaceTB/SmolLM3-3B
+  #  display_name: SmolLM3 3B
+  #  num_of_parameters: 3B
+
+  - model_id: Qwen/Qwen2.5-0.5B-Instruct
+    display_name: Qwen2.5 0.5B
+    num_of_parameters: 0.5B
+  
+  - model_id: Qwen/Qwen3-0.6B
+    display_name: Qwen3 0.6B
+    num_of_parameters: 0.6B
+
+  - model_id: meta-llama/Llama-3.2-1B-Instruct
+    display_name: Llama 3.2 1B
+    num_of_parameters: 1B
+
+  - model_id: Unbabel/Tower-Plus-2B
+    display_name: Tower Plus 2B
+    num_of_parameters: 2B
+  
+  - model_id: microsoft/phi-2
+    display_name: Phi 2
+    num_of_parameters: 2.7B
+
+  - model_id: microsoft/Phi-3-mini-128k-instruct
+    display_name: Phi 3 mini (128k)
+    num_of_parameters: 4B
+
+  - model_id: google/gemma-3-4b-it
+    display_name: Gemma 3 4B
+    num_of_parameters: 4B
+  
+  - model_id: Qwen/Qwen3-4B-Base
+    display_name: Qwen3 4B
+    num_of_parameters: 4B
+  
+  - model_id: Qwen/Qwen3-32B
+    display_name: Qwen3 32B
+    num_of_parameters: 32B
+  
+  - model_id: deepseek-ai/DeepSeek-R1-0528-Qwen3-8B
+    display_name: DeepSeek R1 Qwen3 8B (0528)
+    num_of_parameters: 8B
+  
+  - model_id: meta-llama/Llama-4-Scout-17B-16E-Instruct
+    display_name: Llama 4 Scout 17B
+    num_of_parameters: 17B
+
+  - model_id: mistralai/Mistral-Small-3.2-24B-Instruct-2506
+    display_name: Mistral Small 3.2 24B
+    num_of_parameters: 24B
+
+  - model_id: Qwen/Qwen3-235B-A22B-Instruct-2507
+    display_name: Qwen3 235B A22B
+    num_of_parameters: 235B
+
+  - model_id: deepseek-ai/DeepSeek-V3-0324
+    display_name: DeepSeek V3
+    num_of_parameters: 685B
+  
+
+  # Gemma 3n models are not available on the Inference Providers yet
+  #- model_id: google/gemma-3n-E2B-it
+  #  display_name: Gemma 3n E2B IT (Instruct)
+  #
+  #  # While the raw parameter count of this model is 6B, the architecture design allows the model to be run with a memory footprint comparable to a traditional 2B model by offloading low-utilization matrices from the accelerator.
+  #  #num_of_parameters: 6B
+  #  num_of_parameters: 2B
+  #
+  #- model_id: google/gemma-3n-E4B-it
+  #  display_name: Gemma 3n E4B IT (Instruct)
+  #
+  #  # While the raw parameter count of this model is 8B, the architecture design allows the model to be run with a memory footprint comparable to a traditional 4B model by offloading low-utilization matrices from the accelerator.
+  #  #num_of_parameters: 8B
+  #  num_of_parameters: 4B
+
