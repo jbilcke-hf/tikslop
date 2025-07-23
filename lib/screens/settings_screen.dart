@@ -639,7 +639,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Interested in using custom Hugging Face models? If you already have trained a LoRA model based on LTX-Video 2B 0.9.8 (distilled), please open a thread in the Community forum and I\'ll see for a way to allow for custom models.',
+                    'Please ping @flngr on X if you have made your own LoRA for this model, or if you know a faster open-source model with similar memory footprint.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey,
