@@ -31,6 +31,7 @@ class VideoScreen extends StatefulWidget {
 class _VideoScreenState extends State<VideoScreen> {
   Future<String>? _captionFuture;
   final _websocketService = WebSocketApiService();
+  final _settingsService = SettingsService();
   bool _isConnected = false;
   late VideoResult _videoData;
   final _searchController = TextEditingController();
@@ -436,7 +437,7 @@ class _VideoScreenState extends State<VideoScreen> {
                       Expanded(
                         child: _buildMainContent(),
                       ),
-                      if (Configuration.instance.showChatInVideoView) ...[
+                      if (Configuration.instance.showChatInVideoView && _settingsService.enableSimulation) ...[
                         const SizedBox(width: 16),
                         Padding(
                           padding: const EdgeInsets.only(left: 0, top: 16, right: 16, bottom: 4),
@@ -450,7 +451,7 @@ class _VideoScreenState extends State<VideoScreen> {
                       Expanded(
                         child: _buildMainContent(),
                       ),
-                      if (Configuration.instance.showChatInVideoView) ...[
+                      if (Configuration.instance.showChatInVideoView && _settingsService.enableSimulation) ...[
                         const SizedBox(height: 16),
                         Expanded(
                           child: Padding(

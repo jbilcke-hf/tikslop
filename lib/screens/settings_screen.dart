@@ -188,14 +188,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'LLM (used for search and story generation)',
+                    'Story Engine',
                     style: TextStyle(
                       color: TikSlopColors.onBackground,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '#tikslop uses a language model (LLM) to generate search results and video descriptions.',
+                    style: TextStyle(
+                      color: TikSlopColors.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'A basic LLM is available by default for free, but it has limited capacity. Switch to another LLM for best performance.',
+                    style: TextStyle(
+                      color: TikSlopColors.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   TextField(
                     controller: _hfApiKeyController,
                     decoration: const InputDecoration(
@@ -591,14 +609,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Infinite video generator',
+                    'Rendering Engine',
                     style: TextStyle(
                       color: TikSlopColors.onBackground,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Note: while #tikslop uses GPUs courtesy of Hugging Face, is not an official project but simply a demo made by @jbilcke-hf and should be considered like beta software.',
+                    style: TextStyle(
+                      color: TikSlopColors.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Because of this free hosting (and the experimental nature of the app), the stream might get slowed down or interrupted at anytime in case of traffic surge or unplanned maintenance.',
+                    style: TextStyle(
+                      color: TikSlopColors.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   TextField(
                     controller: _promptController,
                     decoration: const InputDecoration(
@@ -626,7 +662,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
-                      labelText: 'Video Generation Model (cannot be changed yet)',
+                      labelText: 'Real-time Video Model (free and built-in, cannot be changed yet)',
                     ),
                     initialValue: 'ltx-video-2b-0.9.8',
                     onChanged: null, // Disabled
@@ -677,6 +713,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _settingsService.setShowSceneDebugInfo(value);
                     },
                   ),
+                  /*
+                  let's disable this for now, I still need to work on this
                   SwitchListTile(
                     title: const Text('Enable world simulator engine'),
                     subtitle: const Text('Allow video descriptions to evolve over time using a LLM (this consumes tokens, your Hugging Face account will be billed)'),
@@ -688,6 +726,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _settingsService.setEnableSimulation(value);
                     },
                   ),
+                  */
                   const SizedBox(height: 16),
                   // Clear device connections button
                   ListTile(
