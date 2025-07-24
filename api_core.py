@@ -204,7 +204,6 @@ class ChatRoom:
 
 class VideoGenerationAPI:
     def __init__(self):
-        self.inference_client = InferenceClient(token=HF_TOKEN)
         self.hf_api = HfApi(token=HF_TOKEN)
         self.endpoint_manager = EndpointManager()
         self.active_requests: Dict[str, asyncio.Future] = {}
@@ -226,76 +225,74 @@ class VideoGenerationAPI:
         3. Server's HF token (only for built-in provider)
         4. Raise exception if no valid key is available
         """
+
         if not llm_config:
-            return self.inference_client
+            if HF_TOKEN:
+                return InferenceClient(
+                    model=TEXT_MODEL,
+                    token=HF_TOKEN
+                )
+            else:
+                raise ValueError("Built-in provider is not available. Server HF_TOKEN is not configured.")
             
         provider = llm_config.get('provider', '').lower()
-        model = llm_config.get('model', '')
-        api_key = llm_config.get('api_key', '')  # Provider-specific API key
-        hf_token = llm_config.get('hf_token', '')  # User's HF token
-        
+        logger.info(f"provider = {provider}")
+
         # If no provider or model specified, use default
-        if not provider or not model:
-            return self.inference_client
-            
+        if not provider or provider == 'built-in':
+            if HF_TOKEN:
+                return InferenceClient(
+                    model=TEXT_MODEL,
+                    token=HF_TOKEN
+                )
+            else:
+                raise ValueError("Built-in provider is not available. Server HF_TOKEN is not configured.")
+  
+        model = llm_config.get('model', '')
+        user_provider_api_key = llm_config.get('api_key', '')  # Provider-specific API key
+        user_hf_token = llm_config.get('hf_token', '')  # User's HF token
+        
+        #logger.info(f"model = {model}")
+        #logger.info(f"user_provider_api_key = {user_provider_api_key}")
+        #logger.info(f"user_hf_token = {user_hf_token}")
+
+        # If no provider or model specified, use default
+        if not provider or provider == 'built-in':
+            if HF_TOKEN:
+                return InferenceClient(
+                    model=TEXT_MODEL,
+                    token=HF_TOKEN
+                )
+            else:
+                raise ValueError("Built-in provider is not available. Server HF_TOKEN is not configured.")
+  
         try:
-            # Map frontend provider names to HF InferenceClient provider names
-            provider_mapping = {
-                'openai': 'openai',
-                'anthropic': 'anthropic',
-                'google': 'google',
-                'cohere': 'cohere',
-                'together': 'together',
-                'huggingface': None,  # Use HF directly without provider
-                'builtin': None  # Use server's default model
-            }
-            
-            hf_provider = provider_mapping.get(provider)
-            
-            # Handle built-in provider first (always uses server's HF token and default model)
-            if provider == 'builtin':
-                if HF_TOKEN:
-                    # Use server's default model from HF_TEXT_MODEL
-                    return InferenceClient(
-                        model=TEXT_MODEL if TEXT_MODEL else model,
-                        token=HF_TOKEN
-                    )
-                else:
-                    raise ValueError("Built-in provider is not available. Server HF_TOKEN is not configured.")
-            
-            # Priority 1: Use provider-specific API key if available
-            if api_key and hf_provider:
+            # Case 1: Use a provider with a provider-specific API key if available
+            # This mode is currently hidden in the Flutter UI (we don't ask for provider-specific keys yet)
+            # but it is implemented here so that we don't forget it later
+            if user_provider_api_key:
                 return InferenceClient(
                     provider=hf_provider,
                     model=model,
-                    api_key=api_key
+                    api_key=user_provider_api_key
                 )
-            elif api_key and provider == 'huggingface':
-                # For HuggingFace provider with an API key (treat it as HF token)
+
+            # Case 2: Use a provider with user's HF token if available
+            elif user_hf_token:
                 return InferenceClient(
+                    provider=hf_provider,
                     model=model,
-                    token=api_key
+                    token=user_hf_token
                 )
-            
-            # Priority 2: Use user's HF token if available
-            if hf_token:
-                return InferenceClient(
-                    model=model,
-                    token=hf_token
-                )
-            
-            # No valid API key available
-            # Note: Server's HF token is NEVER used for inference providers
-            if provider == 'huggingface':
-                raise ValueError("No API key provided. Please provide your Hugging Face API key.")
+            # 
             else:
-                raise ValueError(f"No API key provided for {provider}. Please provide either a {provider} API key or your Hugging Face API key.")
-                
+                raise ValueError(f"No API key provided for provider '{provider}'. Please provide either a valid {provider} API key or your Hugging Face API key.")
+
         except ValueError:
             # Re-raise ValueError for missing API keys
             raise
         except Exception as e:
-            logger.error(f"Error creating InferenceClient with config {llm_config}: {e}")
+            logger.error(f"Error creating InferenceClient for provider '{provider}' and model '{model}': {e}")
             # Re-raise all other exceptions
             raise
     
@@ -543,9 +540,18 @@ title: \""""
                     raw_yaml_str = raw_yaml_str.strip()
                 else:
                     raw_yaml_str = re.sub(r'^\s*\.\s*\n', '', f"title: \"{raw_yaml_str}")
-                
+
+                # Check if it already has a proper YAML structure
+                if not raw_yaml_str.startswith(('title:', 'title :')):
+                    # Only wrap with title if it doesn't already have one
+                    # Also escape any quotes in the string to prevent YAML parsing issues
+                    escaped_yaml = raw_yaml_str.replace('"', '\\"')
+                    raw_yaml_str = f'title: "{escaped_yaml}"'
+                else:
+                    # If it already has title:, just clean it up
+                    raw_yaml_str = re.sub(r'^\s*\.\s*\n', '', raw_yaml_str)
+
                 sanitized_yaml = sanitize_yaml_response(raw_yaml_str)
-                #logger.info(f"search_video(): sanitized_yaml = {sanitized_yaml}")
 
                 try:
                     result = yaml.safe_load(sanitized_yaml)
@@ -598,11 +604,17 @@ title: \""""
                 current_attempt += 1
                 temperature = random.uniform(0.68, 0.72)  # Try with different random temperature on next attempt
         
+
+        # List of video types to randomly choose from
+        video_types = ["documentary", "movie screencap, movie scene", "POV, gopro footage", "music video", "videogame gameplay", "creepy found footage"]
+
+        video_type = random.choice(video_types)
+
         # If all attempts failed, return a simple result with title only
         return {
             'id': str(uuid.uuid4()),
-            'title': f"Video about {query}",
-            'description': f"Video about {query}",
+            'title': f"{query} ({video_type})",
+            'description': f"{video_type}, {query}, engaging, detailed, dynamic, high quality, 4K, intricate details",
             'thumbnailUrl': '',
             'videoUrl': '',
             'isLatent': True,
@@ -888,8 +900,7 @@ Your caption:"""
         seed = options.get('seed', generate_seed())
         request_id = str(uuid.uuid4())[:8]  # Generate a short ID for logging
         
-        logger.info(f"[{request_id}] Starting video thumbnail generation for video_id: {video_id}")
-        logger.info(f"[{request_id}] Title: '{title}', User role: {user_role}")
+        logger.info(f"[{request_id}] Starting video thumbnail generation for video_id: {video_id}, tTitle: '{title}', User role: {user_role}")
         
         # Create a more concise prompt for the thumbnail
         clip_caption = f"{video_prompt_prefix} - {title.strip()}"
