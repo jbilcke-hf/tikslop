@@ -1,7 +1,7 @@
 # secret codes
 lib/config/secrets.dart
 run_locally_with_secrets.sh
-
+ 
 # Python venv
 .python_venv/
 

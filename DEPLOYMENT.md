@@ -57,6 +57,10 @@ curl https://api.endpoints.huggingface.cloud/v2/endpoint/<YOUR_ACCOUNT_NAME> 	-X
 
 #### Running the gateway scheduler
 
+For convenience, the script `build_and_run.sh` tries to run a `run_locally_with_secret.sh` file that launches the Python backend.
+
+Here is a an example:
+
 ```bash
 # load the environment
 # (if you haven't done it already for this shell session)
@@ -73,10 +77,11 @@ PRODUCT_NAME="TikSlop" \
     VIDEO_ROUND_ROBIN_SERVER_4="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     VIDEO_ROUND_ROBIN_SERVER_5="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     VIDEO_ROUND_ROBIN_SERVER_6="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
-    HF_IMAGE_MODEL="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
+    HF_IMAGE_MODEL="https://<PAY YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     HF_TEXT_MODEL="https://<USE YOUR OWN SERVER>.endpoints.huggingface.cloud" \
     python3 api.py
 ```
+
 
 ### Run the client (web)
 

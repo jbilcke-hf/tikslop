@@ -463,6 +463,10 @@ class WebSocketApiService {
     _reconnectAttempts = 0;
     _connectionId = null;  // Clear connection ID to force a new one
     
+    // Reset user role to anon until we get the new role from server
+    _userRole = 'anon';
+    _userRoleController.add(_userRole);
+    
     // Connect again
     await connect();
   }

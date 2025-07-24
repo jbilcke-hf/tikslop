@@ -223,7 +223,7 @@ class VideoGenerationAPI:
         Priority order for API keys:
         1. Provider-specific API key (if provided)
         2. User's HF token (if provided)
-        3. Server's HF token (only if ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS is true)
+        3. Server's HF token (only for built-in provider)
         4. Raise exception if no valid key is available
         """
         if not llm_config:
@@ -252,16 +252,16 @@ class VideoGenerationAPI:
             
             hf_provider = provider_mapping.get(provider)
             
-            # Handle built-in provider first (uses server's HF token and default model)
+            # Handle built-in provider first (always uses server's HF token and default model)
             if provider == 'builtin':
-                if ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS and HF_TOKEN:
+                if HF_TOKEN:
                     # Use server's default model from HF_TEXT_MODEL
                     return InferenceClient(
                         model=TEXT_MODEL if TEXT_MODEL else model,
                         token=HF_TOKEN
                     )
                 else:
-                    raise ValueError("Built-in provider is not available. Server is not configured to allow fallback to server API key.")
+                    raise ValueError("Built-in provider is not available. Server HF_TOKEN is not configured.")
             
             # Priority 1: Use provider-specific API key if available
             if api_key and hf_provider:
@@ -284,15 +284,8 @@ class VideoGenerationAPI:
                     token=hf_token
                 )
             
-            # Priority 3: Use server's HF token only if explicitly allowed
-            if ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS and HF_TOKEN:
-                logger.warning(f"Using server's HF token for {provider} model {model} - no user API key provided")
-                return InferenceClient(
-                    model=model,
-                    token=HF_TOKEN
-                )
-            
             # No valid API key available
+            # Note: Server's HF token is NEVER used for inference providers
             if provider == 'huggingface':
                 raise ValueError("No API key provided. Please provide your Hugging Face API key.")
             else:
@@ -303,16 +296,8 @@ class VideoGenerationAPI:
             raise
         except Exception as e:
             logger.error(f"Error creating InferenceClient with config {llm_config}: {e}")
-            # For other errors, fallback to default client only if server token is allowed
-            if ALLOW_USING_SERVER_HF_API_KEY_FOR_LLM_CALLS:
-                return self.inference_client
-            else:
-                raise
-                
-        except Exception as e:
-            logger.error(f"Error creating InferenceClient with config {llm_config}: {e}")
-            # Fallback to default client
-            return self.inference_client
+            # Re-raise all other exceptions
+            raise
     
     async def _generate_text(self, prompt: str, llm_config: Optional[dict] = None, 
                            max_new_tokens: int = 200, temperature: float = 0.7,
@@ -621,7 +606,7 @@ title: \""""
             'thumbnailUrl': '',
             'videoUrl': '',
             'isLatent': True,
-            'useFixedSeed': "query" in description.lower(),
+            'useFixedSeed': "query" in query.lower(),
             'seed': generate_seed(),
             'views': 0,
             'tags': []
