@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isSearching = false;
   String? _currentSearchQuery;
   StreamSubscription? _searchSubscription;
-  static const int maxResults = 4;
+  static const int maxResults = 2;
 
   // Subscription for limit status
   StreamSubscription? _anonLimitSubscription;

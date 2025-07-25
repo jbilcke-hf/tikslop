@@ -110,7 +110,6 @@ class WebSocketApiService {
 
   final _connectionLock = Lock();
   final _disposeLock = Lock();
-  final bool _isReconnecting = false;
   
   final _chatController = StreamController<ChatMessage>.broadcast();
   Stream<ChatMessage> get chatStream => _chatController.stream;
@@ -124,8 +123,8 @@ class WebSocketApiService {
   SearchState? _currentSearchState;
   final _searchController = StreamController<VideoResult>.broadcast();
   final _activeSearches = <String, bool>{};
-  static const int maxFailedAttempts = 3;
-  static const int maxResults = 4;
+  static const int maxFailedAttempts = 2;
+  static const int maxResults = 2;
 
   Stream<VideoResult> get searchStream => _searchController.stream;
 
