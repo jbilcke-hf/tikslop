@@ -7,6 +7,7 @@ import time
 import datetime
 from .api_core import VideoGenerationAPI
 from .logging_utils import get_logger
+from .config_utils import get_game_master_prompt
 
 logger = get_logger(__name__)
 

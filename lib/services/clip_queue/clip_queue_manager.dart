@@ -246,7 +246,7 @@ class ClipQueueManager {
   
   /// Simulate the video by evolving the description using the LLM
   Future<void> _evolveDescription() async {
-    debugPrint('SIMULATION: Starting description evolution');
+    // debugPrint('SIMULATION: Starting description evolution');
     if (!_websocketService.isConnected) {
       debugPrint('SIMULATION: Cannot simulate video - websocket not connected');
       ClipQueueConstants.logEvent('Cannot simulate video: websocket not connected');
@@ -255,11 +255,11 @@ class ClipQueueManager {
     
     int retryCount = 0;
     const maxRetries = 2;
-    debugPrint('SIMULATION: Current video state: title="${video.title}", evolvedDescription length=${video.evolvedDescription.length}, original description length=${video.description.length}');
+    // debugPrint('SIMULATION: Current video state: title="${video.title}", evolvedDescription length=${video.evolvedDescription.length}, original description length=${video.description.length}');
     
     // Function to get chat message string
     String getChatMessagesString() {
-      debugPrint('CHAT_DEBUG: Getting chat messages for simulation - count: ${_recentChatMessages.length}');
+      // debugPrint('CHAT_DEBUG: Getting chat messages for simulation - count: ${_recentChatMessages.length}');
       
       if (_recentChatMessages.isEmpty) {
         debugPrint('CHAT_DEBUG: No chat messages available for simulation');
@@ -270,7 +270,7 @@ class ClipQueueManager {
         "${msg.username}: ${msg.content}"
       ).join("\n");
       
-      debugPrint('CHAT_DEBUG: Chat messages for simulation: $messagesString');
+      // debugPrint('CHAT_DEBUG: Chat messages for simulation: $messagesString');
       return messagesString;
     }
     
@@ -281,7 +281,7 @@ class ClipQueueManager {
         
         if (chatMessagesString.isNotEmpty) {
           ClipQueueConstants.logEvent('Including ${_recentChatMessages.length} chat messages in simulation');
-          debugPrint('SIMULATION: Including chat messages: $chatMessagesString');
+          // debugPrint('SIMULATION: Including chat messages: $chatMessagesString');
         }
         
         // Use the WebSocketService to simulate the video

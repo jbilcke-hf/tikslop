@@ -24,7 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _availabilityService = ModelAvailabilityService();
   bool _showSceneDebugInfo = false;
   bool _enableSimulation = true;
-  int _simLoopDelayInSec = 5;
+  int _simLoopDelayInSec = 1;
   String _selectedLlmProvider = 'built-in';
   String _selectedLlmModel = 'meta-llama/Llama-3.2-3B-Instruct';
   LLMProvider? _currentProvider;
@@ -185,7 +185,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // LLM Configuration Card (moved to top)
+          // Game Preferences Card (moved to top)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Game Preferences',
+                    style: TextStyle(
+                      color: TikSlopColors.onBackground,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  TextField(
+                    controller: _gameMasterPromptController,
+                    decoration: const InputDecoration(
+                      labelText: 'Game Master Prompt',
+                      hintText: 'Keep things fun and kid-friendly.',
+                      helperText: 'These are additional instructions you can give to the #tikslop AI agent.',
+                      helperMaxLines: 2,
+                    ),
+                    maxLines: 1,
+                    onChanged: (value) {
+                      _settingsService.setGameMasterPrompt(value);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // LLM Configuration Card
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -287,20 +320,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                         }
                       }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _gameMasterPromptController,
-                    decoration: const InputDecoration(
-                      labelText: 'Game Master Prompt',
-                      hintText: 'Keep things fun and kid-friendly.',
-                      helperText: 'Additional instructions applied to all LLM requests (search, captions, simulations)',
-                      helperMaxLines: 2,
-                    ),
-                    maxLines: 3,
-                    onChanged: (value) {
-                      _settingsService.setGameMasterPrompt(value);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -619,7 +638,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
           // Video Prompt Prefix Card
           Card(
             child: Padding(
@@ -704,7 +722,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
           // Display Options Card
           Card(
             child: Padding(
@@ -733,8 +750,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   SwitchListTile(
-                    title: const Text('Enable world simulator engine'),
-                    subtitle: const Text('Allow video descriptions to evolve over time using a LLM (this consumes tokens, your Hugging Face account will be billed)'),
+                    title: const Text('Enable world simulator during playback (dangerous, can drain your account quickly 💸)'),
+                    subtitle: const Text('⚠️ This calls a LLM in a loop (creates a lot of API calls billed to your HF account).'),
                     value: _enableSimulation,
                     onChanged: (value) {
                       setState(() {

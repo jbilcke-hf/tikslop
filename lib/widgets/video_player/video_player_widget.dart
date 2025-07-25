@@ -223,7 +223,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> with WidgetsBindi
             // that comes from the stream, not create a new one
             // The parent widget should receive this via the onVideoUpdated callback
             if (widget.onVideoUpdated != null) {
-              debugPrint('PLAYER: Received video update, evolvedDescription length: ${updatedVideo.evolvedDescription.length}');
+              // debugPrint('PLAYER: Received video update, evolvedDescription length: ${updatedVideo.evolvedDescription.length}');
               
               if (updatedVideo.evolvedDescription.isNotEmpty) {
                 debugPrint('PLAYER: First 100 chars: ${updatedVideo.evolvedDescription.substring(0, min(100, updatedVideo.evolvedDescription.length))}...');

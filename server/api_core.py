@@ -300,14 +300,15 @@ class VideoGenerationAPI:
             # Create an appropriate prompt based on whether this is the first simulation
             chat_section = ""
             if chat_messages:
-                logger.info(f"CHAT_DEBUG: Server received chat messages for simulation: {chat_messages}")
+                #logger.info(f"CHAT_DEBUG: Server received chat messages for simulation: {chat_messages}")
                 chat_section = f"""
-People are watching this content right now and have shared their thoughts. Like a game master, please take their feedback as input to adjust the story and/or the scene. Here are their messages:
+People are watching this content right now and have shared their thoughts. Like a game master, please take their feedbacks as input to adjust the story and/or the scene (eg if they as you to make the character in the story move somplace, do things.. you MUST change the story and scene description accordingly, but also keep previous elements consistant, eg if a new character, location, clothing item.. is introduced then keep it etc). Here are their messages:
 
 {chat_messages}
 """
-            else:
-                logger.info("CHAT_DEBUG: Server simulation called with no chat messages")
+            #else:
+            #    logger.info("CHAT_DEBUG: Server simulation called with no chat messages")
+   
 
             if is_first_simulation:
                 prompt = SIMULATE_VIDEO_FIRST_PROMPT_TEMPLATE.format(

@@ -489,9 +489,9 @@ class _VideoScreenState extends State<VideoScreen> {
               initialThumbnailUrl: _videoData.thumbnailUrl,
               autoPlay: true,
               onVideoUpdated: (updatedVideo) {
-                debugPrint('VIDEO_SCREEN: Received updated video data');
+                // debugPrint('VIDEO_SCREEN: Received updated video data');
                 if (updatedVideo.evolvedDescription.isNotEmpty) {
-                  debugPrint('VIDEO_SCREEN: Evolved description (${updatedVideo.evolvedDescription.length} chars)');
+                  // debugPrint('VIDEO_SCREEN: Evolved description (${updatedVideo.evolvedDescription.length} chars)');
                   debugPrint('VIDEO_SCREEN: First 100 chars: ${updatedVideo.evolvedDescription.substring(0, math.min(100, updatedVideo.evolvedDescription.length))}...');
                 } else {
                   debugPrint('VIDEO_SCREEN: No evolved description received');

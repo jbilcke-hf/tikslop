@@ -213,7 +213,7 @@ async def generate_text(prompt: str, llm_config: Optional[dict] = None,
     if llm_config and llm_config.get('game_master_prompt'):
         game_master_prompt = llm_config['game_master_prompt'].strip()
         if game_master_prompt:
-            prompt = f"{game_master_prompt}\n\n{prompt}"
+            prompt = f"Important contextual rules: {game_master_prompt}\n\n{prompt}"
     
     # Get the appropriate client
     client = get_inference_client(llm_config)

@@ -50,6 +50,8 @@ THUMBNAIL_FRAMES = 65
 # anonymous users are people browing TikSlop without being connected
 # this category suffers from regular abuse so we need to enforce strict limitations
 CONFIG_FOR_ANONYMOUS_USERS = {
+    # Story settings
+    "default_game_master_prompt": "",
 
     # anons can only watch 2 minutes per video
     "max_rendering_time_per_client_per_video_in_sec": 2 * 60,
@@ -85,6 +87,8 @@ CONFIG_FOR_ANONYMOUS_USERS = {
 
 # Hugging Face users enjoy a more normal and calibrated experience
 CONFIG_FOR_STANDARD_HF_USERS = {
+    # Story settings
+    "default_game_master_prompt": "",
     "max_rendering_time_per_client_per_video_in_sec": 15 * 60,
 
     "min_num_inference_steps": 2,
@@ -118,6 +122,8 @@ CONFIG_FOR_STANDARD_HF_USERS = {
 
 # Hugging Face users with a Pro may enjoy an improved experience
 CONFIG_FOR_PRO_HF_USERS = {
+    # Story settings
+    "default_game_master_prompt": "",
     "max_rendering_time_per_client_per_video_in_sec": 20 * 60,
 
     "min_num_inference_steps": 2,
@@ -150,6 +156,9 @@ CONFIG_FOR_PRO_HF_USERS = {
 }
 
 CONFIG_FOR_ADMIN_HF_USERS = {
+    # Story settings
+    "default_game_master_prompt": "",
+
     "max_rendering_time_per_client_per_video_in_sec": 60 * 60,
 
     "min_num_inference_steps": 2,

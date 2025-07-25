@@ -67,3 +67,25 @@ def get_config_value(role: UserRole, field: str, options: Optional[Dict[str, Any
     
     # If no user value, return the default
     return default_value
+
+
+def get_game_master_prompt(role: UserRole, options: Optional[Dict[str, Any]] = None) -> str:
+    """
+    Get the game master prompt for the given user role and options.
+    
+    Args:
+        role: The user role ('anon', 'normal', 'pro', 'admin')
+        options: Optional user-provided options that may contain game_master_prompt
+        
+    Returns:
+        The game master prompt string, or empty string if not set
+    """
+    # Check if user provided a custom game master prompt
+    if options and 'game_master_prompt' in options:
+        user_prompt = options['game_master_prompt']
+        if user_prompt and user_prompt.strip():
+            return user_prompt.strip()
+    
+    # Fall back to role-based default
+    default_value = get_config_value(role, 'game_master_prompt', options)
+    return default_value or ""

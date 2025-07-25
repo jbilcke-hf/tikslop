@@ -1433,7 +1433,7 @@ class WebSocketApiService {
         }
       }
       
-      debugPrint('WebSocketApiService: Chat messages included: ${formattedChatMessages.isNotEmpty ? 'Yes' : 'No'}');
+      // debugPrint('WebSocketApiService: Chat messages included: ${formattedChatMessages.isNotEmpty ? 'Yes' : 'No'}');
       
       // Get LLM settings
       final settings = SettingsService();
@@ -1472,7 +1472,7 @@ class WebSocketApiService {
       final evolvedDescription = response['evolved_description'] as String? ?? currentDescription;
       final newHistory = response['condensed_history'] as String? ?? condensedHistory;
       
-      debugPrint('WebSocketApiService: Simulation successful, received ${evolvedDescription.length} chars for evolved description');
+      // debugPrint('WebSocketApiService: Simulation successful, received ${evolvedDescription.length} chars for evolved description');
       
       return {
         'evolved_description': evolvedDescription,
