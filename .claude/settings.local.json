@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(flutter build:*)"
+      "Bash(flutter build:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)",
+      "Bash(python:*)"
     ],
     "deny": []
   },

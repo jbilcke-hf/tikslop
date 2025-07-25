@@ -15,6 +15,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../models/search_state.dart';
 import '../models/video_result.dart';
 import '../models/video_orientation.dart';
+import '../utils/colored_logger.dart';
 
 class WebSocketRequest {
   final String requestId;
@@ -49,6 +50,9 @@ class WebSocketApiService {
   factory WebSocketApiService() => _instance;
   WebSocketApiService._internal();
 
+  // Colored logger
+  final _log = ColoredLogger.get('WebSocketApiService');
+
   // Dynamically build WebSocket URL based on current host in web platform
   // or use environment variable/production URL/localhost for development on other platforms
   static String get _wsUrl {
@@ -60,13 +64,13 @@ class WebSocketApiService {
       // For localhost, explicitly include port 8080
       if (location.host == 'localhost' || location.host.startsWith('localhost:')) {
         final url = '$protocol://localhost:8080/ws';
-        debugPrint('WebSocketApiService: Using localhost:8080 WebSocket URL: $url');
+        ColoredLogger.get('WebSocketApiService').network('Using localhost:8080 WebSocket URL: $url');
         return url;
       }
       
       // For other hosts, include the original port number in the URL
       final url = '$protocol://${location.host}/ws';
-      debugPrint('WebSocketApiService: Using dynamic WebSocket URL: $url');
+      ColoredLogger.get('WebSocketApiService').network('Using dynamic WebSocket URL: $url');
       return url;
     } else {
       // First try to get WebSocket URL from environment variable (highest priority)
@@ -143,7 +147,7 @@ class WebSocketApiService {
     if (_initialized) return;
     
     try {
-      debugPrint('WebSocketApiService: Initializing and connecting...');
+      _log.info('Initializing and connecting...');
       
       // Add page unload handler for web platform
       if (kIsWeb) {
@@ -215,7 +219,7 @@ class WebSocketApiService {
       if (response['success'] == true && response['user_role'] != null) {
         _userRole = response['user_role'] as String;
         _userRoleController.add(_userRole);
-        debugPrint('WebSocketApiService: User role set to $_userRole');
+        _log.success('User role set to $_userRole');
         
         // Now that we know the role, check device connection limit for non-anonymous users
         if (kIsWeb && _userRole != 'anon') {
@@ -892,6 +896,7 @@ class WebSocketApiService {
                 'model': llmModel,
                 'api_key': llmApiKey,
                 'hf_token': hfApiKey,
+                'game_master_prompt': settings.gameMasterPrompt,
               },
             },
           ),
@@ -1030,7 +1035,7 @@ class WebSocketApiService {
       final action = data['action'] as String?;
       final requestId = data['requestId'] as String?;
 
-      debugPrint('WebSocketApiService: Received message for action: $action, requestId: $requestId');
+      _log.websocket('Received message for action: $action, requestId: [$requestId]');
       
       // Update user role if present in response (from heartbeat or get_user_role)
       if (data['user_role'] != null) {
@@ -1233,13 +1238,15 @@ class WebSocketApiService {
 
     try {
       final requestData = request.toJson();
-      debugPrint('WebSocketApiService: Sending request ${request.requestId} (${request.action}): ${json.encode(requestData)}');
+      _log.websocket('Sending request [${request.requestId}] (${request.action})', {
+        'data': json.encode(requestData)
+      });
       _channel!.sink.add(json.encode(requestData));
       
       final response = await completer.future.timeout(
         timeout ?? const Duration(seconds: 10),
         onTimeout: () {
-          debugPrint('WebSocketApiService: Request ${request.requestId} timed out');
+          _log.error('Request [${request.requestId}] timed out');
           _cleanup(request.requestId);
           throw TimeoutException('Request timeout');
         },
@@ -1280,6 +1287,7 @@ class WebSocketApiService {
               'provider': llmProvider,
               'model': llmModel,
               'api_key': llmApiKey,
+              'game_master_prompt': settings.gameMasterPrompt,
             },
           },
         ),
@@ -1308,7 +1316,7 @@ class WebSocketApiService {
     int height = 320,
     int width = 512,
     int seed = 0,
-    Duration timeout = const Duration(seconds: 12), // we keep things super tight, as normally a video only takes 2~3s to generate
+    Duration timeout = const Duration(seconds: 8), // we keep things super tight to fail quickly, as normally a video only takes 2 seconds to generate (including the transatlantic round trip)
     VideoOrientation orientation = VideoOrientation.LANDSCAPE,
   }) async {
     final settings = SettingsService();
@@ -1362,6 +1370,7 @@ class WebSocketApiService {
             'provider': llmProvider,
             'model': llmModel,
             'api_key': llmApiKey,
+            'game_master_prompt': settings.gameMasterPrompt,
           },
         },
       ),
@@ -1395,6 +1404,10 @@ class WebSocketApiService {
     }
 
     debugPrint('WebSocketApiService: Sending simulation request for video $videoId (evolution #$evolutionCount)');
+    debugPrint('CHAT_DEBUG: WebSocket simulate() called with chatMessages length: ${chatMessages.length}');
+    if (chatMessages.isNotEmpty) {
+      debugPrint('CHAT_DEBUG: Chat messages content: $chatMessages');
+    }
     
     try {
       // If chat messages are provided directly, use them; otherwise the default empty string is used
@@ -1444,6 +1457,7 @@ class WebSocketApiService {
               'provider': llmProvider,
               'model': llmModel,
               'api_key': llmApiKey,
+              'game_master_prompt': settings.gameMasterPrompt,
             },
           },
         ),

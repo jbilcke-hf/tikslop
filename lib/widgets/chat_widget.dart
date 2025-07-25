@@ -251,6 +251,7 @@ class _ChatWidgetState extends State<ChatWidget> {
               style: const TextStyle(color: TikSlopColors.onSurface),
               maxLength: 255,
               maxLines: 1,
+              onSubmitted: (_) => _sendMessage(),
               onChanged: (value) {
                 // Enforce the character limit by trimming excess characters
                 if (value.length > 255) {
@@ -261,7 +262,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                 }
               },
               decoration: InputDecoration(
-                hintText: 'Chat with this tikslopr..',
+                hintText: 'Ask the game master!',
                 hintStyle: const TextStyle(color: TikSlopColors.onSurfaceVariant, fontSize: 16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -417,7 +418,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                 Icon(Icons.chat, color: TikSlopColors.onBackground),
                 SizedBox(width: 8),
                 Text(
-                  'Simulation log',
+                  'World simulator log',
                   style: TextStyle(
                     color: TikSlopColors.onBackground,
                     fontSize: 16,

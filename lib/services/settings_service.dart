@@ -9,6 +9,8 @@ class SettingsService {
   static const String _negativePromptKey = 'negative_video_prompt';
   static const String _showSceneDebugInfoKey = 'show_scene_debug_info';
   static const String _enableSimulationKey = 'enable_simulation';
+  static const String _simLoopDelayKey = 'sim_loop_delay_in_sec';
+  static const String _gameMasterPromptKey = 'game_master_prompt';
   static const String _llmProviderKey = 'llm_provider';
   static const String _llmModelKey = 'llm_model';
   static const String _llmApiKeyKey = 'llm_api_key';
@@ -58,6 +60,20 @@ class SettingsService {
   
   Future<void> setEnableSimulation(bool value) async {
     await _prefs.setBool(_enableSimulationKey, value);
+    _settingsController.add(null);
+  }
+
+  int get simLoopDelayInSec => _prefs.getInt(_simLoopDelayKey) ?? 5;
+  
+  Future<void> setSimLoopDelayInSec(int value) async {
+    await _prefs.setInt(_simLoopDelayKey, value);
+    _settingsController.add(null);
+  }
+
+  String get gameMasterPrompt => _prefs.getString(_gameMasterPromptKey) ?? '';
+  
+  Future<void> setGameMasterPrompt(String value) async {
+    await _prefs.setString(_gameMasterPromptKey, value);
     _settingsController.add(null);
   }
 

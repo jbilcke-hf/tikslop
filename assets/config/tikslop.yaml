@@ -25,11 +25,10 @@ advertising:
 
 simulation:
   # whether to enable simulation loop to evolve descriptions over time
-  enable_sim_loop: false
+  enable_sim_loop: true
   
-  # how often the description should evolve (in seconds)
-  # setting to 0 disables description evolution
-  sim_loop_frequency_in_sec: 8
+  # delay to wait after each simulation loop (in seconds)
+  sim_loop_delay_in_sec: 8
 
 # it's OK to use high values here,
 # because some of those values are limited by the backend config,

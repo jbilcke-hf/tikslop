@@ -40,11 +40,7 @@ class ClipQueueManager {
   /// Timer for checking the buffer state
   Timer? _bufferCheckTimer;
   
-  /// Timer for evolving the description
-  Timer? _descriptionEvolutionTimer;
   
-  /// Last time the description was evolved
-  DateTime _lastDescriptionEvolutionTime = DateTime.now();
   
   /// Whether the manager is disposed
   bool _isDisposed = false;
@@ -88,20 +84,25 @@ class ClipQueueManager {
     );
     
     // Start listening to chat messages
+    debugPrint('CHAT_DEBUG: ClipQueueManager initializing chat service for video $videoId');
     final chatService = ChatService();
     chatService.initialize().then((_) {
+      debugPrint('CHAT_DEBUG: ChatService initialized, joining room $videoId');
       chatService.joinRoom(videoId).then((_) {
+        debugPrint('CHAT_DEBUG: Joined chat room, setting up message listener');
         chatService.chatStream.listen(_addChatMessage);
       }).catchError((e) {
-        debugPrint('ClipQueueManager: Error joining chat room: $e');
+        debugPrint('CHAT_DEBUG: Error joining chat room: $e');
       });
     }).catchError((e) {
-      debugPrint('ClipQueueManager: Error initializing chat service: $e');
+      debugPrint('CHAT_DEBUG: Error initializing chat service: $e');
     });
   }
   
   /// Add a chat message to the recent messages list
   void _addChatMessage(ChatMessage message) {
+    debugPrint('CHAT_DEBUG: ClipQueueManager received message - videoId: ${message.videoId}, expected: $videoId, content: "${message.content}"');
+    
     if (message.videoId == videoId) {
       _recentChatMessages.add(message);
       // Keep only the 5 most recent messages
@@ -109,6 +110,9 @@ class ClipQueueManager {
         _recentChatMessages.removeAt(0);
       }
       ClipQueueConstants.logEvent('Added chat message: ${message.content.substring(0, min(20, message.content.length))}...');
+      debugPrint('CHAT_DEBUG: Added message to queue manager, total messages: ${_recentChatMessages.length}');
+    } else {
+      debugPrint('CHAT_DEBUG: Message videoId mismatch - ignoring message');
     }
   }
 
@@ -156,9 +160,8 @@ class ClipQueueManager {
     );
     _clipBuffer.clear();
     
-    // Reset evolution counter and last evolution time
+    // Reset evolution counter
     _evolutionCounter = 0;
-    _lastDescriptionEvolutionTime = DateTime.now();
     
     // Set initial orientation
     _currentOrientation = orientation ?? getOrientationFromDimensions(
@@ -217,8 +220,8 @@ class ClipQueueManager {
   
   /// Start the simulation timer
   void _startDescriptionEvolution() {
-    // Cancel any existing timer
-    _descriptionEvolutionTimer?.cancel();
+    // Cancel any existing simulation loop by setting the disposed flag
+    // The _runSimulationLoop method will check _isDisposed and exit gracefully
     
     // Check if simulation is enabled globally in config and from user settings
     final settingsService = SettingsService();
@@ -231,61 +234,13 @@ class ClipQueueManager {
       return;
     }
     
-    if (Configuration.instance.simLoopFrequencyInSec <= 0) {
-      debugPrint('SIMULATION: Disabled (frequency is 0)');
-      ClipQueueConstants.logEvent('Simulation disabled (frequency is 0)');
-      return;
-    }
     
-    debugPrint('SIMULATION: Starting simulation timer with settings: enableSimLoop=${Configuration.instance.enableSimLoop}, userSetting=${settingsService.enableSimulation}, frequency=${Configuration.instance.simLoopFrequencyInSec}s');
+    debugPrint('SIMULATION: Starting simulation with settings: enableSimLoop=${Configuration.instance.enableSimLoop}, userSetting=${settingsService.enableSimulation}, delay=${settingsService.simLoopDelayInSec}s');
     
-    // Adaptive check interval - less frequent checks to reduce overhead
-    final checkInterval = max(3, Configuration.instance.simLoopFrequencyInSec ~/ 3);
+    ClipQueueConstants.logEvent('Starting simulation loop with delay of ${settingsService.simLoopDelayInSec} seconds');
     
-    ClipQueueConstants.logEvent('Starting simulation with check interval of $checkInterval seconds');
-    
-    // Check periodically if it's time to simulate the video
-    _descriptionEvolutionTimer = Timer.periodic(
-      Duration(seconds: checkInterval),
-      (timer) async {
-        // debugPrint('SIMULATION: Timer check triggered');
-        if (_isDisposed) {
-          debugPrint('SIMULATION: Skipping because manager is disposed');
-          return;
-        }
-        
-        // Skip if simulation is paused (due to video playback being paused)
-        if (_isSimulationPaused) {
-          // debugPrint('SIMULATION: Skipping because it is paused');
-          ClipQueueConstants.logEvent('Skipping simulation because it is paused');
-          return;
-        }
-        
-        // We previously delayed simulation if clips were being generated,
-        // but since clip generation is constant, we'll now run them in parallel
-        final isGenerating = _activeGenerations.isNotEmpty;
-        if (isGenerating) {
-          // debugPrint('SIMULATION: Continuing with simulation despite active generations');
-          ClipQueueConstants.logEvent('Running simulation in parallel with active generations');
-          // We no longer return early here
-        }
-        
-        // Calculate time since last simulation
-        final now = DateTime.now();
-        final duration = now.difference(_lastDescriptionEvolutionTime);
-        // debugPrint('SIMULATION: Time since last simulation: ${duration.inSeconds}s (frequency: ${Configuration.instance.simLoopFrequencyInSec}s)');
-        
-        // If we've waited long enough, simulate the video
-        if (duration.inSeconds >= Configuration.instance.simLoopFrequencyInSec) {
-          debugPrint('SIMULATION: Triggering simulation after ${duration.inSeconds} seconds');
-          ClipQueueConstants.logEvent('Triggering simulation after ${duration.inSeconds} seconds');
-          await _evolveDescription();
-          _lastDescriptionEvolutionTime = now;
-        } else {
-          // debugPrint('SIMULATION: Not enough time elapsed since last simulation');
-        }
-      },
-    );
+    // Start the simulation loop immediately
+    _runSimulationLoop();
     ClipQueueConstants.logEvent('Started simulation timer');
   }
   
@@ -304,11 +259,19 @@ class ClipQueueManager {
     
     // Function to get chat message string
     String getChatMessagesString() {
-      if (_recentChatMessages.isEmpty) return '';
+      debugPrint('CHAT_DEBUG: Getting chat messages for simulation - count: ${_recentChatMessages.length}');
       
-      return _recentChatMessages.map((msg) => 
+      if (_recentChatMessages.isEmpty) {
+        debugPrint('CHAT_DEBUG: No chat messages available for simulation');
+        return '';
+      }
+      
+      final messagesString = _recentChatMessages.map((msg) => 
         "${msg.username}: ${msg.content}"
       ).join("\n");
+      
+      debugPrint('CHAT_DEBUG: Chat messages for simulation: $messagesString');
+      return messagesString;
     }
     
     while (retryCount <= maxRetries) {
@@ -375,6 +338,49 @@ class ClipQueueManager {
         }
       }
     }
+  }
+
+  /// Run the simulation loop with delay-based approach
+  Future<void> _runSimulationLoop() async {
+    while (!_isDisposed) {
+      try {
+        // Skip if simulation is paused (due to video playback being paused)
+        if (_isSimulationPaused) {
+          await Future.delayed(const Duration(seconds: 1));
+          continue;
+        }
+
+        // Run the simulation
+        debugPrint('SIMULATION: Starting simulation iteration');
+        ClipQueueConstants.logEvent('Starting simulation iteration');
+        
+        final simulationStart = DateTime.now();
+        await _evolveDescription();
+        final simulationEnd = DateTime.now();
+        final simulationDuration = simulationEnd.difference(simulationStart);
+        
+        debugPrint('SIMULATION: Completed simulation in ${simulationDuration.inMilliseconds}ms');
+        ClipQueueConstants.logEvent('Completed simulation in ${simulationDuration.inMilliseconds}ms');
+        
+        // Add the user-configured delay after simulation
+        final settingsService = SettingsService();
+        final delaySeconds = settingsService.simLoopDelayInSec;
+        debugPrint('SIMULATION: Waiting ${delaySeconds}s before next simulation');
+        ClipQueueConstants.logEvent('Waiting ${delaySeconds}s before next simulation');
+        
+        await Future.delayed(Duration(seconds: delaySeconds));
+        
+      } catch (e) {
+        debugPrint('SIMULATION: Error in simulation loop: $e');
+        ClipQueueConstants.logEvent('Error in simulation loop: $e');
+        
+        // Wait a bit before retrying to avoid tight error loops
+        await Future.delayed(const Duration(seconds: 5));
+      }
+    }
+    
+    debugPrint('SIMULATION: Simulation loop ended');
+    ClipQueueConstants.logEvent('Simulation loop ended');
   }
 
   /// Mark a specific clip as played
@@ -638,11 +644,8 @@ class ClipQueueManager {
         : 'Simulation resumed (video playback resumed)'
     );
     
-    // If we're resuming after a pause, update the last evolution time
-    // to avoid immediate evolution after resuming
-    if (!isPaused) {
-      _lastDescriptionEvolutionTime = DateTime.now();
-    }
+    // Note: With the delay-based approach, simulation timing is handled
+    // internally by the _runSimulationLoop method
   }
 
   /// Print the current state of the queue
@@ -671,7 +674,6 @@ class ClipQueueManager {
 
     // Cancel all timers first
     _bufferCheckTimer?.cancel();
-    _descriptionEvolutionTimer?.cancel();
     
     // Complete any pending generation completers
     for (var clip in _clipBuffer) {

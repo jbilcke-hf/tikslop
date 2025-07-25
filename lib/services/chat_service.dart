@@ -146,8 +146,11 @@ class ChatService {
   }
 
   void _handleChatMessage(ChatMessage message) {
+    debugPrint('CHAT_DEBUG: ChatService received message - videoId: ${message.videoId}, currentRoom: $_currentRoomId, content: "${message.content}"');
+    
     // Only add messages if they're for the current room
     if (message.videoId == _currentRoomId) {
+      debugPrint('CHAT_DEBUG: Message matches current room, forwarding to controller');
       _chatController.add(message);
       
       // Store this message in the recent messages for this room

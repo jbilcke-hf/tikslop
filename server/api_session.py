@@ -5,9 +5,10 @@ from aiohttp import web, WSMsgType
 import json
 import time
 import datetime
-from api_core import VideoGenerationAPI
+from .api_core import VideoGenerationAPI
+from .logging_utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class UserSession:
     """
@@ -50,13 +51,14 @@ class UserSession:
     async def start(self):
         """Start all the queue processors for this session"""
         # Start background tasks for handling different request types
+        logger.info(f"Creating background tasks for user {self.user_id}")
         self.background_tasks = [
             asyncio.create_task(self._process_chat_queue()),
             asyncio.create_task(self._process_video_queue()),
             asyncio.create_task(self._process_search_queue()),
             asyncio.create_task(self._process_simulation_queue())  # New worker for simulation requests
         ]
-        logger.info(f"Started session for user {self.user_id} with role {self.user_role}")
+        logger.info(f"Started session for user {self.user_id} with role {self.user_role}, created {len(self.background_tasks)} background tasks")
         
     async def stop(self):
         """Stop all background tasks for this session"""
@@ -114,88 +116,127 @@ class UserSession:
 
     async def _process_video_queue(self):
         """Process multiple video generation requests in parallel for this user"""
-        from api_config import VIDEO_ROUND_ROBIN_ENDPOINT_URLS
-        
-        active_tasks = set()
-        # Set a per-user concurrent limit based on role
-        max_concurrent = len(VIDEO_ROUND_ROBIN_ENDPOINT_URLS)
-        if self.user_role == 'anon':
-            max_concurrent = min(2, max_concurrent)  # Limit anonymous users
-        elif self.user_role == 'normal':
-            max_concurrent = min(4, max_concurrent)  # Standard users
-        # Pro and admin can use all endpoints
-
-        async def process_single_request(data):
+        try:
             try:
-                title = data.get('title', '')
-                description = data.get('description', '')
-                video_prompt_prefix = data.get('video_prompt_prefix', '')
-                options = data.get('options', {})
-                
-                # Pass the user role to generate_video
-                video_data = await self.shared_api.generate_video(
-                    title, description, video_prompt_prefix, options, self.user_role
-                )
-                
-                result = {
-                    'action': 'generate_video',
-                    'requestId': data.get('requestId'),
-                    'success': True,
-                    'video': video_data,
-                }
-                
-                await self.ws.send_json(result)
-                
-                # Update metrics
-                self.request_counts['video'] += 1
-                self.last_request_times['video'] = time.time()
-                
-            except Exception as e:
-                logger.error(f"Error processing video request for user {self.user_id}: {e}")
+                from .api_config import VIDEO_ROUND_ROBIN_ENDPOINT_URLS
+            except ImportError:
                 try:
-                    await self.ws.send_json({
+                    from server.api_config import VIDEO_ROUND_ROBIN_ENDPOINT_URLS
+                except ImportError:
+                    logger.error(f"Failed to import VIDEO_ROUND_ROBIN_ENDPOINT_URLS for user {self.user_id}")
+                    return
+            
+            active_tasks = set()
+            # Set a per-user concurrent limit based on role
+            max_concurrent = len(VIDEO_ROUND_ROBIN_ENDPOINT_URLS)
+            if self.user_role == 'anon':
+                max_concurrent = min(2, max_concurrent)  # Limit anonymous users
+            elif self.user_role == 'normal':
+                max_concurrent = min(4, max_concurrent)  # Standard users
+            # Pro and admin can use all endpoints
+
+            async def process_single_request(data):
+                request_id = data.get('requestId', 'unknown')
+                try:
+                    title = data.get('title', '')
+                    description = data.get('description', '')
+                    video_prompt_prefix = data.get('video_prompt_prefix', '')
+                    options = data.get('options', {})
+                    
+                    #logger.info(f"Starting video generation for user {self.user_id}: title='{title[:50]}...', role={self.user_role}")
+                    start_time = time.time()
+                    
+                    # Pass the user role to generate_video
+                    video_data = await self.shared_api.generate_video(
+                        title, description, video_prompt_prefix, options, self.user_role
+                    )
+                    
+                    generation_time = time.time() - start_time
+                    logger.info(f"generated clip in {generation_time:.2f}s (len: {len(video_data) if video_data else 0})")
+                    
+                    result = {
                         'action': 'generate_video',
                         'requestId': data.get('requestId'),
-                        'success': False,
-                        'error': f'Video generation error: {str(e)}'
-                    })
-                except Exception as send_error:
-                    logger.error(f"Error sending error response: {send_error}")
-            finally:
-                active_tasks.discard(asyncio.current_task())
-
-        while True:
-            # Clean up completed tasks
-            active_tasks = {task for task in active_tasks if not task.done()}
-            
-            # Start new tasks if we have capacity
-            while len(active_tasks) < max_concurrent:
-                try:
-                    # Use try_get to avoid blocking if queue is empty
-                    data = await asyncio.wait_for(self.video_queue.get(), timeout=0.1)
+                        'success': True,
+                        'video': video_data,
+                    }
                     
-                    # Create and start new task
-                    task = asyncio.create_task(process_single_request(data))
-                    active_tasks.add(task)
+                    #logger.info(f"Sending video generation response to user {self.user_id}")
+                    await self.ws.send_json(result)
                     
-                except asyncio.TimeoutError:
-                    # No items in queue, break inner loop
-                    break
+                    # Update metrics
+                    self.request_counts['video'] += 1
+                    self.last_request_times['video'] = time.time()
+                    
                 except Exception as e:
-                    logger.error(f"Error creating video generation task for user {self.user_id}: {e}")
-                    break
-
-            # Wait a short time before checking queue again
-            await asyncio.sleep(0.1)
-
-            # Handle any completed tasks' errors
-            for task in list(active_tasks):
-                if task.done():
+                    logger.error(f"Error processing video request for user {self.user_id}: {e}")
                     try:
-                        await task
+                        logger.info(f"Sending error response to user {self.user_id}")
+                        await self.ws.send_json({
+                            'action': 'generate_video',
+                            'requestId': data.get('requestId'),
+                            'success': False,
+                            'error': f'Video generation error: {str(e)}'
+                        })
+                    except Exception as send_error:
+                        logger.error(f"Error sending error response: {send_error}")
+                finally:
+                    active_tasks.discard(asyncio.current_task())
+
+            logger.info(f"Video queue processor started for user {self.user_id} with max_concurrent={max_concurrent}")
+            
+            while True:
+                # Clean up completed tasks
+                active_tasks = {task for task in active_tasks if not task.done()}
+                
+                # Log queue processing activity every few iterations
+                if hasattr(self, '_queue_debug_counter'):
+                    self._queue_debug_counter += 1
+                else:
+                    self._queue_debug_counter = 1
+                    
+                if self._queue_debug_counter % 50 == 0:  # Log every 5 seconds (50 * 0.1s)
+                    queue_size = self.video_queue.qsize()
+                    # let's hide this log, it is too verbose
+                    #logger.info(f"Video queue processor heartbeat for user {self.user_id}: queue_size={queue_size}, active_tasks={len(active_tasks)}/{max_concurrent}")
+                
+                # Start new tasks if we have capacity
+                while len(active_tasks) < max_concurrent:
+                    try:
+                        # Use try_get to avoid blocking if queue is empty
+                        data = await asyncio.wait_for(self.video_queue.get(), timeout=0.1)
+                        
+                        request_id = data.get('requestId', 'unknown')
+                        #logger.info(f"[{request_id}] Picked up video request from queue for user {self.user_id}, creating task (active: {len(active_tasks)}/{max_concurrent})")
+                        
+                        # Create and start new task
+                        task = asyncio.create_task(process_single_request(data))
+                        active_tasks.add(task)
+                        
+                    except asyncio.TimeoutError:
+                        # No items in queue, break inner loop
+                        break
                     except Exception as e:
-                        logger.error(f"Task failed with error for user {self.user_id}: {e}")
-                    active_tasks.discard(task)
+                        logger.error(f"Error creating video generation task for user {self.user_id}: {e}")
+                        break
+
+                # Wait a short time before checking queue again
+                await asyncio.sleep(0.1)
+
+                # Handle any completed tasks' errors
+                for task in list(active_tasks):
+                    if task.done():
+                        try:
+                            await task
+                        except Exception as e:
+                            logger.error(f"Task failed with error for user {self.user_id}: {e}")
+                        active_tasks.discard(task)
+                        
+        except Exception as e:
+            logger.error(f"Video queue processor crashed for user {self.user_id}: {e}")
+            import traceback
+            logger.error(f"Video queue processor traceback: {traceback.format_exc()}")
+            raise  # Re-raise to ensure the error is visible
 
     async def _process_search_queue(self):
         """Medium priority queue for search operations"""

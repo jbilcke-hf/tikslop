@@ -132,8 +132,8 @@ class Configuration {
   bool get enableSimLoop =>
       _config['simulation']?['enable_sim_loop'] ?? true;
       
-  int get simLoopFrequencyInSec =>
-      _config['simulation']?['sim_loop_frequency_in_sec'] ?? 0;
+  int get simLoopDelayInSec =>
+      _config['simulation']?['sim_loop_delay_in_sec'] ?? 0;
 
   // Computed properties
 

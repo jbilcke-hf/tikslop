@@ -8,17 +8,16 @@ import uuid
 from aiohttp import web, WSMsgType
 from typing import Dict, Any
 
-from api_core import VideoGenerationAPI
-from api_session import SessionManager
-from api_metrics import MetricsTracker
-from api_config import *
+from server.api_core import VideoGenerationAPI
+from server.api_session import SessionManager
+from server.api_metrics import MetricsTracker
+from server.api_config import *
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Set up colored logging
+from server.logging_utils import setup_colored_logging, get_logger
+
+setup_colored_logging()
+logger = get_logger(__name__)
 
 # Create global session and metrics managers
 session_manager = SessionManager()
@@ -175,6 +174,8 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
                     if action in ['join_chat', 'leave_chat', 'chat_message']:
                         await user_session.chat_queue.put(data)
                     elif action in ['generate_video']:
+                        request_id = data.get('requestId', 'unknown')
+                        #logger.info(f"[{request_id}] Received generate_video request from user {user_id}, adding to video queue")
                         await user_session.video_queue.put(data)
                     elif action == 'search':
                         await user_session.search_queue.put(data)

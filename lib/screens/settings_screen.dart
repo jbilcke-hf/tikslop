@@ -17,12 +17,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _promptController = TextEditingController();
   final _negativePromptController = TextEditingController();
   final _hfApiKeyController = TextEditingController();
+  final _gameMasterPromptController = TextEditingController();
   final _llmApiKeyController = TextEditingController();
   final _modelNameController = TextEditingController();
   final _settingsService = SettingsService();
   final _availabilityService = ModelAvailabilityService();
   bool _showSceneDebugInfo = false;
   bool _enableSimulation = true;
+  int _simLoopDelayInSec = 5;
   String _selectedLlmProvider = 'built-in';
   String _selectedLlmModel = 'meta-llama/Llama-3.2-3B-Instruct';
   LLMProvider? _currentProvider;
@@ -39,9 +41,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _promptController.text = _settingsService.videoPromptPrefix;
     _negativePromptController.text = _settingsService.negativeVideoPrompt;
     _hfApiKeyController.text = _settingsService.huggingfaceApiKey;
+    _gameMasterPromptController.text = _settingsService.gameMasterPrompt;
     _llmApiKeyController.text = _settingsService.llmApiKey;
     _showSceneDebugInfo = _settingsService.showSceneDebugInfo;
     _enableSimulation = _settingsService.enableSimulation;
+    _simLoopDelayInSec = _settingsService.simLoopDelayInSec;
     
     // Auto-select built-in model if no HF API key
     if (_settingsService.huggingfaceApiKey.isEmpty) {
@@ -73,6 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _promptController.dispose();
     _negativePromptController.dispose();
     _hfApiKeyController.dispose();
+    _gameMasterPromptController.dispose();
     _llmApiKeyController.dispose();
     _modelNameController.dispose();
     super.dispose();
@@ -282,6 +287,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                         }
                       }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _gameMasterPromptController,
+                    decoration: const InputDecoration(
+                      labelText: 'Game Master Prompt',
+                      hintText: 'Keep things fun and kid-friendly.',
+                      helperText: 'Additional instructions applied to all LLM requests (search, captions, simulations)',
+                      helperMaxLines: 2,
+                    ),
+                    maxLines: 3,
+                    onChanged: (value) {
+                      _settingsService.setGameMasterPrompt(value);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -713,8 +732,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _settingsService.setShowSceneDebugInfo(value);
                     },
                   ),
-                  /*
-                  let's disable this for now, I still need to work on this
                   SwitchListTile(
                     title: const Text('Enable world simulator engine'),
                     subtitle: const Text('Allow video descriptions to evolve over time using a LLM (this consumes tokens, your Hugging Face account will be billed)'),
@@ -726,7 +743,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _settingsService.setEnableSimulation(value);
                     },
                   ),
-                  */
+                  // Only show simulation delay setting if user has HF API key
+                  if (_hfApiKeyController.text.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ListTile(
+                      title: const Text('Simulation Loop Delay'),
+                      subtitle: Text('Delay between simulation iterations: ${_simLoopDelayInSec}s (Warning: Short delays consume more LLM tokens)'),
+                      trailing: SizedBox(
+                        width: 200,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              onPressed: _simLoopDelayInSec > 0 ? () {
+                                setState(() {
+                                  _simLoopDelayInSec = (_simLoopDelayInSec - 1).clamp(0, 300);
+                                });
+                                _settingsService.setSimLoopDelayInSec(_simLoopDelayInSec);
+                              } : null,
+                              icon: const Icon(Icons.remove),
+                            ),
+                            SizedBox(
+                              width: 50,
+                              child: Text(
+                                '${_simLoopDelayInSec}s',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _simLoopDelayInSec < 300 ? () {
+                                setState(() {
+                                  _simLoopDelayInSec = (_simLoopDelayInSec + 1).clamp(0, 300);
+                                });
+                                _settingsService.setSimLoopDelayInSec(_simLoopDelayInSec);
+                              } : null,
+                              icon: const Icon(Icons.add),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   // Clear device connections button
                   ListTile(

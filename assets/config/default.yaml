@@ -21,9 +21,10 @@ advertising:
       link: https://huggingface.co/docs/smolagents/index
 
 simulation:
-  # how often the description should evolve (in seconds)
-  # setting to 0 disables description evolution
-  sim_loop_frequency_in_sec: 8
+  # delay to wait after each simulation loop (in seconds)
+  sim_loop_delay_in_sec: 8
+
+  enable_sim_loop: false
 
 video:
   # default negative prompt to filter harmful content
