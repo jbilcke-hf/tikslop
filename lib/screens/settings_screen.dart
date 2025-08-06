@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _settingsService = SettingsService();
   final _availabilityService = ModelAvailabilityService();
   bool _showSceneDebugInfo = false;
-  bool _enableSimulation = true;
+  bool _enableSimulation = false;
   int _simLoopDelayInSec = 1;
   String _selectedLlmProvider = 'built-in';
   String _selectedLlmModel = 'meta-llama/Llama-3.2-3B-Instruct';
