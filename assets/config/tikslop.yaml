@@ -1,10 +1,10 @@
 ui:
   product_name: "#tikslop"
-  showChatInVideoView: true
+  show_chat_in_video_view: false
 
 render_queue:
   # how many clips should be stored in advance
-  buffer_size: 3
+  buffer_size: 2
 
   # how many requests for clips can be run in parallel
   max_concurrent_generations: 2
@@ -28,7 +28,7 @@ simulation:
   enable_sim_loop: true
   
   # delay to wait after each simulation loop (in seconds)
-  sim_loop_delay_in_sec: 8
+  sim_loop_delay_in_sec: 4
 
 # it's OK to use high values here,
 # because some of those values are limited by the backend config,

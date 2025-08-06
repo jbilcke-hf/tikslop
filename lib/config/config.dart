@@ -65,7 +65,7 @@ class Configuration {
       _config['ui']['product_name'];
       
   bool get showChatInVideoView => 
-      _config['ui']['showChatInVideoView'] ?? true;
+      _config['ui']['show_chat_in_video_view'] ?? false;
 
   // how many clips should be stored in advance
   int get renderQueueBufferSize => 
@@ -130,7 +130,7 @@ class Configuration {
       
   // Simulation settings
   bool get enableSimLoop =>
-      _config['simulation']?['enable_sim_loop'] ?? true;
+      _config['simulation']?['enable_sim_loop'] ?? false;
       
   int get simLoopDelayInSec =>
       _config['simulation']?['sim_loop_delay_in_sec'] ?? 0;

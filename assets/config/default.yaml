@@ -1,16 +1,16 @@
 ui:
   product_name: AppName
-  showChatInVideoView: true
+  show_chat_in_video_view: false
   
-  render_queue:
+render_queue:
   # how many clips should be stored in advance
-  buffer_size: 4
+  buffer_size: 2
 
   # how many requests for clips can be run in parallel
   max_concurrent_generations: 2
 
   # start playback as soon as we have 1 video over 4 (25%)
-  minimum_buffer_percent_to_start_playback: 25
+  minimum_buffer_percent_to_start_playback: 5
 
 advertising:
   enable_ads: false
@@ -22,7 +22,7 @@ advertising:
 
 simulation:
   # delay to wait after each simulation loop (in seconds)
-  sim_loop_delay_in_sec: 8
+  sim_loop_delay_in_sec: 4
 
   enable_sim_loop: false
 
