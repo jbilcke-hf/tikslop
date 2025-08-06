@@ -20,9 +20,9 @@ For the style, be creative, for instance you can use anything like a "documentar
 If the user ask for something specific eg "movie screencap", "movie scene", "documentary footage" "animation" as a style etc.
 Keep it minimalist but still descriptive, don't use bullets points, use simple words, go to the essential to describe style (cinematic, documentary footage, 3D rendering..), camera modes and angles, characters, age, gender, action, location, lighting, country, costume, time, weather, textures, color palette.. etc). Write about 80 words, and use between 2 and 3 sentences.
 The most import part is to describe the actions and movements in the scene, so don't forget that!
-Don't describe sound, so ever say things like "atmospheric music playing in the background".
-Instead describe the visual elements we can see in the background, be precise, (if there are anything, cars, objects, people, bricks, birds, clouds, trees, leaves or grass then say it so etc).
-Make the result unique and different from previous search results. ONLY RETURN YAML AND WITH ENGLISH CONTENT, NOT CHINESE - DO NOT ADD ANY OTHER COMMENT!
+Don't describe sound, never say things like "atmospheric music playing in the background".
+Only describe the visual elements, be precise, (if there are anything, cars, objects, people, bricks, birds, clouds, trees, leaves or grass then make sure to include it in your caption).
+Make the result unique and different from previous search results. ONLY RETURN YAML AND WITH ENGLISH CONTENT, NOT CHINESE - DO NOT ADD YOU OWN OBSERVATIONS, INTERPREATIONS OR PERSONAL COMMENT!
 
 # Context
 This is attempt {current_attempt}.
@@ -53,11 +53,11 @@ Instructions:
 3. Create a natural progression from previous clips
 4. Take into account user suggestions (chat messages) into the scene
 5. IMPORTANT: viewers have shared messages, consider their input in priority to guide your story, and incorporate relevant suggestions or reactions into your narrative evolution.
-6. Keep visual consistency with previous clips (in most cases you should repeat the same exact description of the location, characters etc but only change a few elements. If this is a webcam scenario, don't touch the camera orientation or focus)
+6. Keep visual consistency with previous clips (in most cases you should repeat the same exact and detailed description of the location, characters etc but only change a few elements. If this is a webcam scenario, don't touch the camera orientation or focus)
 7. Return ONLY the caption text, no additional formatting or explanation
 8. Write in English, about 200 words.
 9. Keep the visual style consistant, but content as well (repeat the style, character, locations, appearance etc..from the previous description, when it makes sense).
-10. Your caption must describe visual elements of the scene in details, including: camera angle and focus, people's appearance, age, look, costumes, clothes, the location visual characteristics and geometry, lighting, action, objects, weather, textures, lighting.
+10. Your caption must describe visual elements of the scene in extreme details, including: camera angle and focus, people's appearance, age, look, costumes, clothes, the location visual characteristics and geometry, lighting, action, objects, weather, textures, lighting.
 11. Please write in the same style as the original description, by keeping things brief etc.
 
 Remember to obey to what users said in the chat history!!
@@ -85,8 +85,8 @@ Instructions:
 6. Keep visual consistency with previous clips (in most cases you should repeat the same exact description of the location, characters etc but only change a few elements. If this is a webcam scenario, don't touch the camera orientation or focus)
 7. Return ONLY the caption text, no additional formatting or explanation
 8. Write in English, about 200 words.
-9. Keep the visual style consistant, but content as well (repeat the style, character, locations, appearance etc..from the previous description, when it makes sense).
-10. Your caption must describe visual elements of the scene in details, including: camera angle and focus, people's appearance, age, look, costumes, clothes, the location visual characteristics and geometry, lighting, action, objects, weather, textures, lighting.
+9. Keep the visual style consistant, descriptive, detailed, but content as well (repeat the style, character, locations, appearance etc..from the previous description, when it makes sense).
+10. Your caption must describe visual elements of the scene in extreme details, including: camera angle and focus, people's appearance, age, look, costumes, clothes, the location visual characteristics and geometry, lighting, action, objects, weather, textures, lighting.
 11. Please write in the same style as the original description, by keeping things brief etc.
 
 Remember to obey to what users said in the chat history!!
