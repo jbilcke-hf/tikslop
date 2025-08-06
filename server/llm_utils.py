@@ -159,29 +159,18 @@ def get_inference_client(llm_config: Optional[dict] = None) -> InferenceClient:
             raise ValueError("Built-in provider is not available. Server HF_TOKEN is not configured.")
 
     model = llm_config.get('model', '')
-    user_provider_api_key = llm_config.get('api_key', '')  # Provider-specific API key
     user_hf_token = llm_config.get('hf_token', '')  # User's HF token
     
     try:
-        # Case 1: Use a provider with a provider-specific API key if available
-        # This mode is currently hidden in the Flutter UI (we don't ask for provider-specific keys yet)
-        # but it is implemented here so that we don't forget it later
-        if user_provider_api_key:
-            return InferenceClient(
-                provider=provider,
-                model=model,
-                api_key=user_provider_api_key
-            )
-
-        # Case 2: Use a provider with user's HF token if available
-        elif user_hf_token:
+        # Use provider with user's HF token if available
+        if user_hf_token:
             return InferenceClient(
                 provider=provider,
                 model=model,
                 token=user_hf_token
             )
         else:
-            raise ValueError(f"No API key provided for provider '{provider}'. Please provide either a valid {provider} API key or your Hugging Face API key.")
+            raise ValueError(f"No Hugging Face API key provided for provider '{provider}'. Please provide your Hugging Face API key.")
 
     except ValueError:
         # Re-raise ValueError for missing API keys

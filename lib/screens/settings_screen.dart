@@ -18,7 +18,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _negativePromptController = TextEditingController();
   final _hfApiKeyController = TextEditingController();
   final _gameMasterPromptController = TextEditingController();
-  final _llmApiKeyController = TextEditingController();
   final _modelNameController = TextEditingController();
   final _settingsService = SettingsService();
   final _availabilityService = ModelAvailabilityService();
@@ -42,7 +41,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _negativePromptController.text = _settingsService.negativeVideoPrompt;
     _hfApiKeyController.text = _settingsService.huggingfaceApiKey;
     _gameMasterPromptController.text = _settingsService.gameMasterPrompt;
-    _llmApiKeyController.text = _settingsService.llmApiKey;
     _showSceneDebugInfo = _settingsService.showSceneDebugInfo;
     _enableSimulation = _settingsService.enableSimulation;
     _simLoopDelayInSec = _settingsService.simLoopDelayInSec;
@@ -78,7 +76,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _negativePromptController.dispose();
     _hfApiKeyController.dispose();
     _gameMasterPromptController.dispose();
-    _llmApiKeyController.dispose();
     _modelNameController.dispose();
     super.dispose();
   }
@@ -147,7 +144,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Switch to first compatible provider
             setState(() {
               _selectedLlmProvider = compatibleProviders.first;
-              _currentProvider = LLMProvider.getById(_selectedLlmProvider);
             });
             await _settingsService.setLlmProvider(_selectedLlmProvider);
           } else {
@@ -365,8 +361,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           // Reset to first available provider if we had built-in selected
                           if (_selectedLlmProvider == 'built-in') {
                             _selectedLlmProvider = _availableProviders.isNotEmpty ? _availableProviders.first.id : 'hf-inference';
-                            _currentProvider = LLMProvider.getById(_selectedLlmProvider);
-                          }
+                                        }
                         });
                         await _settingsService.setLlmModel(newModel.modelId);
                         if (_selectedLlmProvider != 'built-in') {

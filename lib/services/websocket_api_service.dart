@@ -876,7 +876,6 @@ class WebSocketApiService {
     final settings = SettingsService();
     final llmProvider = settings.llmProvider;
     final llmModel = settings.llmModel;
-    final llmApiKey = settings.llmApiKey;
     final hfApiKey = settings.huggingfaceApiKey;
 
     while (_activeSearches[query] == true && 
@@ -893,8 +892,7 @@ class WebSocketApiService {
               'llm_config': {
                 'provider': llmProvider,
                 'model': llmModel,
-                'api_key': llmApiKey,
-                'hf_token': hfApiKey,
+                  'hf_token': hfApiKey,
                 'game_master_prompt': settings.gameMasterPrompt,
               },
             },
@@ -1056,8 +1054,6 @@ class WebSocketApiService {
           debugPrint('WebSocketApiService: Processing join chat response');
           _pendingRequests[requestId]!.complete(data);
         } else if (action == 'search' && data['success'] == true && data['result'] != null) {
-          final result = VideoResult.fromJson(data['result'] as Map<String, dynamic>);
-          
           // Complete the pending request but don't add to search results here
           // The search results will be handled by the startContinuousSearch method
           _pendingRequests[requestId]!.complete(data);
@@ -1274,7 +1270,6 @@ class WebSocketApiService {
       final settings = SettingsService();
       final llmProvider = settings.llmProvider;
       final llmModel = settings.llmModel;
-      final llmApiKey = settings.llmApiKey;
       final hfApiKey = settings.huggingfaceApiKey;
       
       final response = await _sendRequest(
@@ -1285,7 +1280,7 @@ class WebSocketApiService {
             'llm_config': {
               'provider': llmProvider,
               'model': llmModel,
-              'api_key': llmApiKey,
+              'hf_token': hfApiKey,
               'game_master_prompt': settings.gameMasterPrompt,
             },
           },
@@ -1356,7 +1351,6 @@ class WebSocketApiService {
     final settings = SettingsService();
     final llmProvider = settings.llmProvider;
     final llmModel = settings.llmModel;
-    final llmApiKey = settings.llmApiKey;
     final hfApiKey = settings.huggingfaceApiKey;
     
     final response = await _sendRequest(
@@ -1368,7 +1362,7 @@ class WebSocketApiService {
           'llm_config': {
             'provider': llmProvider,
             'model': llmModel,
-            'api_key': llmApiKey,
+            'hf_token': hfApiKey,
             'game_master_prompt': settings.gameMasterPrompt,
           },
         },
@@ -1438,7 +1432,6 @@ class WebSocketApiService {
       final settings = SettingsService();
       final llmProvider = settings.llmProvider;
       final llmModel = settings.llmModel;
-      final llmApiKey = settings.llmApiKey;
       final hfApiKey = settings.huggingfaceApiKey;
       
       final response = await _sendRequest(
@@ -1455,7 +1448,7 @@ class WebSocketApiService {
             'llm_config': {
               'provider': llmProvider,
               'model': llmModel,
-              'api_key': llmApiKey,
+              'hf_token': hfApiKey,
               'game_master_prompt': settings.gameMasterPrompt,
             },
           },

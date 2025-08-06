@@ -13,7 +13,6 @@ class SettingsService {
   static const String _gameMasterPromptKey = 'game_master_prompt';
   static const String _llmProviderKey = 'llm_provider';
   static const String _llmModelKey = 'llm_model';
-  static const String _llmApiKeyKey = 'llm_api_key';
   static final SettingsService _instance = SettingsService._internal();
   
   factory SettingsService() => _instance;
@@ -88,13 +87,6 @@ class SettingsService {
   
   Future<void> setLlmModel(String model) async {
     await _prefs.setString(_llmModelKey, model);
-    _settingsController.add(null);
-  }
-
-  String get llmApiKey => _prefs.getString(_llmApiKeyKey) ?? '';
-  
-  Future<void> setLlmApiKey(String apiKey) async {
-    await _prefs.setString(_llmApiKeyKey, apiKey);
     _settingsController.add(null);
   }
 
